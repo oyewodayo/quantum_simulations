@@ -34,7 +34,7 @@ jobs:
           
           # Option 2: If your quantum simulator is in a separate repo
           cd /var/www/quantum-simulator
-          git pull origin main || git clone https://github.com/oyewodayo/quantum-simulator.git .
+          git pull origin main || git clone https://github.com/oyewodayo/quantum_simulations.git .
           
           # Build your quantum simulator (adjust based on your project)
           # npm install
