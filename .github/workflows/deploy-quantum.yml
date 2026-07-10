@@ -8,16 +8,15 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Deploy to VPS
-      uses: appleboy/ssh-action@master
+      uses: appleboy/ssh-action@v1.0.3
       with:
-        host: ${{ secrets.VPS_HOST }}
-        username: briefbrew
+        host: "109.199.123.180"  # Hardcoded for testing
+        username: "briefbrew"
         key: ${{ secrets.VPS_SSH_KEY }}
-        port: ${{ secrets.VPS_PORT }}
+        port: "22"
         script: |
           set -e
-          
-          # Deploy main app
+          echo "Starting deployment..."
           cd /var/www/briefbrew
           git fetch origin main
           git pull origin main
@@ -28,19 +27,12 @@ jobs:
           php artisan view:cache
           
           # Deploy quantum simulator
-          # Option 1: If your quantum simulator is in a subdirectory in the same repo
-          # cd /var/www/briefbrew/public/quantum
-          # git pull origin main
-          
-          # Option 2: If your quantum simulator is in a separate repo
           cd /var/www/quantum-simulator
-          git pull origin main || git clone https://github.com/oyewodayo/quantum_simulations.git .
+          if [ -d ".git" ]; then
+            git pull origin main
+          else
+            git clone https://github.com/oyewodayo/quantum_simulations.git .
+          fi
           
-          # Build your quantum simulator (adjust based on your project)
-          # npm install
-          # npm run build
-          
-          # Reload nginx
           sudo systemctl reload nginx
-          
           echo "Deployment completed successfully!"
