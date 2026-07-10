@@ -7,13 +7,36 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
+    - name: Debug - Check secrets
+      run: |
+        echo "VPS_HOST is set: ${{ secrets.VPS_HOST != '' }}"
+        echo "VPS_USERNAME is set: ${{ secrets.VPS_USERNAME != '' }}"
+        echo "VPS_SSH_KEY is set: ${{ secrets.VPS_SSH_KEY != '' }}"
+        echo "VPS_PORT is set: ${{ secrets.VPS_PORT != '' }}"
+    
+    - name: Debug - Show host
+      run: |
+        echo "Host: ${{ secrets.VPS_HOST }}"
+    
+    - name: Test SSH Connection
+      uses: appleboy/ssh-action@v1.0.3
+      with:
+        host: ${{ secrets.VPS_HOST }}
+        username: ${{ secrets.VPS_USERNAME }}
+        key: ${{ secrets.VPS_SSH_KEY }}
+        port: ${{ secrets.VPS_PORT }}
+        script: |
+          echo "SSH connection successful!"
+          whoami
+          pwd
+    
     - name: Deploy to VPS
       uses: appleboy/ssh-action@v1.0.3
       with:
-        host: "109.199.123.180"  # Hardcoded for testing
-        username: "briefbrew"
+        host: ${{ secrets.VPS_HOST }}
+        username: ${{ secrets.VPS_USERNAME }}
         key: ${{ secrets.VPS_SSH_KEY }}
-        port: "22"
+        port: ${{ secrets.VPS_PORT }}
         script: |
           set -e
           echo "Starting deployment..."
@@ -25,14 +48,11 @@ jobs:
           php artisan config:cache
           php artisan route:cache
           php artisan view:cache
-          
-          # Deploy quantum simulator
           cd /var/www/quantum-simulator
           if [ -d ".git" ]; then
             git pull origin main
           else
             git clone https://github.com/oyewodayo/quantum_simulations.git .
           fi
-          
           sudo systemctl reload nginx
           echo "Deployment completed successfully!"
