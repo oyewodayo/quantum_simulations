@@ -188,13 +188,6 @@ Contributions are welcome! Here's how you can help:
 
 Copyright © CERN
 
-## 🙏 Acknowledgments
-
-- CERN for hosting and supporting this educational initiative
-- The quantum computing community for inspiration and concepts
-- All contributors and testers who helped refine the experience
-
----
 
 ## 🌐 Explore More
 
