@@ -1,0 +1,677 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Quantum Explorer · CERN</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+  <header>
+    <div class="logo">
+        <a href="index.html" style="color: inherit;text-decoration: none;">  ⟨ψ|</a>
+    </div>
+    <nav>
+      <button class="tab active" data-tab="qubit">Qubit</button>
+      <button class="tab" data-tab="gates">Gates</button>
+      <button class="tab" data-tab="circuit">Circuit</button>
+      <button class="tab" data-tab="measure">Measure</button>
+      <button class="tab" data-tab="statevec">Statevec</button>
+      <button class="tab" data-tab="entangle">Entangle</button>
+      <button class="tab" data-tab="tunnel">Tunnel</button>
+      <button class="tab" data-tab="interference">Interference</button>
+    </nav>
+    <div class="header-right">
+      <div class="header-tag">Quantum Explorer · CERN</div>
+      <button class="theme-toggle" id="theme-toggle" title="Toggle light / dark">
+        <span id="theme-icon">☾</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- ═══════════════════ QUBIT TAB ═══════════════════ -->
+  <section id="tab-qubit" class="tab-content active">
+
+    <div class="compare-header">
+      <h1 class="compare-title">Classical Bit vs Quantum Bit</h1>
+      <p class="compare-subtitle">Interact with both to feel the difference between deterministic and probabilistic information</p>
+    </div>
+
+    <div class="compare-layout">
+
+      <!-- ── CLASSICAL COLUMN ── -->
+      <div class="compare-col classical-col">
+
+        <div class="col-label">
+          <span class="col-badge">Classical</span>
+          <span class="col-desc">Always a definite 0 or 1</span>
+        </div>
+
+        <div class="classical-display-wrap">
+          <div class="classical-display" id="classical-display">1</div>
+          <div class="classical-label">Current state</div>
+        </div>
+
+        <div class="switch-area">
+          <span class="bit-label" id="lbl-zero">0</span>
+          <label class="toggle-switch">
+            <input type="checkbox" id="bit-toggle" checked>
+            <span class="toggle-track">
+              <span class="toggle-thumb"></span>
+            </span>
+          </label>
+          <span class="bit-label active" id="lbl-one">1</span>
+        </div>
+
+        <div class="classical-info">
+          <div class="info-row">
+            <span class="info-key">Possible states</span>
+            <span class="info-val mono">0 or 1</span>
+          </div>
+          <div class="info-row">
+            <span class="info-key">Uncertainty</span>
+            <span class="info-val mono">None — always exact</span>
+          </div>
+          <div class="info-row">
+            <span class="info-key">Times flipped</span>
+            <span class="info-val mono" id="flip-count">0</span>
+          </div>
+        </div>
+
+        <div class="history-section">
+          <div class="history-label">State history</div>
+          <div class="history-trail" id="bit-history"></div>
+        </div>
+
+        <p class="bit-explainer">
+          A classical bit is a physical switch — a transistor, a capacitor charge, a magnetic domain.
+          It is always in exactly one of two states. Flipping it gives you a different exact state,
+          never an ambiguous one.
+        </p>
+
+      </div>
+
+      <!-- ── DIVIDER ── -->
+      <div class="compare-divider">
+        <div class="divider-line"></div>
+        <div class="divider-vs">vs</div>
+        <div class="divider-line"></div>
+      </div>
+
+      <!-- ── QUANTUM COLUMN ── -->
+      <div class="compare-col quantum-col">
+
+        <div class="col-label">
+          <span class="col-badge quantum-badge">Quantum</span>
+          <span class="col-desc">A superposition of both 0 and 1</span>
+        </div>
+
+        <div class="layout-two">
+          <div class="bloch-wrap">
+            <canvas id="bloch-main" width="260" height="260"></canvas>
+            <div class="state-label" id="label-main">|0⟩</div>
+          </div>
+
+          <div class="right-panel">
+            <div class="card">
+              <div class="card-title">State Vector</div>
+              <div class="formula" id="formula-main">|ψ⟩ = |0⟩</div>
+              <div class="prob-rows">
+                <div class="prob-row">
+                  <span class="ket zero-color">|0⟩</span>
+                  <div class="track"><div class="fill zero-fill" id="fill0-main" style="width:100%"></div></div>
+                  <span class="pct" id="pct0-main">100%</span>
+                </div>
+                <div class="prob-row">
+                  <span class="ket one-color">|1⟩</span>
+                  <div class="track"><div class="fill one-fill" id="fill1-main" style="width:0%"></div></div>
+                  <span class="pct" id="pct1-main">0%</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="card">
+              <div class="card-title">Basis States</div>
+              <div class="preset-grid">
+                <button class="preset-btn" onclick="setMainState(0, 0)">|0⟩</button>
+                <button class="preset-btn" onclick="setMainState(Math.PI, 0)">|1⟩</button>
+                <button class="preset-btn" onclick="setMainState(Math.PI/2, 0)">|+⟩</button>
+                <button class="preset-btn" onclick="setMainState(Math.PI/2, Math.PI)">|-⟩</button>
+                <button class="preset-btn" onclick="setMainState(Math.PI/2, Math.PI/2)">|i⟩</button>
+                <button class="preset-btn" onclick="setMainState(Math.PI/2, 3*Math.PI/2)">|-i⟩</button>
+              </div>
+            </div>
+
+            <div class="card">
+              <div class="card-title">Explore the Bloch Sphere</div>
+              <div class="slider-group">
+                <div class="slider-row">
+                  <span class="slider-sym">θ</span>
+                  <input type="range" id="sl-theta" min="0" max="3141" value="0" oninput="sliderUpdate()">
+                  <span class="slider-val" id="val-theta">0°</span>
+                </div>
+                <div class="slider-row">
+                  <span class="slider-sym">φ</span>
+                  <input type="range" id="sl-phi" min="0" max="6283" value="0" oninput="sliderUpdate()">
+                  <span class="slider-val" id="val-phi">0°</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="quantum-info">
+          <div class="info-row">
+            <span class="info-key">Possible states</span>
+            <span class="info-val mono">∞ — any point on Bloch sphere</span>
+          </div>
+          <div class="info-row">
+            <span class="info-key">Uncertainty</span>
+            <span class="info-val mono">Fundamental — until measured</span>
+          </div>
+          <div class="info-row">
+            <span class="info-key">Representation</span>
+            <span class="info-val mono">α|0⟩ + β|1⟩, |α|² + |β|² = 1</span>
+          </div>
+        </div>
+
+        <p class="bit-explainer" style="margin-top:14px;">
+          A qubit can be in a superposition of |0⟩ and |1⟩ simultaneously.
+          Drag the sliders to explore every possible state on the Bloch sphere —
+          each point is a valid qubit state inaccessible to any classical bit.
+        </p>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════ GATES TAB ═══════════════════ -->
+  <section id="tab-gates" class="tab-content">
+
+    <div class="compare-header">
+      <h1 class="compare-title">Quantum Gates</h1>
+      <p class="compare-subtitle">Gates are the verbs of quantum computing — each one grabs the qubit and rotates it somewhere new on the sphere</p>
+    </div>
+
+    <div class="layout-two gates-layout">
+
+      <div class="bloch-wrap">
+        <canvas id="bloch-gates" width="360" height="360"></canvas>
+        <div class="state-label" id="label-gates">|0⟩</div>
+      </div>
+
+      <div class="right-panel">
+        <div class="card">
+          <div class="card-title">Apply Gate</div>
+          <div class="gate-grid" id="gate-grid"></div>
+        </div>
+        <div class="card explainer-card">
+          <div class="card-title">What just happened</div>
+          <p class="bit-explainer" id="gate-explainer">Nothing yet — the qubit is parked at |0⟩, pointing straight up. Pick a gate on the left and watch where it sends the arrow.</p>
+        </div>
+        <div class="card">
+          <div class="card-title">Gate Matrix</div>
+          <div class="matrix-display" id="matrix-display">
+            <span class="muted-text">← select a gate</span>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title">Applied Sequence</div>
+          <div class="history-row" id="gate-history"></div>
+          <div style="margin-top:10px;">
+            <button class="btn-secondary" onclick="resetGates()">Reset to |0⟩</button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ═══════════════════ CIRCUIT TAB ═══════════════════ -->
+  <section id="tab-circuit" class="tab-content">
+
+    <div class="compare-header">
+      <h1 class="compare-title">Quantum Circuit</h1>
+      <p class="compare-subtitle">A circuit is a route: the qubit starts at |0⟩ and walks through each gate in order, left to right, picking up rotations along the way</p>
+    </div>
+
+    <div class="circuit-layout">
+      <div class="circuit-top">
+
+        <div class="circuit-left">
+          <div class="section-label">Gate Palette — click to add</div>
+          <div class="circuit-palette" id="circuit-palette"></div>
+
+          <div class="section-label" style="margin-top:18px;">Circuit Wire</div>
+          <div class="wire-wrap">
+            <div class="wire-ket">|0⟩</div>
+            <div class="wire-track">
+              <div class="wire-line"></div>
+              <div class="gate-slots" id="gate-slots"></div>
+            </div>
+          </div>
+
+          <div class="circuit-actions">
+            <button class="btn-run" onclick="runCircuit()">▶ Run</button>
+            <button class="btn-secondary" onclick="clearCircuit()">Clear</button>
+            <span class="muted-text" id="circuit-status"></span>
+          </div>
+
+          <div class="card explainer-card" style="margin-top:4px;">
+            <div class="card-title">What's going on</div>
+            <p class="bit-explainer" id="circuit-explainer">Lay down a path by clicking gates above — each one claims the next checkpoint on the wire. Press Run and the qubit walks it from |0⟩ to the end, one stop at a time.</p>
+          </div>
+        </div>
+
+        <div class="circuit-right">
+          <div class="section-label">Output State</div>
+          <div class="circuit-output-card">
+            <canvas id="bloch-circuit" width="260" height="260"></canvas>
+            <div class="state-label" id="label-circuit">|0⟩</div>
+            <div class="prob-rows" style="margin-top:10px;width:100%;">
+              <div class="prob-row">
+                <span class="ket zero-color">|0⟩</span>
+                <div class="track"><div class="fill zero-fill" id="cfill0" style="width:100%"></div></div>
+                <span class="pct" id="cpct0">100%</span>
+              </div>
+              <div class="prob-row">
+                <span class="ket one-color">|1⟩</span>
+                <div class="track"><div class="fill one-fill" id="cfill1" style="width:0%"></div></div>
+                <span class="pct" id="cpct1">0%</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════ MEASURE TAB ═══════════════════ -->
+  <section id="tab-measure" class="tab-content">
+
+    <div class="compare-header">
+      <h1 class="compare-title">Measurement</h1>
+      <p class="compare-subtitle">The bars below are odds, not a preview — measuring forces the qubit to answer a question it was genuinely undecided about, and there's no taking it back</p>
+    </div>
+
+    <div class="measure-layout">
+
+      <div class="card measure-main-card">
+        <div class="measure-state-col">
+          <div class="card-title">Quantum State</div>
+          <div class="formula" id="formula-measure">|ψ⟩ = |0⟩</div>
+          <div class="vertical-bars">
+            <div class="vbar-wrap">
+              <div class="vbar-track">
+                <div class="vbar zero-fill" id="vbar0" style="height:100%"></div>
+              </div>
+              <span class="ket zero-color">|0⟩</span>
+              <span class="pct zero-color" id="vpct0">100%</span>
+            </div>
+            <div class="vbar-wrap">
+              <div class="vbar-track">
+                <div class="vbar one-fill" id="vbar1" style="height:0%"></div>
+              </div>
+              <span class="ket one-color">|1⟩</span>
+              <span class="pct one-color" id="vpct1">0%</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="measure-action-col">
+          <button class="btn-measure" onclick="doMeasure()">MEASURE</button>
+          <div class="measure-result" id="measure-result"></div>
+          <div class="preset-grid" style="margin-top:14px;">
+            <button class="preset-btn" onclick="setMeasureState(0,0)">|0⟩</button>
+            <button class="preset-btn" onclick="setMeasureState(Math.PI,0)">|1⟩</button>
+            <button class="preset-btn" onclick="setMeasureState(Math.PI/2,0)">|+⟩</button>
+            <button class="preset-btn" onclick="setMeasureState(Math.PI/2,Math.PI)">|-⟩</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="card explainer-card">
+        <div class="card-title">What just happened</div>
+        <p class="bit-explainer" id="measure-explainer">Right now the qubit hasn't committed to anything — it genuinely holds both |0⟩ and |1⟩ at once, weighted by the bars above. Hit MEASURE and you're forcing it to answer a yes/no question it was actively avoiding.</p>
+      </div>
+
+      <div class="card">
+        <div class="card-title">
+          Measurement Statistics
+          <span class="muted-text" id="trial-count"></span>
+        </div>
+        <div class="histogram">
+          <div class="hist-col">
+            <div class="hist-track">
+              <div class="hist-bar zero-fill" id="hist0"></div>
+            </div>
+            <span class="ket zero-color">|0⟩</span>
+            <span class="pct" id="hpct0">—</span>
+          </div>
+          <div class="hist-col">
+            <div class="hist-track">
+              <div class="hist-bar one-fill" id="hist1"></div>
+            </div>
+            <span class="ket one-color">|1⟩</span>
+            <span class="pct" id="hpct1">—</span>
+          </div>
+        </div>
+        <div class="measure-actions">
+          <button class="btn-secondary" onclick="measureMany(10)">×10</button>
+          <button class="btn-secondary" onclick="measureMany(100)">×100</button>
+          <button class="btn-secondary" onclick="measureMany(1000)">×1000</button>
+          <button class="btn-secondary" onclick="resetStats()">Reset</button>
+        </div>
+        <div class="convergence-note" id="convergence-note"></div>
+        <p class="bit-explainer" style="margin-top:10px;">This is the only way to actually confirm those odds — ask the same question of many identical qubits and watch the histogram settle into the predicted split. A single qubit only ever gives you one answer; the pattern only shows up across a crowd.</p>
+      </div>
+
+    </div>
+  </section>
+
+
+  <!-- ═══════════════════ STATEVEC TAB ═══════════════════ -->
+  <section id="tab-statevec" class="tab-content">
+
+    <div class="compare-header">
+      <h1 class="compare-title">State Vector</h1>
+      <p class="compare-subtitle">A classical bit is a point on a line. A qubit is a vector tip on a unit arc — an infinite continuum of distinct states</p>
+    </div>
+
+    <div class="compare-layout">
+
+      <!-- Classical -->
+      <div class="compare-col classical-col">
+        <div class="col-label">
+          <span class="col-badge">Classical</span>
+          <span class="col-desc">Two discrete endpoints only</span>
+        </div>
+
+        <div class="sv-canvas-wrap">
+          <canvas id="sv-classical" width="220" height="300"></canvas>
+        </div>
+
+        <div style="display:flex;justify-content:center;margin:14px 0;">
+          <button class="btn-measure" onclick="toggleClassicalSV()">Toggle bit</button>
+        </div>
+
+        <div class="card">
+          <div class="card-title">Current State</div>
+          <div class="formula" id="sv-classical-formula">State = |1⟩</div>
+        </div>
+
+        <div class="card" style="margin-top:10px;">
+          <div class="card-title">State Space</div>
+          <p class="bit-explainer">Only the two endpoints |0⟩ and |1⟩ are valid. The region between is physically forbidden — there is no "47% |1⟩" for a classical bit.</p>
+        </div>
+      </div>
+
+      <!-- Divider -->
+      <div class="compare-divider">
+        <div class="divider-line"></div>
+        <div class="divider-vs">vs</div>
+        <div class="divider-line"></div>
+      </div>
+
+      <!-- Quantum -->
+      <div class="compare-col quantum-col">
+        <div class="col-label">
+          <span class="col-badge quantum-badge">Quantum</span>
+          <span class="col-desc">Any point on the unit arc</span>
+        </div>
+
+        <div class="sv-canvas-wrap">
+          <canvas id="sv-quantum" width="300" height="300"></canvas>
+        </div>
+
+        <div class="slider-group" style="margin:14px 0 10px;">
+          <div class="slider-row">
+            <span class="slider-sym">θ</span>
+            <input type="range" id="sv-theta-slider" min="0" max="3141" value="0" oninput="svSliderUpdate()">
+            <span class="slider-val" id="sv-theta-val">0°</span>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">State Vector</div>
+          <div class="formula" id="sv-quantum-formula">|ψ⟩ = 1.00|0⟩ + 0.00|1⟩</div>
+          <div class="prob-rows" style="margin-top:10px;">
+            <div class="prob-row">
+              <span class="ket zero-color">|0⟩</span>
+              <div class="track"><div class="fill zero-fill" id="sv-fill0" style="width:100%"></div></div>
+              <span class="pct" id="sv-pct0">100%</span>
+            </div>
+            <div class="prob-row">
+              <span class="ket one-color">|1⟩</span>
+              <div class="track"><div class="fill one-fill" id="sv-fill1" style="width:0%"></div></div>
+              <span class="pct" id="sv-pct1">0%</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="card" style="margin-top:10px;">
+          <div class="card-title">Key Insight</div>
+          <p class="bit-explainer">The tip of the state vector must sit on the unit arc (α² + β² = 1). Every point on that arc is a distinct, valid quantum state. The classical bit only ever occupies the two corners.</p>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ═══════════════════ ENTANGLE TAB ═══════════════════ -->
+  <section id="tab-entangle" class="tab-content">
+
+    <div class="compare-header">
+      <h1 class="compare-title">Quantum Entanglement</h1>
+      <p class="compare-subtitle">Bell state (|00⟩ + |11⟩)/√2 — neither qubit has a definite state alone; measuring one instantly determines the other</p>
+    </div>
+
+    <div class="entangle-layout">
+
+      <div class="card entangle-main-card">
+
+        <div class="entangle-bell-state">
+          <span class="formula" style="font-size:1.05rem;">(|00⟩ + |11⟩) / √2</span>
+          <span class="muted-text" style="margin-left:14px;font-size:0.72rem;">joint state of both qubits</span>
+        </div>
+
+        <div class="coins-row">
+
+          <div class="coin-wrap">
+            <div class="coin-label-top">Qubit A</div>
+            <canvas id="coin1" width="130" height="130"></canvas>
+            <div class="coin-label-bottom" id="coin1-label">Unmeasured</div>
+          </div>
+
+          <div class="entangle-mid">
+            <div class="entangle-link-label">Entangled</div>
+            <div class="entangle-link-arrow">↔</div>
+            <div class="entangle-note" id="entangle-note">Measuring A instantly<br>determines B</div>
+          </div>
+
+          <div class="coin-wrap">
+            <div class="coin-label-top">Qubit B</div>
+            <canvas id="coin2" width="130" height="130"></canvas>
+            <div class="coin-label-bottom" id="coin2-label">Unmeasured</div>
+          </div>
+
+        </div>
+
+        <div class="entangle-actions">
+          <button class="btn-measure" onclick="flipEntangled()">Measure Both</button>
+          <button class="btn-secondary" style="padding:10px 16px;font-size:0.8rem;" onclick="measureCoinA()">Measure A Only</button>
+          <button class="btn-secondary" onclick="resetEntangle()">Reset</button>
+        </div>
+
+        <div class="entangle-result" id="entangle-result"></div>
+
+      </div>
+
+      <div class="card" style="margin-top:14px;">
+        <div class="card-title">
+          Measurement Statistics
+          <span class="muted-text" id="entangle-trial-count"></span>
+        </div>
+
+        <div class="entangle-stats">
+          <div class="prob-row">
+            <span class="ket zero-color" style="min-width:34px;">|00⟩</span>
+            <div class="track"><div class="fill zero-fill" id="estat-fill-00" style="width:0%"></div></div>
+            <span class="pct" id="estat-pct-00">—</span>
+          </div>
+          <div class="prob-row">
+            <span class="ket one-color" style="min-width:34px;">|11⟩</span>
+            <div class="track"><div class="fill one-fill" id="estat-fill-11" style="width:0%"></div></div>
+            <span class="pct" id="estat-pct-11">—</span>
+          </div>
+          <div class="prob-row" style="margin-top:4px;opacity:0.35;">
+            <span class="ket" style="min-width:34px;color:var(--text3);">|01⟩</span>
+            <div class="track"><div class="fill" style="background:var(--text3);width:0%"></div></div>
+            <span class="pct">0%</span>
+          </div>
+          <div class="prob-row" style="opacity:0.35;">
+            <span class="ket" style="min-width:34px;color:var(--text3);">|10⟩</span>
+            <div class="track"><div class="fill" style="background:var(--text3);width:0%"></div></div>
+            <span class="pct">0%</span>
+          </div>
+        </div>
+
+        <div class="convergence-note" style="margin-top:10px;" id="entangle-convergence"></div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ═══════════════════ TUNNEL TAB ═══════════════════ -->
+  <section id="tab-tunnel" class="tab-content">
+
+    <div class="compare-header">
+      <h1 class="compare-title">Quantum Tunneling</h1>
+      <p class="compare-subtitle">Fire a wave packet at a wall taller than its own energy. Classically it always bounces. Quantum mechanically, a piece of it slips through anyway</p>
+    </div>
+
+    <div class="tunnel-layout">
+
+      <div class="tunnel-canvas-card">
+        <canvas id="tunnel-canvas" width="820" height="240"></canvas>
+        <div class="tunnel-stats">
+          <div class="tunnel-stat">
+            <span class="stat-dot" style="background:var(--zero)"></span>
+            <span class="stat-label">Reflected</span>
+            <span class="stat-val" id="tunnel-refl">—</span>
+          </div>
+          <div class="tunnel-stat">
+            <span class="stat-dot" style="background:var(--one)"></span>
+            <span class="stat-label">Transmitted</span>
+            <span class="stat-val" id="tunnel-trans">—</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="tunnel-controls-grid">
+        <div class="card">
+          <div class="card-title">Barrier</div>
+          <div class="slider-group">
+            <div class="slider-row">
+              <span class="slider-sym">V₀</span>
+              <input type="range" id="tunnel-height" min="0" max="250" value="100" oninput="onTunnelSliderChange()">
+              <span class="slider-val" id="tunnel-height-val">1.00×E</span>
+            </div>
+            <div class="slider-row">
+              <span class="slider-sym">w</span>
+              <input type="range" id="tunnel-width" min="4" max="40" value="14" oninput="onTunnelSliderChange()">
+              <span class="slider-val" id="tunnel-width-val">14</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">Controls</div>
+          <div class="tunnel-btn-row">
+            <button class="btn-run" id="tunnel-play-btn" onclick="toggleTunnelPlay()">⏸ Pause</button>
+            <button class="btn-secondary" onclick="fireTunnelPacket()">↻ Fire again</button>
+          </div>
+        </div>
+
+        <div class="card explainer-card">
+          <div class="card-title">What just happened</div>
+          <p class="bit-explainer" id="tunnel-explainer">A wave packet is about to launch toward a barrier. Watch the probability cloud — not a solid ball — hit the wall.</p>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ═══════════════════ INTERFERENCE TAB ═══════════════════ -->
+  <section id="tab-interference" class="tab-content">
+
+    <div class="compare-header">
+      <h1 class="compare-title">Wave Interference</h1>
+      <p class="compare-subtitle">Two open paths and a screen keeping score. Every dot on the right is one particle landing — yet together they paint a wave</p>
+    </div>
+
+    <div class="interference-layout">
+
+      <div class="interference-main">
+        <div class="ripple-wrap">
+          <canvas id="ripple-canvas" width="360" height="260"></canvas>
+        </div>
+        <div class="screen-wrap">
+          <canvas id="screen-canvas" width="86" height="260"></canvas>
+          <div class="screen-label">Screen</div>
+        </div>
+      </div>
+
+      <div class="right-panel">
+        <div class="card">
+          <div class="card-title">Setup</div>
+          <div class="mode-grid">
+            <button class="preset-btn mode-btn active" data-mode="double" onclick="setInterferenceMode('double')">Double slit</button>
+            <button class="preset-btn mode-btn" data-mode="single" onclick="setInterferenceMode('single')">Single slit</button>
+            <button class="preset-btn mode-btn" data-mode="which-path" onclick="setInterferenceMode('which-path')">Which-path</button>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">Wave</div>
+          <div class="slider-group">
+            <div class="slider-row">
+              <span class="slider-sym">d</span>
+              <input type="range" id="slit-sep" min="20" max="90" value="46" oninput="onInterferenceSliderChange()">
+              <span class="slider-val" id="slit-sep-val">46</span>
+            </div>
+            <div class="slider-row">
+              <span class="slider-sym">λ</span>
+              <input type="range" id="wavelength" min="10" max="34" value="18" oninput="onInterferenceSliderChange()">
+              <span class="slider-val" id="wavelength-val">18</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">
+            Detector
+            <span class="muted-text" id="interference-count"></span>
+          </div>
+          <button class="btn-secondary" onclick="resetScreen()">Clear accumulation</button>
+        </div>
+
+        <div class="card explainer-card">
+          <div class="card-title">What just happened</div>
+          <p class="bit-explainer" id="interference-explainer">Both slits are open and the paths are indistinguishable. Watch the dots pile up one at a time — and slowly reveal stripes.</p>
+        </div>
+      </div>
+
+    </div>
+  </section>
+<div class="container py-5 px-5" style="text-align:center;font-size:0.8rem;color:var(--text2);">
+
+	Copyright &copy; CERN
+</div>
+  <script src="js/main.js"></script>
+</body>
+</html>
