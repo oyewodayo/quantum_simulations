@@ -7,36 +7,13 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-    - name: Debug - Check secrets
-      run: |
-        echo "VPS_HOST is set: ${{ secrets.VPS_HOST != '' }}"
-        echo "VPS_USERNAME is set: ${{ secrets.VPS_USERNAME != '' }}"
-        echo "VPS_SSH_KEY is set: ${{ secrets.VPS_SSH_KEY != '' }}"
-        echo "VPS_PORT is set: ${{ secrets.VPS_PORT != '' }}"
-    
-    - name: Debug - Show host
-      run: |
-        echo "Host: ${{ secrets.VPS_HOST }}"
-    
-    - name: Test SSH Connection
-      uses: appleboy/ssh-action@v1.0.3
-      with:
-        host: ${{ secrets.VPS_HOST }}
-        username: ${{ secrets.VPS_USERNAME }}
-        key: ${{ secrets.VPS_SSH_KEY }}
-        port: ${{ secrets.VPS_PORT }}
-        script: |
-          echo "SSH connection successful!"
-          whoami
-          pwd
-    
     - name: Deploy to VPS
       uses: appleboy/ssh-action@v1.0.3
       with:
-        host: ${{ secrets.VPS_HOST }}
-        username: ${{ secrets.VPS_USERNAME }}
+        host: "109.199.123.180"  # Hardcoded
+        username: "briefbrew"
         key: ${{ secrets.VPS_SSH_KEY }}
-        port: ${{ secrets.VPS_PORT }}
+        port: "22"
         script: |
           set -e
           echo "Starting deployment..."
