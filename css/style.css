@@ -168,7 +168,15 @@ nav { display: flex; gap: 2px; }
   padding: calc(var(--header-h) + 28px) 24px 40px;
   min-height: 100vh;
 }
-.tab-content.active { display: block; }
+.tab-content.active { display: block; animation: tab-fade-in 0.22s ease; }
+
+@keyframes tab-fade-in {
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .tab-content.active { animation: none; }
+}
 
 /* ─── QUBIT TAB: COMPARE HEADER ──────────────────────── */
 .compare-header {
@@ -416,6 +424,72 @@ nav { display: flex; gap: 2px; }
 }
 
 canvas { display: block; }
+
+/* The main Qubit-tab Bloch sphere is directly draggable to set state;
+   the Gates/Circuit spheres are read-only outputs, so no grab cursor. */
+#bloch-main { cursor: grab; touch-action: none; }
+#bloch-main.dragging { cursor: grabbing; }
+
+/* ─── BLOCH TOOLTIP (hover over an axis label) ───────── */
+.bloch-tooltip {
+  position: fixed;
+  pointer-events: none;
+  background: var(--surface2);
+  border: 1px solid var(--border2);
+  color: var(--text);
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 0.72rem;
+  line-height: 1.45;
+  padding: 7px 10px;
+  border-radius: 7px;
+  max-width: 220px;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.18);
+  opacity: 0;
+  transform: translate(-50%, -100%);
+  transition: opacity 0.12s;
+  z-index: 200;
+}
+.bloch-tooltip.visible { opacity: 1; }
+
+/* ─── FIRST-RUN GUIDED TOUR ──────────────────────────── */
+.tour-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.55);
+  z-index: 300;
+}
+.tour-highlight {
+  position: relative;
+  z-index: 301;
+  box-shadow: 0 0 0 4px var(--zero), 0 0 24px rgba(74,222,128,0.55);
+  border-radius: 8px;
+}
+/* header is its own stacking context (fixed + z-index), so a highlighted
+   child inside it needs the whole header raised to clear the backdrop */
+.tour-raise-header { z-index: 305 !important; }
+
+.tour-popover {
+  position: fixed;
+  z-index: 302;
+  max-width: 280px;
+  background: var(--surface2);
+  border: 1px solid var(--border2);
+  border-radius: 10px;
+  padding: 14px 16px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.32);
+  font-size: 0.8rem;
+  color: var(--text);
+}
+.tour-step-count {
+  font-size: 0.62rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text3);
+  margin-bottom: 6px;
+}
+.tour-popover p { line-height: 1.55; margin-bottom: 12px; }
+.tour-actions { display: flex; justify-content: flex-end; gap: 8px; }
 
 .state-label {
   font-family: 'JetBrains Mono', monospace;

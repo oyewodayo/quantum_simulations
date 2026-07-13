@@ -4,6 +4,16 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Quantum Explorer · CERN</title>
+  <script>
+    // Applies a saved theme preference before first paint, so the page
+    // never flashes the default theme before switching to the saved one.
+    (function () {
+      var saved = localStorage.getItem('qe-theme');
+      if (saved === 'light' || saved === 'dark') {
+        document.documentElement.setAttribute('data-theme', saved);
+      }
+    })();
+  </script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/style.css">
@@ -111,7 +121,7 @@
 
         <div class="layout-two">
           <div class="bloch-wrap">
-            <canvas id="bloch-main" width="260" height="260"></canvas>
+            <canvas id="bloch-main" width="260" height="260" role="img" aria-label="Bloch sphere. State: |ψ⟩ = |0⟩. Draggable to set the qubit's state."></canvas>
             <div class="state-label" id="label-main">|0⟩</div>
           </div>
 
@@ -131,17 +141,20 @@
                   <span class="pct" id="pct1-main">0%</span>
                 </div>
               </div>
+              <div style="margin-top:10px;">
+                <button class="btn-secondary" id="btn-share-qubit">Copy shareable link</button>
+              </div>
             </div>
 
             <div class="card">
               <div class="card-title">Basis States</div>
               <div class="preset-grid">
-                <button class="preset-btn" onclick="setMainState(0, 0)">|0⟩</button>
-                <button class="preset-btn" onclick="setMainState(Math.PI, 0)">|1⟩</button>
-                <button class="preset-btn" onclick="setMainState(Math.PI/2, 0)">|+⟩</button>
-                <button class="preset-btn" onclick="setMainState(Math.PI/2, Math.PI)">|-⟩</button>
-                <button class="preset-btn" onclick="setMainState(Math.PI/2, Math.PI/2)">|i⟩</button>
-                <button class="preset-btn" onclick="setMainState(Math.PI/2, 3*Math.PI/2)">|-i⟩</button>
+                <button class="preset-btn" data-theta-mult="0"   data-phi-mult="0">|0⟩</button>
+                <button class="preset-btn" data-theta-mult="1"   data-phi-mult="0">|1⟩</button>
+                <button class="preset-btn" data-theta-mult="0.5" data-phi-mult="0">|+⟩</button>
+                <button class="preset-btn" data-theta-mult="0.5" data-phi-mult="1">|-⟩</button>
+                <button class="preset-btn" data-theta-mult="0.5" data-phi-mult="0.5">|i⟩</button>
+                <button class="preset-btn" data-theta-mult="0.5" data-phi-mult="1.5">|-i⟩</button>
               </div>
             </div>
 
@@ -150,12 +163,12 @@
               <div class="slider-group">
                 <div class="slider-row">
                   <span class="slider-sym">θ</span>
-                  <input type="range" id="sl-theta" min="0" max="3141" value="0" oninput="sliderUpdate()">
+                  <input type="range" id="sl-theta" min="0" max="3141" value="0">
                   <span class="slider-val" id="val-theta">0°</span>
                 </div>
                 <div class="slider-row">
                   <span class="slider-sym">φ</span>
-                  <input type="range" id="sl-phi" min="0" max="6283" value="0" oninput="sliderUpdate()">
+                  <input type="range" id="sl-phi" min="0" max="6283" value="0">
                   <span class="slider-val" id="val-phi">0°</span>
                 </div>
               </div>
@@ -199,7 +212,7 @@
     <div class="layout-two gates-layout">
 
       <div class="bloch-wrap">
-        <canvas id="bloch-gates" width="360" height="360"></canvas>
+        <canvas id="bloch-gates" width="360" height="360" role="img" aria-label="Bloch sphere. State: |ψ⟩ = |0⟩."></canvas>
         <div class="state-label" id="label-gates">|0⟩</div>
       </div>
 
@@ -207,6 +220,17 @@
         <div class="card">
           <div class="card-title">Apply Gate</div>
           <div class="gate-grid" id="gate-grid"></div>
+        </div>
+        <div class="card">
+          <div class="card-title">Rotation Gates</div>
+          <div class="slider-group">
+            <div class="slider-row">
+              <span class="slider-sym">θ</span>
+              <input type="range" id="rotation-angle" min="0" max="360" value="90">
+              <span class="slider-val" id="rotation-angle-val">90°</span>
+            </div>
+          </div>
+          <div class="gate-grid" id="rotation-gate-grid" style="margin-top:10px;"></div>
         </div>
         <div class="card explainer-card">
           <div class="card-title">What just happened</div>
@@ -222,7 +246,7 @@
           <div class="card-title">Applied Sequence</div>
           <div class="history-row" id="gate-history"></div>
           <div style="margin-top:10px;">
-            <button class="btn-secondary" onclick="resetGates()">Reset to |0⟩</button>
+            <button class="btn-secondary" id="btn-reset-gates">Reset to |0⟩</button>
           </div>
         </div>
       </div>
@@ -239,6 +263,13 @@
     </div>
 
     <div class="circuit-layout">
+
+      <div class="mode-grid" style="grid-template-columns:1fr 1fr;max-width:280px;margin:0 auto 18px;">
+        <button class="preset-btn mode-btn active" data-circuit-mode="1q">1 Qubit</button>
+        <button class="preset-btn mode-btn" data-circuit-mode="2q">2 Qubits</button>
+      </div>
+
+      <div id="circuit-1q-panel">
       <div class="circuit-top">
 
         <div class="circuit-left">
@@ -255,8 +286,9 @@
           </div>
 
           <div class="circuit-actions">
-            <button class="btn-run" onclick="runCircuit()">▶ Run</button>
-            <button class="btn-secondary" onclick="clearCircuit()">Clear</button>
+            <button class="btn-run" id="btn-run-circuit">▶ Run</button>
+            <button class="btn-secondary" id="btn-clear-circuit">Clear</button>
+            <button class="btn-secondary" id="btn-share-circuit">Copy shareable link</button>
             <span class="muted-text" id="circuit-status"></span>
           </div>
 
@@ -269,7 +301,7 @@
         <div class="circuit-right">
           <div class="section-label">Output State</div>
           <div class="circuit-output-card">
-            <canvas id="bloch-circuit" width="260" height="260"></canvas>
+            <canvas id="bloch-circuit" width="260" height="260" role="img" aria-label="Bloch sphere showing the circuit's output state. State: |ψ⟩ = |0⟩."></canvas>
             <div class="state-label" id="label-circuit">|0⟩</div>
             <div class="prob-rows" style="margin-top:10px;width:100%;">
               <div class="prob-row">
@@ -287,6 +319,72 @@
         </div>
 
       </div>
+      </div>
+
+      <div id="circuit-2q-panel" style="display:none;">
+      <div class="circuit-top">
+
+        <div class="circuit-left">
+          <div class="section-label">Target Qubit — new gates apply to</div>
+          <div class="mode-grid" style="grid-template-columns:1fr 1fr;">
+            <button class="preset-btn mode-btn active" data-target-qubit="0">Qubit 0</button>
+            <button class="preset-btn mode-btn" data-target-qubit="1">Qubit 1</button>
+          </div>
+
+          <div class="section-label" style="margin-top:14px;">Gate Palette — click to add to target qubit</div>
+          <div class="circuit-palette" id="circuit-2q-palette"></div>
+          <div class="circuit-palette" style="margin-top:6px;">
+            <button class="circuit-gate-btn" id="btn-add-cnot-01" style="font-size:0.72rem;padding:7px 10px;">CNOT Q0→Q1</button>
+            <button class="circuit-gate-btn" id="btn-add-cnot-10" style="font-size:0.72rem;padding:7px 10px;">CNOT Q1→Q0</button>
+          </div>
+
+          <div class="section-label" style="margin-top:18px;">Circuit Sequence</div>
+          <div class="history-row" id="circuit-2q-sequence"></div>
+
+          <div class="circuit-actions">
+            <button class="btn-run" id="btn-run-circuit-2q">▶ Run</button>
+            <button class="btn-secondary" id="btn-clear-circuit-2q">Clear</button>
+            <span class="muted-text" id="circuit-2q-status"></span>
+          </div>
+
+          <div class="card explainer-card" style="margin-top:4px;">
+            <div class="card-title">What's going on</div>
+            <p class="bit-explainer" id="circuit-2q-explainer">Two qubits, no entanglement yet. Try adding H to Qubit 0, then CNOT Q0→Q1, then press Run — that's the exact recipe behind the Bell state you saw in the Entangle tab, except this time you built it gate by gate.</p>
+          </div>
+        </div>
+
+        <div class="circuit-right">
+          <div class="section-label">Output State (2 Qubits)</div>
+          <div class="circuit-output-card">
+            <div class="formula" id="circuit-2q-formula" style="text-align:center;">|ψ⟩ = |00⟩</div>
+            <div class="prob-rows" style="width:100%;margin-top:8px;">
+              <div class="prob-row">
+                <span class="ket" style="color:var(--zero)">|00⟩</span>
+                <div class="track"><div class="fill zero-fill" id="c2-fill-00" style="width:100%"></div></div>
+                <span class="pct" id="c2-pct-00">100%</span>
+              </div>
+              <div class="prob-row">
+                <span class="ket" style="color:var(--text2)">|01⟩</span>
+                <div class="track"><div class="fill" style="background:var(--text2);width:0%" id="c2-fill-01"></div></div>
+                <span class="pct" id="c2-pct-01">0%</span>
+              </div>
+              <div class="prob-row">
+                <span class="ket" style="color:var(--text2)">|10⟩</span>
+                <div class="track"><div class="fill" style="background:var(--text2);width:0%" id="c2-fill-10"></div></div>
+                <span class="pct" id="c2-pct-10">0%</span>
+              </div>
+              <div class="prob-row">
+                <span class="ket" style="color:var(--one)">|11⟩</span>
+                <div class="track"><div class="fill one-fill" id="c2-fill-11" style="width:0%"></div></div>
+                <span class="pct" id="c2-pct-11">0%</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+      </div>
+
     </div>
   </section>
 
@@ -323,13 +421,13 @@
         </div>
 
         <div class="measure-action-col">
-          <button class="btn-measure" onclick="doMeasure()">MEASURE</button>
+          <button class="btn-measure" id="btn-measure">MEASURE</button>
           <div class="measure-result" id="measure-result"></div>
           <div class="preset-grid" style="margin-top:14px;">
-            <button class="preset-btn" onclick="setMeasureState(0,0)">|0⟩</button>
-            <button class="preset-btn" onclick="setMeasureState(Math.PI,0)">|1⟩</button>
-            <button class="preset-btn" onclick="setMeasureState(Math.PI/2,0)">|+⟩</button>
-            <button class="preset-btn" onclick="setMeasureState(Math.PI/2,Math.PI)">|-⟩</button>
+            <button class="preset-btn" data-theta-mult="0"   data-phi-mult="0">|0⟩</button>
+            <button class="preset-btn" data-theta-mult="1"   data-phi-mult="0">|1⟩</button>
+            <button class="preset-btn" data-theta-mult="0.5" data-phi-mult="0">|+⟩</button>
+            <button class="preset-btn" data-theta-mult="0.5" data-phi-mult="1">|-⟩</button>
           </div>
         </div>
       </div>
@@ -361,10 +459,10 @@
           </div>
         </div>
         <div class="measure-actions">
-          <button class="btn-secondary" onclick="measureMany(10)">×10</button>
-          <button class="btn-secondary" onclick="measureMany(100)">×100</button>
-          <button class="btn-secondary" onclick="measureMany(1000)">×1000</button>
-          <button class="btn-secondary" onclick="resetStats()">Reset</button>
+          <button class="btn-secondary" data-measure-n="10">×10</button>
+          <button class="btn-secondary" data-measure-n="100">×100</button>
+          <button class="btn-secondary" data-measure-n="1000">×1000</button>
+          <button class="btn-secondary" id="btn-reset-stats">Reset</button>
         </div>
         <div class="convergence-note" id="convergence-note"></div>
         <p class="bit-explainer" style="margin-top:10px;">This is the only way to actually confirm those odds — ask the same question of many identical qubits and watch the histogram settle into the predicted split. A single qubit only ever gives you one answer; the pattern only shows up across a crowd.</p>
@@ -392,11 +490,11 @@
         </div>
 
         <div class="sv-canvas-wrap">
-          <canvas id="sv-classical" width="220" height="300"></canvas>
+          <canvas id="sv-classical" width="220" height="300" role="img" aria-label="Diagram of a classical bit's state space: a vertical line with only two valid points, |0⟩ at the bottom and |1⟩ at the top, and a forbidden zone between them."></canvas>
         </div>
 
         <div style="display:flex;justify-content:center;margin:14px 0;">
-          <button class="btn-measure" onclick="toggleClassicalSV()">Toggle bit</button>
+          <button class="btn-measure" id="btn-toggle-classical-sv">Toggle bit</button>
         </div>
 
         <div class="card">
@@ -425,13 +523,13 @@
         </div>
 
         <div class="sv-canvas-wrap">
-          <canvas id="sv-quantum" width="300" height="300"></canvas>
+          <canvas id="sv-quantum" width="300" height="300" role="img" aria-label="Diagram of a qubit's state space: a 2D plane with a quarter-circle arc from |0⟩ to |1⟩, and a vector whose tip traces every valid superposition as theta changes."></canvas>
         </div>
 
         <div class="slider-group" style="margin:14px 0 10px;">
           <div class="slider-row">
             <span class="slider-sym">θ</span>
-            <input type="range" id="sv-theta-slider" min="0" max="3141" value="0" oninput="svSliderUpdate()">
+            <input type="range" id="sv-theta-slider" min="0" max="3141" value="0">
             <span class="slider-val" id="sv-theta-val">0°</span>
           </div>
         </div>
@@ -483,7 +581,7 @@
 
           <div class="coin-wrap">
             <div class="coin-label-top">Qubit A</div>
-            <canvas id="coin1" width="130" height="130"></canvas>
+            <canvas id="coin1" width="130" height="130" role="img" aria-label="Qubit A: unmeasured, in superposition."></canvas>
             <div class="coin-label-bottom" id="coin1-label">Unmeasured</div>
           </div>
 
@@ -495,16 +593,16 @@
 
           <div class="coin-wrap">
             <div class="coin-label-top">Qubit B</div>
-            <canvas id="coin2" width="130" height="130"></canvas>
+            <canvas id="coin2" width="130" height="130" role="img" aria-label="Qubit B: unmeasured, in superposition."></canvas>
             <div class="coin-label-bottom" id="coin2-label">Unmeasured</div>
           </div>
 
         </div>
 
         <div class="entangle-actions">
-          <button class="btn-measure" onclick="flipEntangled()">Measure Both</button>
-          <button class="btn-secondary" style="padding:10px 16px;font-size:0.8rem;" onclick="measureCoinA()">Measure A Only</button>
-          <button class="btn-secondary" onclick="resetEntangle()">Reset</button>
+          <button class="btn-measure" id="btn-measure-both">Measure Both</button>
+          <button class="btn-secondary" style="padding:10px 16px;font-size:0.8rem;" id="btn-measure-a">Measure A Only</button>
+          <button class="btn-secondary" id="btn-reset-entangle">Reset</button>
         </div>
 
         <div class="entangle-result" id="entangle-result"></div>
@@ -557,7 +655,7 @@
     <div class="tunnel-layout">
 
       <div class="tunnel-canvas-card">
-        <canvas id="tunnel-canvas" width="820" height="240"></canvas>
+        <canvas id="tunnel-canvas" width="820" height="240" role="img" aria-label="Animated plot of a quantum wave packet's probability cloud approaching and partly tunneling through a potential barrier, with live reflected/transmitted percentages shown below."></canvas>
         <div class="tunnel-stats">
           <div class="tunnel-stat">
             <span class="stat-dot" style="background:var(--zero)"></span>
@@ -578,12 +676,12 @@
           <div class="slider-group">
             <div class="slider-row">
               <span class="slider-sym">V₀</span>
-              <input type="range" id="tunnel-height" min="0" max="250" value="100" oninput="onTunnelSliderChange()">
+              <input type="range" id="tunnel-height" min="0" max="250" value="100">
               <span class="slider-val" id="tunnel-height-val">1.00×E</span>
             </div>
             <div class="slider-row">
               <span class="slider-sym">w</span>
-              <input type="range" id="tunnel-width" min="4" max="40" value="14" oninput="onTunnelSliderChange()">
+              <input type="range" id="tunnel-width" min="4" max="40" value="14">
               <span class="slider-val" id="tunnel-width-val">14</span>
             </div>
           </div>
@@ -592,8 +690,8 @@
         <div class="card">
           <div class="card-title">Controls</div>
           <div class="tunnel-btn-row">
-            <button class="btn-run" id="tunnel-play-btn" onclick="toggleTunnelPlay()">⏸ Pause</button>
-            <button class="btn-secondary" onclick="fireTunnelPacket()">↻ Fire again</button>
+            <button class="btn-run" id="tunnel-play-btn">⏸ Pause</button>
+            <button class="btn-secondary" id="btn-fire-tunnel">↻ Fire again</button>
           </div>
         </div>
 
@@ -618,10 +716,10 @@
 
       <div class="interference-main">
         <div class="ripple-wrap">
-          <canvas id="ripple-canvas" width="360" height="260"></canvas>
+          <canvas id="ripple-canvas" width="360" height="260" role="img" aria-label="Animated ripple simulation of waves passing through one or two slits, showing the resulting interference pattern."></canvas>
         </div>
         <div class="screen-wrap">
-          <canvas id="screen-canvas" width="86" height="260"></canvas>
+          <canvas id="screen-canvas" width="86" height="260" role="img" aria-label="Detector screen accumulating individual particle-hit dots over time, building up the interference or single-slit pattern."></canvas>
           <div class="screen-label">Screen</div>
         </div>
       </div>
@@ -630,9 +728,9 @@
         <div class="card">
           <div class="card-title">Setup</div>
           <div class="mode-grid">
-            <button class="preset-btn mode-btn active" data-mode="double" onclick="setInterferenceMode('double')">Double slit</button>
-            <button class="preset-btn mode-btn" data-mode="single" onclick="setInterferenceMode('single')">Single slit</button>
-            <button class="preset-btn mode-btn" data-mode="which-path" onclick="setInterferenceMode('which-path')">Which-path</button>
+            <button class="preset-btn mode-btn active" data-mode="double">Double slit</button>
+            <button class="preset-btn mode-btn" data-mode="single">Single slit</button>
+            <button class="preset-btn mode-btn" data-mode="which-path">Which-path</button>
           </div>
         </div>
 
@@ -641,12 +739,12 @@
           <div class="slider-group">
             <div class="slider-row">
               <span class="slider-sym">d</span>
-              <input type="range" id="slit-sep" min="20" max="90" value="46" oninput="onInterferenceSliderChange()">
+              <input type="range" id="slit-sep" min="20" max="90" value="46">
               <span class="slider-val" id="slit-sep-val">46</span>
             </div>
             <div class="slider-row">
               <span class="slider-sym">λ</span>
-              <input type="range" id="wavelength" min="10" max="34" value="18" oninput="onInterferenceSliderChange()">
+              <input type="range" id="wavelength" min="10" max="34" value="18">
               <span class="slider-val" id="wavelength-val">18</span>
             </div>
           </div>
@@ -657,7 +755,7 @@
             Detector
             <span class="muted-text" id="interference-count"></span>
           </div>
-          <button class="btn-secondary" onclick="resetScreen()">Clear accumulation</button>
+          <button class="btn-secondary" id="btn-clear-screen">Clear accumulation</button>
         </div>
 
         <div class="card explainer-card">
@@ -672,6 +770,26 @@
 
 	Copyright &copy; CERN
 </div>
-  <script src="js/main.js"></script>
+  <script src="js/core/tab-registry.js"></script>
+  <script src="js/core/theme.js"></script>
+  <script src="js/core/complex.js"></script>
+  <script src="js/core/qubit.js"></script>
+  <script src="js/core/two-qubit.js"></script>
+  <script src="js/core/dom-utils.js"></script>
+  <script src="js/core/gates.js"></script>
+  <script src="js/core/bloch-renderer.js"></script>
+  <script src="js/core/utils.js"></script>
+  <script src="js/tabs/classical-bit.js"></script>
+  <script src="js/tabs/qubit-tab.js"></script>
+  <script src="js/tabs/gates-tab.js"></script>
+  <script src="js/tabs/circuit-tab.js"></script>
+  <script src="js/tabs/circuit2-tab.js"></script>
+  <script src="js/tabs/measure-tab.js"></script>
+  <script src="js/tabs/statevector-tab.js"></script>
+  <script src="js/tabs/entanglement-tab.js"></script>
+  <script src="js/tabs/tunneling-tab.js"></script>
+  <script src="js/tabs/interference-tab.js"></script>
+  <script src="js/tour.js"></script>
+  <script src="js/app.js"></script>
 </body>
 </html>

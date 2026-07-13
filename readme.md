@@ -16,6 +16,7 @@ Quantum Explorer transforms complex quantum mechanics into interactive visual ex
 
 ### 🎮 Quantum Gates
 - **All Standard Gates**: H, X, Y, Z, S, T gates with visual feedback
+- **Rotation Gates**: Parametrized Rx/Ry/Rz with a live angle slider, alongside the fixed gate set
 - **Gate Matrix Display**: See the mathematical representation of each operation
 - **Applied Sequence History**: Track the gate sequence applied to the qubit
 - **Live State Updates**: Watch the Bloch sphere rotate in real-time
@@ -25,6 +26,8 @@ Quantum Explorer transforms complex quantum mechanics into interactive visual ex
 - **Visual Circuit Representation**: See gates arranged along a quantum wire
 - **Circuit Execution**: Run the circuit step-by-step with animations
 - **State Evolution**: Track the qubit's state as it moves through the circuit
+- **2-Qubit Mode**: Switch to a real two-qubit circuit with a per-qubit gate palette and CNOT — build H + CNOT yourself and watch entanglement emerge in the |00⟩/|01⟩/|10⟩/|11⟩ probability bars
+- **Shareable Links**: Copy a link that reproduces the current qubit state or circuit for someone else to open
 
 ### 📊 Measurement & Statistics
 - **Single Measurement**: Collapse superposition and observe the result
@@ -71,11 +74,42 @@ open index.html
 ### File Structure
 ```
 quantum-explorer/
-├── index.html          # Main HTML file with all tabs and UI
+├── index.html                  # Main HTML file with all tabs and UI
 ├── css/
-│   └── style.css       # Complete styling with dark/light theme
+│   └── style.css               # Complete styling with dark/light theme
 └── js/
-    └── main.js         # Quantum simulation engine and UI logic
+    ├── core/                    # Shared engine — theme, math, gates, renderer
+    │   ├── tab-registry.js      # registerTab(): per-tab onEnter/onLeave hooks
+    │   ├── theme.js             # Dark/light theme state + Bloch color refresh
+    │   ├── complex.js           # Complex number arithmetic
+    │   ├── qubit.js              # Qubit class (state vector, gate application)
+    │   ├── two-qubit.js          # TwoQubitState class (4-amplitude state, CNOT)
+    │   ├── dom-utils.js         # Shared UI helpers (explainer text, share links, tooltips)
+    │   ├── gates.js              # H, X, Y, Z, S, T + Rx/Ry/Rz rotation gates
+    │   ├── bloch-renderer.js    # 3D Bloch sphere canvas renderer (incl. drag-to-set + hover tooltips)
+    │   └── utils.js              # Small generic helpers (delay)
+    ├── tabs/                     # One file per tab, each self-contained
+    │   ├── classical-bit.js
+    │   ├── qubit-tab.js
+    │   ├── gates-tab.js
+    │   ├── circuit-tab.js
+    │   ├── circuit2-tab.js       # 2-qubit circuit mode (CNOT, entanglement)
+    │   ├── measure-tab.js
+    │   ├── statevector-tab.js
+    │   ├── entanglement-tab.js
+    │   ├── tunneling-tab.js     # Real time-dependent Schrödinger solver
+    │   └── interference-tab.js # Double-slit wave + rejection-sampled hits
+    ├── tour.js                   # First-run guided tour (shown once, via localStorage)
+    └── app.js                    # App state + DOMContentLoaded init (loads last)
+```
+
+All scripts are plain classic `<script>` tags (no bundler, no ES modules) loaded in dependency order, so the app keeps working when `index.html` is opened directly via `file://`.
+
+### Tests
+
+`tests/run.js` is a small, dependency-free Node script that checks the quantum math core (complex arithmetic, `Qubit` normalization, and gate unitarity) without a test framework. Run it with:
+```bash
+node tests/run.js
 ```
 
 ## 🎯 How It Works
