@@ -218,7 +218,7 @@ function drawQuantumSV(theta) {
   // α and β labels on axes
   if (alpha > 0.06) {
     ctx.font = `11px 'JetBrains Mono', monospace`;
-    ctx.fillStyle = isDark ? '#4ADE80' : '#15803D';
+    ctx.fillStyle = isDark ? '#5B8DEF' : '#0033A0';
     ctx.textAlign = 'center'; ctx.textBaseline = 'top';
     ctx.fillText(`α=${round2(alpha)}`, tipX, originY + 8);
   }

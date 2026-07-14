@@ -12,14 +12,18 @@
   --border2:      #3C3C3C;
   --text:         #F0F0F0;
   --text2:        #888888;
-  --text3:        #404040;
-  --text4:        #282828;
+  --text3:        #55555C;
+  --text4:        #55555C;
   --accent-dim:   rgba(255,255,255,0.06);
   --accent-glow:  rgba(255,255,255,0.10);
+  --shadow-sm:    0 1px 2px rgba(0,0,0,0.5), 0 1px 0 rgba(255,255,255,0.02) inset;
+  --shadow-md:    0 6px 20px rgba(0,0,0,0.45);
+  --header-shadow: 0 1px 0 var(--border), 0 2px 20px rgba(0,0,0,0.35);
 
-  /* Functional — |0⟩ green, |1⟩ pink — only used for probability UI */
-  --zero:         #4ADE80;
-  --zero-dim:     rgba(74, 222, 128, 0.14);
+  /* Functional — |0⟩ CERN blue (Pantone 286C, lightened for dark backgrounds),
+     |1⟩ pink — only used for probability UI */
+  --zero:         #5B8DEF;
+  --zero-dim:     rgba(91, 141, 239, 0.14);
   --one:          #F472B6;
   --one-dim:      rgba(244, 114, 182, 0.14);
 
@@ -29,7 +33,7 @@
   --bloch-sphere-ring: rgba(255,255,255,0.18);
   --bloch-grid:        rgba(255,255,255,0.13);
   --bloch-grid-back:   rgba(255,255,255,0.04);
-  --bloch-axis-z:      #4ADE80;
+  --bloch-axis-z:      #5B8DEF;
   --bloch-axis-other:  rgba(200,200,200,0.28);
   --bloch-proj:        rgba(255,255,255,0.18);
   --bloch-tip:         rgba(255,255,255,0.88);
@@ -38,19 +42,27 @@
 }
 
 [data-theme="light"] {
-  --bg:           #F6F6F6;
-  --surface:      #EDEDED;
-  --surface2:     #E3E3E3;
-  --border:       #D2D2D2;
-  --border2:      #BABABA;
-  --text:         #0B0B0B;
-  --text2:        #666666;
-  --text3:        #AAAAAA;
-  --accent-dim:   rgba(0,0,0,0.05);
-  --accent-glow:  rgba(0,0,0,0.08);
+  /* Cards are deliberately whiter than the page canvas (--surface lighter
+     than --bg) so they visually lift off the background — combined with
+     --shadow-sm/--shadow-md below, this is what gives light mode real
+     depth instead of the previous flat, same-tone-as-background look. */
+  --bg:           #F1F1F3;
+  --surface:      #FFFFFF;
+  --surface2:     #EBEBEF;
+  --border:       #E3E3E8;
+  --border2:      #CDCDD4;
+  --text:         #0C0C0F;
+  --text2:        #63636B;
+  --text3:        #96969F;
+  --text4:        #96969F;
+  --accent-dim:   rgba(12,12,15,0.05);
+  --accent-glow:  rgba(12,12,15,0.10);
+  --shadow-sm:    0 1px 2px rgba(20,20,30,0.05), 0 1px 0 rgba(20,20,30,0.03);
+  --shadow-md:    0 8px 24px rgba(20,20,30,0.08), 0 2px 6px rgba(20,20,30,0.05);
+  --header-shadow: 0 1px 0 var(--border), 0 2px 16px rgba(20,20,30,0.04);
 
-  --zero:         #15803D;
-  --zero-dim:     rgba(21, 128, 61, 0.11);
+  --zero:         #0033A0;
+  --zero-dim:     rgba(0, 51, 160, 0.11);
   --one:          #BE185D;
   --one-dim:      rgba(190, 24, 93, 0.11);
 
@@ -59,7 +71,7 @@
   --bloch-sphere-ring: rgba(0,0,0,0.20);
   --bloch-grid:        rgba(0,0,0,0.13);
   --bloch-grid-back:   rgba(0,0,0,0.04);
-  --bloch-axis-z:      #15803D;
+  --bloch-axis-z:      #0033A0;
   --bloch-axis-other:  rgba(60,60,60,0.32);
   --bloch-proj:        rgba(0,0,0,0.18);
   --bloch-tip:         rgba(10,10,10,0.88);
@@ -91,13 +103,13 @@ header {
   top: 0; left: 0; right: 0;
   height: var(--header-h);
   background: var(--bg);
-  border-bottom: 1px solid var(--border);
+  box-shadow: var(--header-shadow);
   display: flex;
   align-items: center;
   padding: 0 20px;
   gap: 16px;
   z-index: 100;
-  transition: background 0.28s, border-color 0.28s;
+  transition: background 0.28s, box-shadow 0.28s;
 }
 
 .logo {
@@ -107,9 +119,22 @@ header {
   color: var(--text);
   letter-spacing: -0.02em;
   min-width: 40px;
+  flex-shrink: 0;
 }
 
-nav { display: flex; gap: 2px; }
+/* Scrolls horizontally instead of overflowing the header when the 8 tabs
+   don't fit — without this, narrow viewports push the Simulations/
+   Roadmap toggle and theme button completely off-screen and
+   unreachable, since a flex row with no wrap just overflows its
+   container rather than shrinking children below their content size. */
+nav {
+  display: flex;
+  gap: 2px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+nav::-webkit-scrollbar { display: none; }
+nav .tab { flex-shrink: 0; }
 
 .tab {
   background: none;
@@ -136,6 +161,7 @@ nav { display: flex; gap: 2px; }
   display: flex;
   align-items: center;
   gap: 14px;
+  flex-shrink: 0;
 }
 
 .header-tag {
@@ -162,6 +188,10 @@ nav { display: flex; gap: 2px; }
 }
 .theme-toggle:hover { border-color: var(--text2); color: var(--text); background: var(--surface2); }
 
+/* Header Simulations/Roadmap switch — sits between nav and .header-right,
+   so it stays visible regardless of which mode is active. */
+.app-mode-grid { max-width: 260px; white-space: nowrap; flex-shrink: 0; }
+
 /* ─── TAB CONTENT ────────────────────────────────────── */
 .tab-content {
   display: none;
@@ -176,6 +206,99 @@ nav { display: flex; gap: 2px; }
 }
 @media (prefers-reduced-motion: reduce) {
   .tab-content.active { animation: none; }
+}
+
+/* ─── ROADMAP VIEW ───────────────────────────────────── */
+/* Deliberately its own selector, never .tab-content — switchToTab()
+   (js/app.js) sweeps every .tab-content on every simulation tab switch,
+   and this view must never be caught by that sweep. */
+#roadmap-view {
+  display: none;
+  padding: calc(var(--header-h) + 28px) 24px 40px;
+  min-height: 100vh;
+  max-width: 1080px;
+  margin: 0 auto;
+}
+#roadmap-view.active { display: block; animation: tab-fade-in 0.22s ease; }
+@media (prefers-reduced-motion: reduce) {
+  #roadmap-view.active { animation: none; }
+}
+
+.roadmap-panel { display: block; }
+
+.roadmap-lesson-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 14px;
+}
+
+.roadmap-lesson-checklist {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 14px;
+}
+.roadmap-checklist-row {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-size: 0.8rem;
+  color: var(--text2);
+}
+.roadmap-checklist-row input[type="checkbox"] {
+  width: 15px; height: 15px;
+  accent-color: var(--zero);
+}
+
+.progress-row { display: flex; align-items: center; gap: 10px; }
+
+.roadmap-quiz-options {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 12px;
+}
+.roadmap-quiz-options .preset-btn {
+  text-align: left;
+  padding: 10px 14px;
+}
+/* Per-answer feedback — shared by the Quiz tab and each lesson's
+   embedded Quick check (both read ROADMAP_QUIZ, see roadmap.js). */
+.roadmap-quiz-options .quiz-correct {
+  border-color: var(--zero);
+  color: var(--zero);
+  background: var(--zero-dim);
+  opacity: 1;
+}
+.roadmap-quiz-options .quiz-incorrect {
+  border-color: var(--one);
+  color: var(--one);
+  background: var(--one-dim);
+  opacity: 1;
+}
+.roadmap-quiz-options .preset-btn:disabled:not(.quiz-correct):not(.quiz-incorrect) {
+  cursor: default;
+  opacity: 0.55;
+}
+
+/* Lesson-embedded Quick check */
+.roadmap-quickcheck {
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+}
+.roadmap-quickcheck-label {
+  font-size: 0.61rem;
+  font-weight: 600;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+  color: var(--text3);
+  margin-bottom: 6px;
+}
+.roadmap-quickcheck-q {
+  font-size: 0.78rem;
+  color: var(--text);
+  line-height: 1.5;
 }
 
 /* ─── QUBIT TAB: COMPARE HEADER ──────────────────────── */
@@ -271,7 +394,8 @@ nav { display: flex; gap: 2px; }
   line-height: 1;
   letter-spacing: -0.04em;
   user-select: none;
-  transition: background 0.28s, border-color 0.28s;
+  box-shadow: var(--shadow-sm);
+  transition: background 0.28s, border-color 0.28s, box-shadow 0.28s;
 }
 
 .classical-display.is-zero { color: var(--text2); }
@@ -340,7 +464,8 @@ nav { display: flex; gap: 2px; }
   display: flex;
   flex-direction: column;
   gap: 9px;
-  transition: background 0.28s, border-color 0.28s;
+  box-shadow: var(--shadow-sm);
+  transition: background 0.28s, border-color 0.28s, box-shadow 0.28s;
 }
 .quantum-info { margin-top: 14px; margin-bottom: 0; }
 
@@ -420,15 +545,30 @@ nav { display: flex; gap: 2px; }
   flex-direction: column;
   align-items: center;
   gap: 8px;
-  transition: background 0.28s, border-color 0.28s;
+  box-shadow: var(--shadow-md);
+  transition: background 0.28s, border-color 0.28s, box-shadow 0.28s;
+}
+
+/* Fires alongside .gate-btn.pulsing when a gate is applied, so the
+   click and the sphere's resulting rotation read as one connected
+   action rather than a click somewhere and a shape changing elsewhere. */
+@keyframes bloch-wrap-pulse {
+  0%   { box-shadow: var(--shadow-md), 0 0 0 0 var(--zero-dim); }
+  40%  { box-shadow: var(--shadow-md), 0 0 0 10px var(--zero-dim); }
+  100% { box-shadow: var(--shadow-md), 0 0 0 0 transparent; }
+}
+.bloch-wrap.pulsing { animation: bloch-wrap-pulse 0.55s ease-out; }
+@media (prefers-reduced-motion: reduce) {
+  .bloch-wrap.pulsing { animation: none; }
 }
 
 canvas { display: block; }
 
 /* The main Qubit-tab Bloch sphere is directly draggable to set state;
    the Gates/Circuit spheres are read-only outputs, so no grab cursor. */
-#bloch-main { cursor: grab; touch-action: none; }
+#bloch-main { cursor: grab; touch-action: none; border-radius: 8px; }
 #bloch-main.dragging { cursor: grabbing; }
+#bloch-main:focus-visible { outline: 2px solid var(--zero); outline-offset: 3px; }
 
 /* ─── BLOCH TOOLTIP (hover over an axis label) ───────── */
 .bloch-tooltip {
@@ -461,7 +601,7 @@ canvas { display: block; }
 .tour-highlight {
   position: relative;
   z-index: 301;
-  box-shadow: 0 0 0 4px var(--zero), 0 0 24px rgba(74,222,128,0.55);
+  box-shadow: 0 0 0 4px var(--zero), 0 0 24px rgba(91,141,239,0.55);
   border-radius: 8px;
 }
 /* header is its own stacking context (fixed + z-index), so a highlighted
@@ -507,7 +647,8 @@ canvas { display: block; }
   border: 1px solid var(--border);
   border-radius: 10px;
   padding: 13px 15px;
-  transition: background 0.28s, border-color 0.28s;
+  box-shadow: var(--shadow-sm);
+  transition: background 0.28s, border-color 0.28s, box-shadow 0.28s;
 }
 
 .card-title {
@@ -675,12 +816,48 @@ input[type="range"]::-webkit-slider-thumb:hover { width: 16px; height: 16px; }
 .gate-btn:hover { transform: scale(1.05); box-shadow: 0 0 16px currentColor; }
 .gate-btn:active { transform: scale(0.97); }
 
+/* Brief tactile confirmation that a gate was actually applied — synced
+   with a matching pulse on the Bloch sphere card (.bloch-wrap.pulsing
+   below) so the click and the resulting rotation read as one action. */
+@keyframes gate-btn-pulse {
+  0%   { transform: scale(1); }
+  35%  { transform: scale(1.14); box-shadow: 0 0 26px 2px currentColor; }
+  100% { transform: scale(1); }
+}
+.gate-btn.pulsing { animation: gate-btn-pulse 0.42s ease-out; }
+@media (prefers-reduced-motion: reduce) {
+  .gate-btn.pulsing { animation: none; }
+}
+
 .gate-sub {
   font-size: 0.56rem;
   font-family: 'Space Grotesk', sans-serif;
   opacity: 0.6;
   letter-spacing: 0.01em;
 }
+
+/* ─── GATE REFERENCE (formal names — always visible, not hover-only) ── */
+.gate-reference-list {
+  display: flex;
+  flex-direction: column;
+}
+.gate-reference-row {
+  display: grid;
+  grid-template-columns: 24px 1fr auto;
+  align-items: baseline;
+  gap: 10px;
+  padding: 6px 2px;
+  border-bottom: 1px solid var(--border);
+  font-size: 0.74rem;
+}
+.gate-reference-row:last-child { border-bottom: none; }
+.gate-reference-symbol {
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 700;
+  font-size: 0.85rem;
+}
+.gate-reference-formal { color: var(--text); }
+.gate-reference-nick { color: var(--text2); font-size: 0.7rem; white-space: nowrap; }
 
 /* ─── MATRIX ─────────────────────────────────────────── */
 .matrix-display {
@@ -761,7 +938,12 @@ input[type="range"]::-webkit-slider-thumb:hover { width: 16px; height: 16px; }
   align-items: start;
 }
 
-.circuit-left { display: flex; flex-direction: column; gap: 13px; }
+/* min-width:0 overrides the grid item's default min-width:auto — without
+   it, the circuit2-diagram's large min-content width (it's fixed-column
+   and horizontally scrollable on its own) propagates up through this
+   flex/grid chain and forces the whole page wider instead of letting
+   the diagram's own overflow-x:auto handle it. */
+.circuit-left { display: flex; flex-direction: column; gap: 13px; min-width: 0; }
 
 .section-label {
   font-size: 0.62rem;
@@ -794,6 +976,7 @@ input[type="range"]::-webkit-slider-thumb:hover { width: 16px; height: 16px; }
   border: 1px solid var(--border);
   border-radius: 10px;
   padding: 15px 13px;
+  box-shadow: var(--shadow-sm);
 }
 .wire-ket {
   font-family: 'JetBrains Mono', monospace;
@@ -835,6 +1018,125 @@ input[type="range"]::-webkit-slider-thumb:hover { width: 16px; height: 16px; }
 .gate-slot.filled { border-style: solid; background: var(--surface); }
 .gate-slot.running { box-shadow: 0 0 18px currentColor; transform: scale(1.1); }
 
+/* First-slot "+" cue shown only while the wire is completely empty, so
+   it's obvious clicking a palette gate above is what fills these in. */
+.gate-slot-hint {
+  color: var(--text3);
+  font-size: 1.1rem;
+  font-weight: 400;
+  animation: gate-slot-hint-pulse 2s ease-in-out infinite;
+}
+@keyframes gate-slot-hint-pulse {
+  0%, 100% { opacity: 0.5; }
+  50%      { opacity: 1; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .gate-slot-hint { animation: none; }
+}
+
+/* ─── 2-QUBIT CIRCUIT DIAGRAM ────────────────────────── */
+/* A real textbook-style two-wire diagram (not a flat tag list): each
+   circuit2Gates[] entry is one column shared by both grid rows, so a
+   CNOT's control dot, target ⊕, and connecting line all line up exactly
+   under each other for free, just by placing three items in the same
+   grid-column across different grid-rows. */
+.circuit2-diagram-wrap { overflow-x: auto; }
+.circuit2-diagram {
+  display: grid;
+  grid-template-columns: 40px repeat(10, 46px);
+  grid-template-rows: 48px 48px;
+  align-items: center;
+  justify-items: center;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 14px 16px;
+  box-shadow: var(--shadow-sm);
+  width: max-content;
+  min-width: 100%;
+}
+
+.circuit2-ket {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.8rem;
+  color: var(--text2);
+  justify-self: start;
+}
+
+.circuit2-wire {
+  justify-self: stretch;
+  height: 1px;
+  background: var(--border2);
+}
+
+.circuit2-cell {
+  width: 38px;
+  height: 38px;
+  z-index: 1;
+  padding: 0;
+  cursor: default;
+}
+.circuit2-cell.empty {
+  border: 1px dashed var(--border2);
+  border-radius: 8px;
+  background: var(--bg);
+}
+.circuit2-cell.circuit2-cell-hint {
+  color: var(--text3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+  animation: gate-slot-hint-pulse 2s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .circuit2-cell-hint { animation: none; }
+}
+
+.circuit2-gate {
+  border: 1px solid;
+  border-radius: 8px;
+  background: var(--surface2);
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 700;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: transform 0.11s, box-shadow 0.11s;
+}
+.circuit2-gate:hover { transform: scale(1.08); box-shadow: 0 0 14px currentColor; }
+.circuit2-gate.running { box-shadow: 0 0 18px currentColor; transform: scale(1.12); }
+
+.circuit2-cnot-line {
+  align-self: stretch;
+  width: 2px;
+  background: var(--text2);
+  z-index: 0;
+}
+.circuit2-cnot-dot {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--text);
+  border: none;
+  cursor: pointer;
+}
+.circuit2-cnot-target {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: 2px solid var(--text);
+  background: var(--surface);
+  color: var(--text);
+  font-size: 0.95rem;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.circuit2-cnot-dot:hover, .circuit2-cnot-target:hover { box-shadow: 0 0 12px var(--text2); }
+.circuit2-cnot-dot.running, .circuit2-cnot-target.running { box-shadow: 0 0 18px var(--zero); }
+
 .circuit-actions { display: flex; align-items: center; gap: 8px; }
 
 .btn-run {
@@ -861,6 +1163,7 @@ input[type="range"]::-webkit-slider-thumb:hover { width: 16px; height: 16px; }
   flex-direction: column;
   align-items: center;
   gap: 7px;
+  box-shadow: var(--shadow-md);
 }
 
 /* ─── MEASURE TAB ────────────────────────────────────── */
@@ -890,6 +1193,19 @@ input[type="range"]::-webkit-slider-thumb:hover { width: 16px; height: 16px; }
   border-radius: 4px 4px 0 0;
   transition: height 0.38s cubic-bezier(0.4,0,0.2,1);
 }
+/* One-shot flash tying an abstract probability bar to the actual outcome
+   it produced — the bar's height deliberately doesn't move (it reflects
+   the prepared state's fixed odds, not "the answer"), so this glow is
+   the only visual link between the two. */
+@keyframes vbar-collapse-flash {
+  0%   { box-shadow: 0 0 0 0 currentColor; }
+  40%  { box-shadow: 0 0 22px 6px currentColor; }
+  100% { box-shadow: 0 0 0 0 transparent; }
+}
+.vbar-track.collapsing { animation: vbar-collapse-flash 0.6s ease-out; }
+@media (prefers-reduced-motion: reduce) {
+  .vbar-track.collapsing { animation: none; }
+}
 
 .btn-measure {
   background: var(--surface2);
@@ -907,6 +1223,7 @@ input[type="range"]::-webkit-slider-thumb:hover { width: 16px; height: 16px; }
 }
 .btn-measure:hover { background: var(--accent-dim); box-shadow: 0 0 18px var(--accent-glow); }
 .btn-measure:active { transform: scale(0.98); }
+.btn-measure.pulsing { animation: gate-btn-pulse 0.42s ease-out; }
 
 .measure-result {
   font-family: 'JetBrains Mono', monospace;
@@ -915,6 +1232,18 @@ input[type="range"]::-webkit-slider-thumb:hover { width: 16px; height: 16px; }
   min-height: 48px;
   display: flex; align-items: center; justify-content: center;
   transition: opacity 0.22s;
+}
+/* The "collapse" moment — a snappy overshoot pop rather than a plain
+   fade, so the definite outcome reads as landing decisively. */
+@keyframes measure-result-pop {
+  0%   { opacity: 0; transform: scale(0.5) rotate(-6deg); }
+  55%  { opacity: 1; transform: scale(1.28) rotate(3deg); }
+  78%  { transform: scale(0.94) rotate(-1deg); }
+  100% { opacity: 1; transform: scale(1) rotate(0deg); }
+}
+.measure-result.collapsing { animation: measure-result-pop 0.5s cubic-bezier(0.34,1.56,0.64,1); }
+@media (prefers-reduced-motion: reduce) {
+  .measure-result.collapsing { animation: none; }
 }
 
 .histogram {
@@ -978,6 +1307,12 @@ input[type="range"]::-webkit-slider-thumb:hover { width: 16px; height: 16px; }
   .preset-grid { grid-template-columns: repeat(2, 1fr); }
 }
 
+@media (max-width: 480px) {
+  /* Reclaims space for the scrollable tab nav — see .roadmap-badge-count. */
+  .roadmap-badge-count { display: none; }
+  .app-mode-grid { max-width: 180px; }
+}
+
 /* ─── STATEVEC TAB ───────────────────────────────────── */
 .sv-canvas-wrap {
   background: var(--surface);
@@ -987,7 +1322,8 @@ input[type="range"]::-webkit-slider-thumb:hover { width: 16px; height: 16px; }
   display: flex;
   justify-content: center;
   align-items: center;
-  transition: background 0.28s, border-color 0.28s;
+  box-shadow: var(--shadow-sm);
+  transition: background 0.28s, border-color 0.28s, box-shadow 0.28s;
 }
 
 /* ─── ENTANGLE TAB ───────────────────────────────────── */
@@ -1088,6 +1424,23 @@ input[type="range"]::-webkit-slider-thumb:hover { width: 16px; height: 16px; }
   color: var(--text);
   letter-spacing: 0.02em;
 }
+.entangle-result.collapsing { animation: measure-result-pop 0.5s cubic-bezier(0.34,1.56,0.64,1); }
+@media (prefers-reduced-motion: reduce) {
+  .entangle-result.collapsing { animation: none; }
+}
+
+/* Reused on any canvas at the moment it settles to a definite outcome
+   (the entangled coins here; could apply anywhere else a canvas
+   "resolves"). */
+@keyframes canvas-collapse-pulse {
+  0%   { transform: scale(1); filter: brightness(1); }
+  35%  { transform: scale(1.12); filter: brightness(1.35); }
+  100% { transform: scale(1); filter: brightness(1); }
+}
+canvas.collapsing { animation: canvas-collapse-pulse 0.45s ease-out; }
+@media (prefers-reduced-motion: reduce) {
+  canvas.collapsing { animation: none; }
+}
 
 .entangle-stats {
   display: flex;
@@ -1115,7 +1468,8 @@ input[type="range"]::-webkit-slider-thumb:hover { width: 16px; height: 16px; }
   border: 1px solid var(--border);
   border-radius: 12px;
   padding: 16px 16px 12px;
-  transition: background 0.28s, border-color 0.28s;
+  box-shadow: var(--shadow-md);
+  transition: background 0.28s, border-color 0.28s, box-shadow 0.28s;
 }
 
 #tunnel-canvas {
@@ -1191,16 +1545,29 @@ input[type="range"]::-webkit-slider-thumb:hover { width: 16px; height: 16px; }
   border: 1px solid var(--border);
   border-radius: 12px;
   padding: 14px;
-  transition: background 0.28s, border-color 0.28s;
+  box-shadow: var(--shadow-md);
+  transition: background 0.28s, border-color 0.28s, box-shadow 0.28s;
 }
 
 .ripple-wrap {
   flex: 1;
+  min-width: 0; /* let this flex item shrink below the canvas's native
+                   360px width instead of forcing the page wider */
   display: flex;
   justify-content: center;
   border-radius: 8px;
   overflow: hidden;
   background: var(--bg);
+}
+
+/* Scales down visually on narrow screens (same pattern as #tunnel-canvas)
+   without touching the canvas's actual drawing resolution (360×260,
+   set via its width/height attributes in index.html and read directly
+   by interference-tab.js) — the simulation keeps full internal
+   fidelity, only the on-screen size shrinks. */
+#ripple-canvas {
+  max-width: 100%;
+  height: auto;
 }
 
 .screen-wrap {
@@ -1226,17 +1593,53 @@ input[type="range"]::-webkit-slider-thumb:hover { width: 16px; height: 16px; }
   color: var(--text3);
 }
 
+/* Segmented control (Simulations/Roadmap, 1 Qubit/2 Qubits, mode
+   switches, etc.) — a single pill-shaped envelope with borderless
+   segments, rather than a row of separate outlined buttons. Each usage
+   sets its own grid-template-columns inline (defaults to one column /
+   vertical stack, as Interference's Double/Single/Which-path uses). */
 .mode-grid {
+  position: relative;
   display: grid;
   grid-template-columns: 1fr;
-  gap: 6px;
+  gap: 3px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 3px;
+  box-shadow: var(--shadow-sm);
 }
 
-.mode-btn.active {
-  border-color: var(--zero);
-  color: var(--zero);
-  background: var(--zero-dim);
+/* The active segment's highlight — a single element that slides/resizes
+   to the active button's position instead of each button drawing its
+   own background, so switching segments animates like a native
+   iOS/macOS segmented control. Positioned by initModeGridThumbs() in
+   core/dom-utils.js. */
+.mode-grid-thumb {
+  position: absolute;
+  top: 0;
+  left: 0;
+  background: var(--surface);
+  border-radius: 7px;
+  box-shadow: var(--shadow-sm);
+  transition: transform 0.25s cubic-bezier(0.4,0,0.2,1), width 0.25s, height 0.25s;
+  z-index: 0;
+  pointer-events: none;
 }
+@media (prefers-reduced-motion: reduce) {
+  .mode-grid-thumb { transition: none; }
+}
+
+.mode-btn {
+  position: relative;
+  z-index: 1;
+  border: none;
+  background: transparent;
+  border-radius: 7px;
+  padding: 8px 6px;
+}
+.mode-btn:not(.active):hover { color: var(--text); background: var(--accent-dim); }
+.mode-btn.active { color: var(--zero); }
 
 @media (max-width: 920px) {
   .interference-layout { grid-template-columns: 1fr; }

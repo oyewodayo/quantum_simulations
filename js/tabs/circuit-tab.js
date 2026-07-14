@@ -79,6 +79,13 @@ function renderCircuitSlots() {
       slot.style.color       = g.color;
       slot.style.borderColor = g.color;
       slot.className = 'gate-slot filled';
+    } else if (i === 0 && circuitGates.length === 0) {
+      // Empty-state hint: the wire is otherwise just 8 blank dashed boxes
+      // with no cue that clicking a palette gate above is what fills them.
+      slot.textContent = '+';
+      slot.style.color = '';
+      slot.style.borderColor = '';
+      slot.className = 'gate-slot empty gate-slot-hint';
     } else {
       slot.textContent       = '';
       slot.style.color       = '';

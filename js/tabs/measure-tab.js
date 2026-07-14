@@ -53,9 +53,19 @@ function doMeasure() {
 
   const resEl = document.getElementById('measure-result');
   resEl.style.color   = result === 0 ? 'var(--zero)' : 'var(--one)';
-  resEl.style.opacity = '0';
+  resEl.style.opacity = '1';
   resEl.textContent   = result === 0 ? '|0⟩' : '|1⟩';
-  requestAnimationFrame(() => { resEl.style.opacity = '1'; });
+  pulseElement(resEl, 'collapsing', 500);
+
+  // The bars themselves deliberately don't move — they show the fixed odds
+  // of the prepared state, not "the answer" — but a flash on whichever
+  // bar matched the outcome ties the abstract percentages to what just
+  // actually happened.
+  const winningTrack = document.getElementById(result === 0 ? 'vbar0' : 'vbar1').closest('.vbar-track');
+  winningTrack.style.color = result === 0 ? 'var(--zero)' : 'var(--one)';
+  pulseElement(winningTrack, 'collapsing', 600);
+  pulseElement(document.getElementById('btn-measure'), 'pulsing');
+
   updateHistogram();
 
   const opener = MEASURE_OPENERS[Math.floor(Math.random() * MEASURE_OPENERS.length)];

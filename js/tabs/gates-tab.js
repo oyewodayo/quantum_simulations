@@ -20,11 +20,12 @@ function buildGateButtons() {
     btn.style.color       = gate.color;
     btn.style.borderColor = gate.color + '44';
     btn.innerHTML = `${gate.name}<span class="gate-sub">${gate.desc}</span>`;
-    btn.addEventListener('click', () => applyGate(key));
+    btn.addEventListener('click', () => applyGate(key, btn));
     grid.appendChild(btn);
   });
   document.getElementById('btn-reset-gates').addEventListener('click', resetGates);
   buildRotationButtons();
+  buildGateReference();
 
   // The Gates-tab sphere mirrors qubitMain but is otherwise idle between
   // visits, so jump its animation state to the current qubit on entry
@@ -39,13 +40,15 @@ function buildGateButtons() {
   });
 }
 
-function applyGate(key) {
+function applyGate(key, btn) {
   const gate = GATES[key];
   qubitMain.applyGate(gate.matrix);
   gateHistory.push({ label: gate.name, color: gate.color });
   showMatrix(key);
   updateGatesUI();
   updateQubitUI();
+  if (btn) pulseElement(btn, 'pulsing');
+  pulseElement(document.querySelector('#tab-gates .bloch-wrap'), 'pulsing', 550);
 
   const p0 = Math.round(qubitMain.prob0() * 100);
   const p1 = Math.round(qubitMain.prob1() * 100);
@@ -83,7 +86,7 @@ function buildRotationButtons() {
     btn.innerHTML = `${gate.label}<span class="gate-sub">${gate.desc}</span>`;
     btn.addEventListener('click', () => {
       const angleDeg = parseInt(document.getElementById('rotation-angle').value, 10);
-      applyRotationGate(axis, angleDeg);
+      applyRotationGate(axis, angleDeg, btn);
     });
     grid.appendChild(btn);
   });
@@ -95,7 +98,25 @@ function updateRotationAngleLabel() {
   document.getElementById('rotation-angle-val').textContent = val + '°';
 }
 
-function applyRotationGate(axis, angleDeg) {
+/* A permanent, always-visible glossary of what each gate letter stands
+   for (Hadamard, the three Pauli gates, the phase gates) — the buttons
+   above only show playful nicknames, so this is the one place a visitor
+   can see the formal names without having to hover or apply a gate first. */
+function buildGateReference() {
+  const rows = [
+    ...Object.values(GATES),
+    ...Object.values(ROTATION_GATES).map(g => ({ ...g, name: g.label }))
+  ];
+  document.getElementById('gate-reference-list').innerHTML = rows.map(g => `
+    <div class="gate-reference-row">
+      <span class="gate-reference-symbol" style="color:${g.color}">${g.name}</span>
+      <span class="gate-reference-formal">${g.formalName}</span>
+      <span class="gate-reference-nick">${g.desc}</span>
+    </div>
+  `).join('');
+}
+
+function applyRotationGate(axis, angleDeg, btn) {
   const gate = ROTATION_GATES[axis];
   const matrix = rotationMatrix(axis, angleDeg);
   qubitMain.applyGate(matrix);
@@ -103,6 +124,8 @@ function applyRotationGate(axis, angleDeg) {
   showRotationMatrix(axis, angleDeg, matrix);
   updateGatesUI();
   updateQubitUI();
+  if (btn) pulseElement(btn, 'pulsing');
+  pulseElement(document.querySelector('#tab-gates .bloch-wrap'), 'pulsing', 550);
 
   const p0 = Math.round(qubitMain.prob0() * 100);
   const p1 = Math.round(qubitMain.prob1() * 100);

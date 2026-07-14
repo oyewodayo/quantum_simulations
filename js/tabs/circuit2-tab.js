@@ -6,11 +6,10 @@
 // "2 Qubits" mode toggle at the top of the Circuit tab. Unlike the
 // single-qubit circuit (tabs/circuit-tab.js), gates target a specific
 // wire (qubit 0 or 1) chosen via a toggle, and CNOT is added as its own
-// two-wire step — this keeps the same flat, sequential gate-list model
-// as the single-qubit circuit instead of a full 2D circuit-diagram
-// renderer, while still being able to build a real Bell pair by hand
-// (H on Q0, then CNOT Q0→Q1) and watch entanglement appear in the
-// |00⟩/|01⟩/|10⟩/|11⟩ probability bars.
+// two-wire step. circuit2Gates[] stays a flat, sequential array (index =
+// diagram column) — renderCircuit2Sequence() below is what turns that
+// into an actual two-wire circuit diagram, so the underlying model is
+// still as simple as the single-qubit circuit's.
 
 const CIRCUIT2_MAX_STEPS = 10;
 
@@ -81,23 +80,55 @@ function removeCircuit2Gate(i) {
 
 function circuit2EntryLabel(entry) {
   if (entry.type === 'cnot') return `CNOT Q${entry.control}→Q${entry.target}`;
-  return `${GATES[entry.key].name}·Q${entry.qubit}`;
+  return `${GATES[entry.key].name} on Q${entry.qubit}`;
 }
 
-function circuit2EntryColor(entry) {
-  return entry.type === 'cnot' ? 'var(--text)' : GATES[entry.key].color;
-}
-
+/**
+ * Renders circuit2Gates[] as an actual two-wire circuit diagram: one CSS
+ * Grid with 2 rows (Qubit 0, Qubit 1) and CIRCUIT2_MAX_STEPS columns.
+ * Each gates[] entry owns one column, shared by both rows — a CNOT's
+ * control dot, target ⊕, and connecting line are three separate grid
+ * items placed in that same grid-column (rows 1, 2, and 1/3 respectively),
+ * which is what makes them line up under each other automatically
+ * without any manual pixel math. Columns past circuit2Gates.length are
+ * empty dashed placeholders, matching the single-qubit wire's slots.
+ */
 function renderCircuit2Sequence() {
-  const el = document.getElementById('circuit-2q-sequence');
-  el.innerHTML = circuit2Gates.length
-    ? circuit2Gates.map((entry, i) => {
-        const color = circuit2EntryColor(entry);
-        return `<span class="hist-tag" data-i="${i}" style="color:${color};border-color:${color}44;cursor:pointer" title="Click to remove">${circuit2EntryLabel(entry)}</span>`;
-      }).join('')
-    : '<span class="muted-text">—</span>';
-  el.querySelectorAll('.hist-tag').forEach(tag => {
-    tag.addEventListener('click', () => removeCircuit2Gate(parseInt(tag.dataset.i, 10)));
+  const container = document.getElementById('circuit-2q-diagram');
+  let html = '';
+
+  html += `<div class="circuit2-ket" style="grid-column:1;grid-row:1;">|0⟩</div>`;
+  html += `<div class="circuit2-ket" style="grid-column:1;grid-row:2;">|0⟩</div>`;
+  html += `<div class="circuit2-wire" style="grid-column:2/-1;grid-row:1;"></div>`;
+  html += `<div class="circuit2-wire" style="grid-column:2/-1;grid-row:2;"></div>`;
+
+  for (let c = 0; c < CIRCUIT2_MAX_STEPS; c++) {
+    const col   = c + 2; // grid-column 1 is the |0⟩ label
+    const entry = circuit2Gates[c];
+
+    if (!entry) {
+      const isHint = c === 0 && circuit2Gates.length === 0;
+      html += `<div class="circuit2-cell empty${isHint ? ' circuit2-cell-hint' : ''}" style="grid-column:${col};grid-row:1;">${isHint ? '+' : ''}</div>`;
+      html += `<div class="circuit2-cell empty" style="grid-column:${col};grid-row:2;"></div>`;
+      continue;
+    }
+
+    if (entry.type === 'single') {
+      const g   = GATES[entry.key];
+      const row = entry.qubit + 1;
+      html += `<button class="circuit2-cell circuit2-gate" data-i="${c}" style="grid-column:${col};grid-row:${row};color:${g.color};border-color:${g.color}" title="${circuit2EntryLabel(entry)} — click to remove">${g.name}</button>`;
+    } else {
+      const controlRow = entry.control + 1;
+      const targetRow  = entry.target + 1;
+      html += `<div class="circuit2-cnot-line" style="grid-column:${col};grid-row:1/3;"></div>`;
+      html += `<button class="circuit2-cell circuit2-cnot-dot" data-i="${c}" style="grid-column:${col};grid-row:${controlRow};" title="${circuit2EntryLabel(entry)} — click to remove"></button>`;
+      html += `<button class="circuit2-cell circuit2-cnot-target" data-i="${c}" style="grid-column:${col};grid-row:${targetRow};" title="${circuit2EntryLabel(entry)} — click to remove">⊕</button>`;
+    }
+  }
+
+  container.innerHTML = html;
+  container.querySelectorAll('[data-i]').forEach(el => {
+    el.addEventListener('click', () => removeCircuit2Gate(parseInt(el.dataset.i, 10)));
   });
 }
 
@@ -110,10 +141,10 @@ async function runCircuit2() {
   setCircuit2Status('Running…');
   setCircuit2Explainer('Both qubits start at |00⟩ and step through the sequence in order…');
 
-  const tags = document.querySelectorAll('#circuit-2q-sequence .hist-tag');
   for (let i = 0; i < circuit2Gates.length; i++) {
     const entry = circuit2Gates[i];
-    if (tags[i]) tags[i].style.boxShadow = '0 0 12px currentColor';
+    const stepEls = document.querySelectorAll(`#circuit-2q-diagram [data-i="${i}"]`);
+    stepEls.forEach(el => el.classList.add('running'));
     setCircuit2Explainer(`Step ${i + 1} of ${circuit2Gates.length}: ${circuit2EntryLabel(entry)}.`);
     await delay(320);
     if (entry.type === 'cnot') {
@@ -123,7 +154,7 @@ async function runCircuit2() {
     }
     updateCircuit2UI();
     await delay(130);
-    if (tags[i]) tags[i].style.boxShadow = '';
+    stepEls.forEach(el => el.classList.remove('running'));
   }
 
   setCircuit2Status('Done');

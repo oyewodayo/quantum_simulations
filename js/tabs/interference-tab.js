@@ -31,7 +31,7 @@ let screenCanvas = null, screenCtx = null;
    attach before the tab has ever been visited, for the same reason as
    tabs/tunneling-tab.js's initTunnelControls(). */
 function initInterferenceControls() {
-  document.querySelectorAll('.mode-btn').forEach(btn => {
+  document.querySelectorAll('.mode-btn[data-mode]').forEach(btn => {
     btn.addEventListener('click', () => setInterferenceMode(btn.dataset.mode));
   });
   document.getElementById('slit-sep').addEventListener('input', onInterferenceSliderChange);
@@ -203,7 +203,7 @@ const INTERFERENCE_MODE_COPY = {
 
 function setInterferenceMode(mode) {
   interferenceMode = mode;
-  document.querySelectorAll('.mode-btn').forEach(b => {
+  document.querySelectorAll('.mode-btn[data-mode]').forEach(b => {
     b.classList.toggle('active', b.dataset.mode === mode);
   });
   resetScreen();

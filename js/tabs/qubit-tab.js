@@ -20,6 +20,25 @@ function initQubitTab() {
     const b = qubitMain.getBloch();
     copyShareLink({ tab: 'qubit', theta: b.theta.toFixed(4), phi: b.phi.toFixed(4) }, e.currentTarget);
   });
+
+  // Keyboard control: the sphere is drag-only otherwise, which locks out
+  // anyone not using a mouse/touchscreen. Arrow keys nudge theta/phi in
+  // small steps; hold Shift for bigger steps.
+  document.getElementById('bloch-main').addEventListener('keydown', e => {
+    const step = e.shiftKey ? Math.PI / 6 : Math.PI / 36; // 30° or 5°
+    const b = qubitMain.getBloch();
+    let theta = b.theta, phi = b.phi;
+    switch (e.key) {
+      case 'ArrowUp':    theta = Math.max(0, theta - step); break;
+      case 'ArrowDown':  theta = Math.min(Math.PI, theta + step); break;
+      case 'ArrowLeft':  phi -= step; break;
+      case 'ArrowRight': phi += step; break;
+      default: return;
+    }
+    phi = ((phi % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI);
+    e.preventDefault();
+    setMainState(theta, phi);
+  });
 }
 
 function setMainState(theta, phi) {
@@ -45,7 +64,7 @@ function updateQubitUI() {
 
   rendererMain.animateTo(b.x, b.y, b.z);
   document.getElementById('bloch-main').setAttribute('aria-label',
-    `Bloch sphere. State: ${qubitMain.getFormula()}. Draggable to set the qubit's state.`);
+    `Bloch sphere. State: ${qubitMain.getFormula()}. Draggable, or focus and use arrow keys, to set the qubit's state.`);
   document.getElementById('label-main').textContent   = qubitMain.getLabel();
   document.getElementById('formula-main').textContent = qubitMain.getFormula();
   document.getElementById('fill0-main').style.width   = p0 + '%';

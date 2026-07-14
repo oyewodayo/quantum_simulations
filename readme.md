@@ -8,6 +8,9 @@ Quantum Explorer transforms complex quantum mechanics into interactive visual ex
 
 ## ✨ Features
 
+### 🗺️ Learning Roadmap
+A "Simulations / Roadmap" switch in the header toggles between the interactive simulator (below) and a lightweight learning tracker: **Lessons** (a short write-up per simulation, with a "Try it" button that jumps straight into that tab), **Progress Tracking** (a completed-lessons bar and best quiz score), and a **Quiz** covering the app's core concepts. Progress is stored locally in the browser — no account needed.
+
 ### 🎯 Qubit Explorer
 - **Classical vs Quantum Comparison**: Side-by-side interaction with classical bits and qubits
 - **Bloch Sphere Visualization**: Real-time 3D state representation with smooth animations
@@ -99,6 +102,7 @@ quantum-explorer/
     │   ├── entanglement-tab.js
     │   ├── tunneling-tab.js     # Real time-dependent Schrödinger solver
     │   └── interference-tab.js # Double-slit wave + rejection-sampled hits
+    ├── roadmap.js                 # Roadmap mode: lessons, progress tracking, quiz
     ├── tour.js                   # First-run guided tour (shown once, via localStorage)
     └── app.js                    # App state + DOMContentLoaded init (loads last)
 ```

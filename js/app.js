@@ -114,6 +114,8 @@ document.addEventListener('DOMContentLoaded', () => {
   updateCircuitUI();
   updateMeasureUI();
   updateClassicalUI();
+  initRoadmap();
+  initModeGridThumbs();
 
   applySharedStateFromURL();
   startTourIfFirstVisit();

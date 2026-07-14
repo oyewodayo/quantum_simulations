@@ -62,7 +62,7 @@ function drawCoin(canvasId, state) {
     // Superposition — draw faint overlapping 0 and 1
     ctx.font = `bold ${r * 0.52}px 'JetBrains Mono', monospace`;
     ctx.globalAlpha = 0.18;
-    ctx.fillStyle = isDark ? '#4ADE80' : '#15803D';
+    ctx.fillStyle = isDark ? '#5B8DEF' : '#0033A0';
     ctx.fillText('0', cx - r * 0.14, cy);
     ctx.fillStyle = isDark ? '#F472B6' : '#BE185D';
     ctx.fillText('1', cx + r * 0.14, cy);
@@ -73,7 +73,7 @@ function drawCoin(canvasId, state) {
     ctx.fillText('?', cx, cy);
   } else if (state === 0) {
     ctx.font = `bold ${r * 0.62}px 'JetBrains Mono', monospace`;
-    ctx.fillStyle = isDark ? '#4ADE80' : '#15803D';
+    ctx.fillStyle = isDark ? '#5B8DEF' : '#0033A0';
     ctx.fillText('0', cx, cy);
   } else {
     ctx.font = `bold ${r * 0.62}px 'JetBrains Mono', monospace`;
@@ -114,6 +114,8 @@ async function flipEntangled() {
 
   drawCoin('coin1', result);
   drawCoin('coin2', result);
+  pulseElement(document.getElementById('coin1'), 'collapsing');
+  pulseElement(document.getElementById('coin2'), 'collapsing');
 
   const ket = result === 0 ? '|0⟩' : '|1⟩';
   document.getElementById('coin1-label').textContent = ket;
@@ -123,6 +125,7 @@ async function flipEntangled() {
   const resEl = document.getElementById('entangle-result');
   resEl.textContent = `Outcome: |${result}${result}⟩`;
   resEl.style.color = result === 0 ? 'var(--zero)' : 'var(--one)';
+  pulseElement(resEl, 'collapsing', 500);
 
   entangleCounts[result === 0 ? '00' : '11']++;
   updateEntangleStats();
@@ -149,6 +152,7 @@ async function measureCoinA() {
   const result = Math.random() < 0.5 ? 0 : 1;
   coin1State = result;
   drawCoin('coin1', result);
+  pulseElement(document.getElementById('coin1'), 'collapsing');
   document.getElementById('coin1-label').textContent =
     `A = ${result === 0 ? '|0⟩' : '|1⟩'}`;
 
@@ -159,12 +163,14 @@ async function measureCoinA() {
   // B collapses to same value with no communication
   coin2State = result;
   drawCoin('coin2', result);
+  pulseElement(document.getElementById('coin2'), 'collapsing');
   document.getElementById('coin2-label').textContent =
     `B = ${result === 0 ? '|0⟩' : '|1⟩'}`;
 
   const resEl = document.getElementById('entangle-result');
   resEl.textContent = `|${result}${result}⟩ — no signal sent to B`;
   resEl.style.color = result === 0 ? 'var(--zero)' : 'var(--one)';
+  pulseElement(resEl, 'collapsing', 500);
   setEntangleNote('Correlation holds regardless of distance');
 
   entangleCounts[result === 0 ? '00' : '11']++;
