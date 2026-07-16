@@ -26,6 +26,8 @@
   --zero-dim:     rgba(91, 141, 239, 0.14);
   --one:          #F472B6;
   --one-dim:      rgba(244, 114, 182, 0.14);
+  --success:      #34D399;
+  --success-dim:  rgba(52, 211, 153, 0.14);
 
   /* Bloch sphere — resolved by JS via refreshThemeColors() */
   --bloch-arrow:       rgba(255,255,255,0.92);
@@ -39,6 +41,8 @@
   --bloch-tip:         rgba(255,255,255,0.88);
 
   --header-h: 56px;
+  --dock-clear: 190px;  /* left clearance for the always-expanded tab dock — see #tab-sidebar */
+  --tab-strip-h: 48px;
 }
 
 [data-theme="light"] {
@@ -65,6 +69,8 @@
   --zero-dim:     rgba(0, 51, 160, 0.11);
   --one:          #BE185D;
   --one-dim:      rgba(190, 24, 93, 0.11);
+  --success:      #059669;
+  --success-dim:  rgba(5, 150, 105, 0.11);
 
   --bloch-arrow:       rgba(10,10,10,0.88);
   --bloch-sphere-bg:   rgba(0,0,0,0.015);
@@ -122,38 +128,86 @@ header {
   flex-shrink: 0;
 }
 
-/* Scrolls horizontally instead of overflowing the header when the 8 tabs
-   don't fit — without this, narrow viewports push the Simulations/
-   Roadmap toggle and theme button completely off-screen and
-   unreachable, since a flex row with no wrap just overflows its
-   container rather than shrinking children below their content size. */
-nav {
+/* ─── SIMULATION TAB DOCK ────────────────────────────── */
+/* A floating column of pill buttons, vertically centered on the left
+   edge and pinned there while the page (not this element) scrolls —
+   replaces the old horizontal header <nav>. Deliberately not a panel:
+   each pill pairs a mnemonic letter badge (Qubit, Gates, Circuit,
+   Measure, Statevec, Entangle, Tunnel, Interference are all distinct on
+   first letter) with its full label, always spelled out — never
+   abbreviated down to just the badge. A thin rail behind the badges reads
+   as a path/route, echoing the "circuits are a route" language used in
+   the Roadmap lesson text. Only shown in Simulations app-mode (display
+   toggled by setAppMode() in roadmap.js, same convention the old nav
+   used). */
+#tab-sidebar {
+  position: fixed;
+  left: 18px;
+  top: 50%;
+  transform: translateY(-50%);
   display: flex;
-  gap: 2px;
-  overflow-x: auto;
-  scrollbar-width: none;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+  z-index: 90;
 }
-nav::-webkit-scrollbar { display: none; }
-nav .tab { flex-shrink: 0; }
+#tab-sidebar::before {
+  content: '';
+  position: absolute;
+  left: 17px;
+  top: 18px;
+  bottom: 18px;
+  width: 2px;
+  background: var(--border2);
+  z-index: -1;
+}
 
-.tab {
-  background: none;
-  border: none;
+#tab-sidebar .tab {
+  position: relative;
+  display: flex;
+  align-items: center;
+  height: 36px;
+  padding: 0;
+  border-radius: 999px;
+  background: var(--surface);
+  border: 1px solid var(--border);
   color: var(--text2);
-  font-family: 'Space Grotesk', sans-serif;
-  font-size: 0.82rem;
-  font-weight: 500;
-  letter-spacing: 0.03em;
-  padding: 5px 12px;
-  border-radius: 6px;
+  white-space: nowrap;
   cursor: pointer;
-  transition: color 0.14s, background 0.14s;
+  box-shadow: var(--shadow-sm);
+  transition: background 0.18s, border-color 0.18s, color 0.18s, transform 0.18s;
 }
-.tab:hover { color: var(--text); background: var(--accent-dim); }
-.tab.active {
+#tab-sidebar .tab:hover {
+  border-color: var(--border2);
   color: var(--text);
   background: var(--surface2);
-  box-shadow: 0 0 0 1px var(--border2);
+  transform: translateX(3px);
+}
+#tab-sidebar .tab.active {
+  background: var(--zero);
+  border-color: var(--zero);
+  color: #fff;
+  box-shadow: var(--shadow-md);
+}
+#tab-sidebar .tab:focus-visible { outline: 2px solid var(--zero); outline-offset: 2px; }
+
+#tab-sidebar .tab-badge {
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+#tab-sidebar .tab-label {
+  padding-right: 16px;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 0.8rem;
+  font-weight: 500;
+  letter-spacing: 0.02em;
 }
 
 .header-right {
@@ -188,14 +242,17 @@ nav .tab { flex-shrink: 0; }
 }
 .theme-toggle:hover { border-color: var(--text2); color: var(--text); background: var(--surface2); }
 
-/* Header Simulations/Roadmap switch — sits between nav and .header-right,
-   so it stays visible regardless of which mode is active. */
+/* Header Simulations/Roadmap switch — sits between the logo and
+   .header-right, so it stays visible regardless of which mode is active. */
 .app-mode-grid { max-width: 260px; white-space: nowrap; flex-shrink: 0; }
 
 /* ─── TAB CONTENT ────────────────────────────────────── */
 .tab-content {
   display: none;
-  padding: calc(var(--header-h) + 28px) 24px 40px;
+  /* Left padding clears the #tab-sidebar dock (only ever visible together
+     with this element — both are Simulations-mode-only) rather than the
+     ordinary 24px side padding used everywhere else. */
+  padding: calc(var(--header-h) + 28px) 24px 40px var(--dock-clear);
   min-height: 100vh;
 }
 .tab-content.active { display: block; animation: tab-fade-in 0.22s ease; }
@@ -300,6 +357,155 @@ nav .tab { flex-shrink: 0; }
   color: var(--text);
   line-height: 1.5;
 }
+
+/* ─── ROADMAP MIND-MAP ───────────────────────────────── */
+/* Wraps the heading + mode toggle + mind-map so all three can be
+   vertically centered as one block filling the initial viewport (the
+   ".roadmap-hero--full" min-height cancels out exactly against
+   #roadmap-view's own top padding, calc(var(--header-h) + 28px), so the
+   hero's bottom edge lands on the viewport's bottom edge). The --full
+   modifier is only applied while the Lessons sub-tab is active (see
+   setRoadmapMode() in roadmap.js) — Progress/Quiz keep the compact,
+   natural-height layout. */
+.roadmap-hero {
+  display: flex;
+  flex-direction: column;
+}
+.roadmap-hero.roadmap-hero--full {
+  min-height: calc(100vh - var(--header-h) - 28px);
+  justify-content: center;
+}
+
+/* Geometry (node/curve positions) is computed in JS — see
+   renderRoadmapMindmap() in roadmap.js — since it depends on the
+   container's actual measured size. This block is purely visual. */
+.roadmap-mindmap {
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 340px;
+  max-height: 860px;
+  margin-bottom: 26px;
+}
+.roadmap-mindmap svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  overflow: visible;
+}
+.roadmap-mindmap svg path {
+  fill: none;
+  stroke: var(--border2);
+  stroke-width: 1.5;
+}
+.mindmap-center {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  width: 160px;
+  height: 160px;
+  border-radius: 50%;
+  background: var(--zero);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  font-weight: 700;
+  font-size: 1.3rem;
+  letter-spacing: 0.02em;
+  box-shadow: var(--shadow-md);
+}
+.mindmap-node {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  padding: 10px 18px;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 0.92rem;
+  color: var(--text2);
+  cursor: pointer;
+  white-space: nowrap;
+  box-shadow: var(--shadow-sm);
+  transition: border-color 0.13s, color 0.13s, background 0.13s;
+}
+.mindmap-node:hover { border-color: var(--border2); color: var(--text); }
+.mindmap-node.is-done {
+  border-color: var(--success);
+  color: var(--success);
+  background: var(--success-dim);
+}
+@media (max-width: 760px) {
+  .roadmap-mindmap { display: none; }
+  .roadmap-hero.roadmap-hero--full { min-height: 0; justify-content: flex-start; }
+}
+
+/* ─── LESSON MODAL ───────────────────────────────────── */
+#lesson-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 400;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+#lesson-modal.open { display: flex; }
+.lesson-modal-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0,0,0,0.6);
+}
+.lesson-modal-panel {
+  position: relative;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: var(--shadow-md);
+  width: min(1100px, 92vw);
+  max-height: 90vh;
+  overflow-y: auto;
+  padding: 22px 24px 32px;
+}
+.lesson-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+.lesson-modal-title {
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: var(--text);
+}
+.lesson-modal-close {
+  background: none;
+  border: 1px solid var(--border);
+  color: var(--text2);
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 1rem;
+  line-height: 1;
+  flex-shrink: 0;
+}
+.lesson-modal-close:hover { border-color: var(--border2); color: var(--text); }
+.lesson-modal-info { max-width: 720px; }
+.lesson-modal-simhost {
+  margin-top: 22px;
+  padding-top: 20px;
+  border-top: 1px solid var(--border);
+}
+/* The reparented .tab-content section is normally a full standalone page
+   (own top padding for the fixed header, own duplicate heading) — neither
+   applies once it's embedded inside the modal. */
+.lesson-modal-simhost .tab-content { padding: 0; min-height: 0; }
+.lesson-modal-simhost .compare-header { display: none; }
+body.modal-open { overflow: hidden; }
 
 /* ─── QUBIT TAB: COMPARE HEADER ──────────────────────── */
 .compare-header {
@@ -927,6 +1133,12 @@ input[type="range"]::-webkit-slider-thumb:hover { width: 16px; height: 16px; }
   transition: all 0.13s;
 }
 .btn-secondary:hover { border-color: var(--border2); color: var(--text); }
+.btn-secondary.is-done {
+  border-color: var(--success);
+  color: var(--success);
+  background: var(--success-dim);
+}
+.btn-secondary.is-done:hover { border-color: var(--success); color: var(--success); }
 
 /* ─── CIRCUIT TAB ────────────────────────────────────── */
 .circuit-layout { max-width: 960px; margin: 0 auto; }
@@ -1302,7 +1514,29 @@ input[type="range"]::-webkit-slider-thumb:hover { width: 16px; height: 16px; }
   .measure-main-card { flex-direction: column; }
   header { padding: 0 12px; gap: 10px; }
   .header-tag { display: none; }
-  .tab-content { padding: calc(var(--header-h) + 16px) 14px 24px; }
+  /* The floating dock collapses into a horizontal, horizontally-
+     scrollable strip pinned under the header (same overflow-x:auto +
+     hidden-scrollbar technique the old header <nav> used) instead of a
+     vertical column. .tab-content's own top padding below accounts for
+     this strip's height so content never starts underneath it. */
+  #tab-sidebar {
+    top: var(--header-h);
+    left: 0; right: 0;
+    transform: none;
+    flex-direction: row;
+    align-items: center;
+    gap: 6px;
+    height: var(--tab-strip-h);
+    padding: 6px 12px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    scrollbar-width: none;
+  }
+  #tab-sidebar::-webkit-scrollbar { display: none; }
+  #tab-sidebar::before { display: none; }
+  #tab-sidebar .tab { flex-shrink: 0; }
+  #tab-sidebar .tab-label { padding-right: 14px; }
+  .tab-content { padding: calc(var(--header-h) + var(--tab-strip-h) + 16px) 14px 24px; }
   .gate-grid { grid-template-columns: repeat(2, 1fr); }
   .preset-grid { grid-template-columns: repeat(2, 1fr); }
 }

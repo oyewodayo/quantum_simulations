@@ -10,7 +10,7 @@ const TOUR_STORAGE_KEY = 'qe-tour-seen';
 const TOUR_STEPS = [
   {
     tab: 'qubit',
-    selector: 'nav',
+    selector: '#tab-sidebar',
     text: 'Each tab explores one quantum concept, building from a single qubit up to entanglement and wave phenomena. Click through them anytime.'
   },
   {
@@ -33,6 +33,11 @@ let tourHighlightEl = null;
 function startTourIfFirstVisit() {
   if (localStorage.getItem(TOUR_STORAGE_KEY)) return;
   tourIndex = 0;
+  // Every step targets a Simulations-page element (nav, #bloch-main,
+  // #theme-toggle) — since Roadmap is the default landing view, switch
+  // there explicitly rather than relying on whatever mode happened to be
+  // active, so the tour never tries to highlight a 0x0 hidden element.
+  setAppMode('sim');
   buildTourDOM();
   showTourStep();
 }
@@ -79,8 +84,18 @@ function showTourStep() {
         <button class="btn-run" id="tour-next">${tourIndex === TOUR_STEPS.length - 1 ? 'Done' : 'Next'}</button>
       </div>
     `;
-    const top  = Math.min(window.innerHeight - 160, rect.bottom + 12);
-    const left = Math.min(window.innerWidth - 300, Math.max(12, rect.left));
+    // Usually anchored below the target, but a tall element (e.g. the
+    // full-height #tab-sidebar) leaves no room below it — fall back to
+    // anchoring beside it instead of letting the popover run off-screen.
+    const popoverH = 170;
+    let top, left;
+    if (rect.bottom + 12 + popoverH <= window.innerHeight) {
+      top  = rect.bottom + 12;
+      left = Math.min(window.innerWidth - 300, Math.max(12, rect.left));
+    } else {
+      top  = Math.min(window.innerHeight - popoverH - 12, Math.max(12, rect.top));
+      left = Math.min(window.innerWidth - 300, rect.right + 12);
+    }
     tourPopover.style.top  = top + 'px';
     tourPopover.style.left = left + 'px';
 

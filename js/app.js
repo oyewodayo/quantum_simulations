@@ -115,6 +115,9 @@ document.addEventListener('DOMContentLoaded', () => {
   updateMeasureUI();
   updateClassicalUI();
   initRoadmap();
+  setAppMode('roadmap'); // Roadmap is the default landing view — see index.html's
+                          // matching hardcoded defaults (nav hidden, #roadmap-view
+                          // .active) that avoid a Simulations-page flash before this runs.
   initModeGridThumbs();
 
   applySharedStateFromURL();
