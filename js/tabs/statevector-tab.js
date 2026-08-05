@@ -1,25 +1,41 @@
 'use strict';
-// Depends on: core/qubit.js (round2), core/theme.js (isDark, BLOCH_COLORS),
-// core/tab-registry.js (registerTab), app.js state (classicalSVState, svTheta).
-
-// ═══════════════════════════════════════════════════════════════════
-// STATEVECTOR TAB
-// ═══════════════════════════════════════════════════════════════════
+// needs round2 (qubit.js), isDark/BLOCH_COLORS/onThemeChange (theme.js),
+// classicalSVState/svTheta from app.js. used to be its own top-level
+// "Statevec" tab, now it's the "Compare the State Spaces" widget embedded
+// in Maths Concept's State Vector section (#maths-statevector). see
+// setMathsSection() in mathsconcept-tab.js - it calls
+// redrawStatevecCanvases() when that section opens, taking over the
+// redraw-on-entry job registerTab('statevec', ...) used to handle.
 function initStatevecTab() {
   drawClassicalSV(classicalSVState);
   drawQuantumSV(svTheta);
   updateSVFormulas();
   document.getElementById('btn-toggle-classical-sv').addEventListener('click', toggleClassicalSV);
   document.getElementById('sv-theta-slider').addEventListener('input', svSliderUpdate);
+  document.querySelectorAll('.mode-btn[data-statevec-mode]').forEach(btn =>
+    btn.addEventListener('click', () => setStatevecMode(btn.dataset.statevecMode)));
+  onThemeChange(redrawStatevecCanvases);
+}
 
-  // Canvases are static once drawn, but redraw on entry in case the
-  // theme changed while this tab was hidden (draw() reads live isDark).
-  registerTab('statevec', {
-    onEnter: () => {
-      drawClassicalSV(classicalSVState);
-      drawQuantumSV(svTheta);
-    }
-  });
+// canvases are static once drawn, but redraw on entry in case the theme
+// changed while hidden (draw() reads live isDark), or the panel behind
+// the other mode never got a proper-sized redraw while display:none
+function redrawStatevecCanvases() {
+  drawClassicalSV(classicalSVState);
+  drawQuantumSV(svTheta);
+}
+
+// Classical/Quantum switch, same two-tier pattern as Gates' domain toggle.
+// each used to be half of a side-by-side "vs" comparison, now standalone pages.
+function setStatevecMode(mode) {
+  document.querySelectorAll('.mode-btn[data-statevec-mode]').forEach(btn =>
+    btn.classList.toggle('active', btn.dataset.statevecMode === mode));
+  document.getElementById('statevec-classical-panel').style.display = mode === 'classical' ? '' : 'none';
+  document.getElementById('statevec-quantum-panel').style.display   = mode === 'quantum'   ? '' : 'none';
+  // canvases don't redraw themselves while display:none, so switching
+  // panels needs the same explicit redraw onEnter() does for tab visits
+  drawClassicalSV(classicalSVState);
+  drawQuantumSV(svTheta);
 }
 
 function toggleClassicalSV() {
@@ -51,7 +67,7 @@ function updateSVFormulas() {
   document.getElementById('sv-pct1').textContent  = Math.round(p1) + '%';
 }
 
-/* Classical state-vector canvas — vertical line, only two valid points */
+// vertical line, only two valid points
 function drawClassicalSV(state) {
   const canvas = document.getElementById('sv-classical');
   if (!canvas) return;
@@ -131,7 +147,7 @@ function drawClassicalSV(state) {
   ctx.fillText(state, axisX, stateY);
 }
 
-/* Quantum state-vector canvas — 2D amplitude space with unit arc */
+// 2D amplitude space with a unit arc
 function drawQuantumSV(theta) {
   const canvas = document.getElementById('sv-quantum');
   if (!canvas) return;
@@ -149,7 +165,7 @@ function drawQuantumSV(theta) {
   const tipX  = originX + alpha * size;
   const tipY  = originY - beta  * size;
 
-  // ── Unit quarter-circle arc (the full state space) ──────────────
+  // unit quarter-circle arc, the full state space
   ctx.strokeStyle = isDark ? 'rgba(255,255,255,0.16)' : 'rgba(0,0,0,0.14)';
   ctx.lineWidth = 1.2;
   ctx.setLineDash([5, 5]);
@@ -158,7 +174,7 @@ function drawQuantumSV(theta) {
   ctx.stroke();
   ctx.setLineDash([]);
 
-  // ── Axes ──────────────────────────────────────────────────────────
+  // axes
   const axCol = isDark ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.3)';
   ctx.strokeStyle = axCol;
   ctx.lineWidth = 1.5;
@@ -201,7 +217,7 @@ function drawQuantumSV(theta) {
   ctx.textBaseline = 'top';
   ctx.fillText('|1⟩', originX, originY - size - 28);
 
-  // ── Projection dashes from tip to axes ───────────────────────────
+  // projection dashes from tip to axes
   ctx.strokeStyle = isDark ? 'rgba(255,255,255,0.13)' : 'rgba(0,0,0,0.13)';
   ctx.lineWidth = 1;
   ctx.setLineDash([3, 4]);
@@ -218,7 +234,7 @@ function drawQuantumSV(theta) {
   // α and β labels on axes
   if (alpha > 0.06) {
     ctx.font = `11px 'JetBrains Mono', monospace`;
-    ctx.fillStyle = isDark ? '#4ADE80' : '#15803D';
+    ctx.fillStyle = isDark ? '#5B8DEF' : '#0033A0';
     ctx.textAlign = 'center'; ctx.textBaseline = 'top';
     ctx.fillText(`α=${round2(alpha)}`, tipX, originY + 8);
   }
@@ -245,7 +261,7 @@ function drawQuantumSV(theta) {
     ctx.fillText('θ/2', originX + lr * Math.cos(midAng), originY + lr * Math.sin(midAng));
   }
 
-  // ── State vector arrow ───────────────────────────────────────────
+  // state vector arrow
   ctx.save();
   if (isDark) { ctx.shadowBlur = 14; ctx.shadowColor = BLOCH_COLORS.arrow; }
   ctx.strokeStyle = BLOCH_COLORS.arrow;

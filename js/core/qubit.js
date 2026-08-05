@@ -1,14 +1,10 @@
 'use strict';
-// Depends on: core/complex.js (C.*), used inside method bodies at call time.
+// needs core/complex.js (C.*), used inside method bodies at call time
 
-// ─── QUBIT ────────────────────────────────────────────────────────────
-/**
- * A single-qubit state |ψ⟩ = alpha|0⟩ + beta|1⟩.
- * Invariant: alpha/beta are renormalized (_normalize) after every
- * mutation, so |alpha|^2 + |beta|^2 == 1 always holds outside of a
- * gate application in progress. theta/phi follow the standard Bloch
- * sphere convention: alpha = cos(theta/2), beta = e^(i*phi) sin(theta/2).
- */
+// |ψ⟩ = alpha|0⟩ + beta|1⟩. alpha/beta get renormalized after every
+// mutation so |alpha|^2 + |beta|^2 == 1 always holds (outside of a gate
+// application actually in progress). theta/phi are the usual Bloch sphere
+// convention: alpha = cos(theta/2), beta = e^(i*phi) sin(theta/2).
 class Qubit {
   constructor() {
     this.alpha = { r: 1, i: 0 };
@@ -98,3 +94,28 @@ class Qubit {
 }
 
 function round2(x) { return Math.round(x * 100) / 100; }
+
+// Labels a raw Bloch vector (x,y,z) rather than a Qubit instance - used for
+// the reduced single-qubit spheres in the 2/3-qubit builders (see
+// TwoQubitState/ThreeQubitState.getSingleQubitBloch()), where the vector
+// isn't always unit length: entanglement with the rest of the circuit
+// shrinks it (a genuinely mixed reduced state), and a pure state's theta/phi
+// snapping can't label that as a clean ket. Below 0.90 we just report how
+// mixed it is instead of guessing a ket that isn't really there.
+function blochVectorLabel(x, y, z) {
+  const r = Math.sqrt(x * x + y * y + z * z);
+  if (r < 0.90) return `mixed (${Math.round(r * 100)}%)`;
+
+  const p0  = (1 + z) / 2;
+  const phi = ((Math.atan2(y, x) % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI);
+  const eps = 0.03;
+  if (p0 > 1 - eps) return '|0⟩';
+  if (p0 < eps)     return '|1⟩';
+  if (Math.abs(p0 - 0.5) < eps) {
+    if (phi < eps || phi > 2 * Math.PI - eps) return '|+⟩';
+    if (Math.abs(phi - Math.PI)     < eps)    return '|-⟩';
+    if (Math.abs(phi - Math.PI / 2) < eps)    return '|i⟩';
+    if (Math.abs(phi - 3 * Math.PI / 2) < eps) return '|-i⟩';
+  }
+  return '|ψ⟩';
+}

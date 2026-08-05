@@ -4,14 +4,11 @@
 // when this tab becomes visible/hidden — interferenceAnimId itself stays
 // private to this file.
 
-// ═══════════════════════════════════════════════════════════════════
-// WAVE INTERFERENCE TAB
-// Two coherent point sources ripple in real time on the left; the
-// right-hand "screen" accumulates individual hits sampled from the
-// exact two-source intensity I = |e^(ikr1) + e^(ikr2)|^2, rejection-
-// sampled point by point — the classic "one particle at a time"
-// build-up demonstration, not a pre-rendered fringe image.
-// ═══════════════════════════════════════════════════════════════════
+// two coherent point sources ripple in real time on the left; the screen
+// on the right accumulates individual hits sampled from the exact
+// two-source intensity I = |e^(ikr1) + e^(ikr2)|^2, rejection-sampled
+// point by point - classic "one particle at a time" build-up, not a
+// pre-rendered fringe image
 const INTERFERENCE_WAVE_SPEED = 70;   // px per time unit
 const INTERFERENCE_DT         = 0.045;
 const INTERFERENCE_HITS_PER_FRAME = 3;
@@ -26,12 +23,11 @@ let interferenceInitialized = false;
 let rippleCanvas = null, rippleCtx = null, rippleImageData = null;
 let screenCanvas = null, screenCtx = null;
 
-/* Wires the static controls (mode buttons/sliders/reset already in
-   index.html) — called once from app.js's DOMContentLoaded. Safe to
-   attach before the tab has ever been visited, for the same reason as
-   tabs/tunneling-tab.js's initTunnelControls(). */
+// wires the static controls already in index.html - called once from
+// app.js's DOMContentLoaded, safe before the tab's ever been visited,
+// same as tunneling-tab.js's initTunnelControls()
 function initInterferenceControls() {
-  document.querySelectorAll('.mode-btn').forEach(btn => {
+  document.querySelectorAll('.mode-btn[data-mode]').forEach(btn => {
     btn.addEventListener('click', () => setInterferenceMode(btn.dataset.mode));
   });
   document.getElementById('slit-sep').addEventListener('input', onInterferenceSliderChange);
@@ -57,11 +53,11 @@ function interferenceGeometry() {
   };
 }
 
-/* Exact two-source intensity at a screen point, before normalization.
-   'double'     -> coherent sum, produces fringes: I = 2 + 2cos(k*dr)
-   'single'     -> only one slit contributes, no partner to interfere with
-   'which-path' -> both slits open, but path info is known, so the
-                   amplitudes add incoherently (no cross term) -> flat */
+// exact two-source intensity at a screen point, before normalization.
+// double: coherent sum, produces fringes, I = 2 + 2cos(k*dr)
+// single: only one slit contributes, nothing to interfere with
+// which-path: both slits open but path is known, so amplitudes add
+// incoherently (no cross term) - flat
 function interferenceIntensity(y, geo, mode) {
   const k = 2 * Math.PI / interferenceWavelen();
   const r1 = Math.hypot(geo.screenX - geo.sourceX, y - geo.y1);
@@ -156,10 +152,10 @@ function interferenceAddHits(geo) {
   screenCtx.fillStyle = dotColor;
 
   for (let i = 0; i < INTERFERENCE_HITS_PER_FRAME; i++) {
-    // rejection sampling against the exact intensity curve. The 12-try
-    // cap is a safety bound against low-acceptance-rate edge cases (e.g.
-    // sampling right at a destructive-interference minimum) — not a
-    // magic tuning constant, just "give up this frame and try next frame".
+    // rejection sampling against the exact intensity curve. the 12-try
+    // cap just guards low-acceptance edge cases (like sampling right at a
+    // destructive minimum) - not tuned for anything, just give up and try
+    // again next frame
     let y, accepted = false, tries = 0;
     while (!accepted && tries < 12) {
       y = Math.random() * h;
@@ -203,7 +199,7 @@ const INTERFERENCE_MODE_COPY = {
 
 function setInterferenceMode(mode) {
   interferenceMode = mode;
-  document.querySelectorAll('.mode-btn').forEach(b => {
+  document.querySelectorAll('.mode-btn[data-mode]').forEach(b => {
     b.classList.toggle('active', b.dataset.mode === mode);
   });
   resetScreen();
@@ -227,9 +223,8 @@ function ensureInterferenceStarted() {
   if (!interferenceAnimId) interferenceAnimId = requestAnimationFrame(interferenceAnimate);
 }
 
-/* Pauses the rAF loop while the Interference tab isn't visible — called
-   by app.js's tab-switch handler instead of touching interferenceAnimId
-   directly. */
+// pauses the rAF loop while this tab isn't visible - called from app.js's
+// tab-switch handler instead of touching interferenceAnimId directly
 function stopInterferenceSim() {
   if (interferenceAnimId) {
     cancelAnimationFrame(interferenceAnimId);

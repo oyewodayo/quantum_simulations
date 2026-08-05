@@ -4,14 +4,11 @@
 // onLeave hooks that start/pause the simulation loop when this tab
 // becomes visible/hidden — tunnelAnimId itself stays private to this file.
 
-// ═══════════════════════════════════════════════════════════════════
-// QUANTUM TUNNELING TAB
-// Real time-dependent Schrodinger solver (staggered leapfrog), not a
-// fake animation. Units: hbar = m = 1, so H = -0.5 d^2/dx^2 + V(x).
-// Validated separately: probability stays conserved to <0.3% over a
-// full run, and transmission falls off correctly as V0/E increases
-// (23% at V0=E down to 0.1% at V0=2.5E).
-// ═══════════════════════════════════════════════════════════════════
+// real time-dependent Schrodinger solver (staggered leapfrog), not a fake
+// animation. units: hbar = m = 1, so H = -0.5 d^2/dx^2 + V(x). checked
+// separately - probability stays conserved to <0.3% over a full run, and
+// transmission falls off correctly as V0/E increases (23% at V0=E down to
+// 0.1% at V0=2.5E).
 const TUNNEL_N   = 320;
 const TUNNEL_DX  = 1 / TUNNEL_N;
 const TUNNEL_DT  = 0.4 * TUNNEL_DX * TUNNEL_DX;
@@ -33,11 +30,11 @@ let tunnelDrawScale = 1;
 let tunnelBarrier = null; // { heightRatio, widthCells, V0, center, half }
 let tunnelInitialized = false;
 
-/* Wires the static controls (sliders/buttons already in index.html) —
-   called once from app.js's DOMContentLoaded. Safe to attach before the
-   tab has ever been visited: these controls are only reachable once the
-   Tunnel tab is active, and activating it runs ensureTunnelStarted()
-   first, which allocates tunnelPsiR/I before any listener could fire. */
+// wires the static controls already in index.html - called once from
+// app.js's DOMContentLoaded. safe before the tab's ever been visited: these
+// controls are only reachable once the tab's active, and activating it
+// runs ensureTunnelStarted() first which allocates tunnelPsiR/I before any
+// listener could fire.
 function initTunnelControls() {
   document.getElementById('tunnel-height').addEventListener('input', onTunnelSliderChange);
   document.getElementById('tunnel-width').addEventListener('input', onTunnelSliderChange);
@@ -49,11 +46,9 @@ function initTunnelControls() {
 
 function tunnelEnergy() { return TUNNEL_K0 * TUNNEL_K0 / 2; }
 
-/**
- * Applies the discretized Hamiltonian H = -0.5 d^2/dx^2 + V(x) to `psi`
- * via a centered finite difference, writing the result into `out`.
- * Boundaries are fixed to zero (infinite well), so waves don't wrap.
- */
+// applies the discretized Hamiltonian H = -0.5 d^2/dx^2 + V(x) to psi via
+// a centered finite difference, writes into out. boundaries fixed to zero
+// (infinite well) so waves don't wrap.
 function tunnelHpsi(psi, out) {
   const c = 0.5 / (TUNNEL_DX * TUNNEL_DX);
   for (let j = 1; j < TUNNEL_N - 1; j++) {
@@ -104,10 +99,10 @@ function tunnelLaunchWave() {
   tunnelElapsedSteps = 0;
 }
 
-/* One leapfrog step: advance psiR using the (already half-step-ahead)
-   psiI, then advance psiI using the freshly-updated psiR — each half of
-   the wavefunction always "sees" the other at the correct interleaved
-   time, which is what keeps this scheme both stable and norm-conserving. */
+// one leapfrog step: advance psiR using the already-half-step-ahead psiI,
+// then advance psiI using the freshly-updated psiR - each half always
+// sees the other at the correct interleaved time, which is what keeps
+// this stable and norm-conserving
 function tunnelStep() {
   tunnelHpsi(tunnelPsiI, tunnelHtmp);
   for (let j = 0; j < TUNNEL_N; j++) tunnelPsiR[j] += TUNNEL_DT * tunnelHtmp[j];
@@ -141,7 +136,7 @@ function drawTunnel() {
 
   const baseline = h * 0.86;
 
-  // ── barrier ─────────────────────────────────────────
+  // barrier
   const bx1 = (tunnelBarrier.center - tunnelBarrier.half) / TUNNEL_N * w;
   const bx2 = (tunnelBarrier.center + tunnelBarrier.half) / TUNNEL_N * w;
   const barrierPxH = 14 + (tunnelBarrier.heightRatio / 2.5) * h * 0.55;
@@ -159,11 +154,11 @@ function drawTunnel() {
   ctx.textBaseline = 'bottom';
   ctx.fillText('V₀', (bx1 + bx2) / 2, baseline - barrierPxH - 5);
 
-  // ── baseline axis ───────────────────────────────────
+  // baseline axis
   ctx.strokeStyle = isDark ? 'rgba(255,255,255,0.14)' : 'rgba(0,0,0,0.14)';
   ctx.beginPath(); ctx.moveTo(0, baseline); ctx.lineTo(w, baseline); ctx.stroke();
 
-  // ── |psi(x)|^2 filled probability cloud ─────────────
+  // |psi(x)|^2 filled probability cloud
   const glow = BLOCH_COLORS.arrow || (isDark ? 'rgba(255,255,255,0.9)' : 'rgba(10,10,10,0.85)');
   ctx.beginPath();
   ctx.moveTo(0, baseline);
@@ -185,7 +180,7 @@ function drawTunnel() {
   ctx.stroke();
   ctx.restore();
 
-  // ── faint oscillating carrier wave inside the envelope ──
+  // faint oscillating carrier wave inside the envelope
   ctx.save();
   ctx.globalAlpha = 0.4;
   ctx.strokeStyle = isDark ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.4)';
@@ -289,8 +284,8 @@ function ensureTunnelStarted() {
   if (!tunnelAnimId) tunnelAnimId = requestAnimationFrame(tunnelAnimate);
 }
 
-/* Pauses the rAF loop while the Tunnel tab isn't visible — called by
-   app.js's tab-switch handler instead of touching tunnelAnimId directly. */
+// pauses the rAF loop while this tab isn't visible - called from app.js's
+// tab-switch handler instead of touching tunnelAnimId directly
 function stopTunnelSim() {
   if (tunnelAnimId) {
     cancelAnimationFrame(tunnelAnimId);

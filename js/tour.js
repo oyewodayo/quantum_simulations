@@ -1,16 +1,15 @@
 'use strict';
-// First-run guided tour — shown once per browser (tracked via
-// localStorage) to orient new visitors. Depends on app.js's
-// switchToTab()/currentTab and core/tab-registry.js indirectly through
-// that. Loads right before app.js and is kicked off from app.js's
-// DOMContentLoaded, once every other tab is fully initialized.
+// first-run guided tour, shown once per browser (tracked in localStorage).
+// needs switchToTab()/currentTab from app.js, which is loaded after this
+// file and kicks the tour off on DOMContentLoaded once everything else
+// is initialized
 
 const TOUR_STORAGE_KEY = 'qe-tour-seen';
 
 const TOUR_STEPS = [
   {
     tab: 'qubit',
-    selector: 'nav',
+    selector: '#tab-sidebar',
     text: 'Each tab explores one quantum concept, building from a single qubit up to entanglement and wave phenomena. Click through them anytime.'
   },
   {
@@ -33,6 +32,10 @@ let tourHighlightEl = null;
 function startTourIfFirstVisit() {
   if (localStorage.getItem(TOUR_STORAGE_KEY)) return;
   tourIndex = 0;
+  // steps target Concepts-page elements, but Roadmap is the default landing
+  // view, so switch modes explicitly here or the tour tries to highlight
+  // something that's hidden with 0x0 dimensions
+  setAppMode('sim');
   buildTourDOM();
   showTourStep();
 }
@@ -63,10 +66,9 @@ function showTourStep() {
 
     target.classList.add('tour-highlight');
     tourHighlightEl = target;
-    // Elements inside <header> live in its own stacking context (it's
-    // position:fixed with its own z-index), so a highlighted child can't
-    // out-rank the backdrop just by raising its own z-index — the whole
-    // header needs to be raised instead.
+    // header is position:fixed with its own z-index / stacking context, so
+    // a highlighted child inside it can't out-rank the backdrop on its own -
+    // have to raise the whole header
     const headerAncestor = target.closest('header');
     if (headerAncestor) headerAncestor.classList.add('tour-raise-header');
 
@@ -79,8 +81,18 @@ function showTourStep() {
         <button class="btn-run" id="tour-next">${tourIndex === TOUR_STEPS.length - 1 ? 'Done' : 'Next'}</button>
       </div>
     `;
-    const top  = Math.min(window.innerHeight - 160, rect.bottom + 12);
-    const left = Math.min(window.innerWidth - 300, Math.max(12, rect.left));
+    // normally anchors below the target, but something tall like the
+    // full-height sidebar leaves no room, so fall back to the side instead
+    // of letting it run off screen
+    const popoverH = 170;
+    let top, left;
+    if (rect.bottom + 12 + popoverH <= window.innerHeight) {
+      top  = rect.bottom + 12;
+      left = Math.min(window.innerWidth - 300, Math.max(12, rect.left));
+    } else {
+      top  = Math.min(window.innerHeight - popoverH - 12, Math.max(12, rect.top));
+      left = Math.min(window.innerWidth - 300, rect.right + 12);
+    }
     tourPopover.style.top  = top + 'px';
     tourPopover.style.left = left + 'px';
 

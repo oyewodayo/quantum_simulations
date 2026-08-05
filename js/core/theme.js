@@ -1,13 +1,19 @@
 'use strict';
-// No file dependencies at load time. toggleTheme() reaches into renderers/draw
-// functions defined in later files (tabs/*.js, app.js), but only when the
-// theme button is actually clicked — long after every script has run.
+// theme-sensitive tabs/app.js register their own redraw via onThemeChange()
+// below, during their own init (always runs inside DOMContentLoaded, before
+// toggleTheme() could ever fire from a click), so this file never needs to
+// know which tabs exist or what they draw. Same registration trick as
+// tab-registry.js's onEnter/onLeave.
 
-// ─── THEME SYSTEM ────────────────────────────────────────────────────
 const THEME_STORAGE_KEY = 'qe-theme';
 
 let isDark = false;
 let BLOCH_COLORS = {};
+
+// canvases mostly, anything with theme-dependent colors registers its
+// redraw here instead of us having to call into tab-specific draw fns by name
+const themeChangeCallbacks = [];
+function onThemeChange(fn) { themeChangeCallbacks.push(fn); }
 
 function refreshThemeColors() {
   isDark = document.documentElement.getAttribute('data-theme') !== 'light';
@@ -26,9 +32,9 @@ function refreshThemeColors() {
   };
 }
 
-// Sets the header icon to match whatever data-theme is currently active
-// (called once on load, after the inline anti-flash script in <head> has
-// already applied any saved preference — see index.html).
+// syncs the header icon to whatever data-theme is already active, called
+// once on load, after the inline anti-flash script in <head> applies the
+// saved preference (see index.html)
 function syncThemeIcon() {
   const dark = document.documentElement.getAttribute('data-theme') !== 'light';
   document.getElementById('theme-icon').textContent = dark ? '☀' : '☾';
@@ -42,13 +48,5 @@ function toggleTheme() {
   localStorage.setItem(THEME_STORAGE_KEY, newTheme);
   document.getElementById('theme-icon').textContent = isDark ? '☾' : '☀';
   refreshThemeColors();
-  // Redraw all visible spheres immediately
-  [rendererMain, rendererGates, rendererCircuit].forEach(r => {
-    if (r) r.draw(r.cur.x, r.cur.y, r.cur.z);
-  });
-  // Redraw theme-sensitive canvases
-  drawClassicalSV(classicalSVState);
-  drawQuantumSV(svTheta);
-  drawCoin('coin1', coin1State);
-  drawCoin('coin2', coin2State);
+  themeChangeCallbacks.forEach(fn => fn());
 }

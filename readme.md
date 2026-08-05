@@ -2,19 +2,22 @@
 
 An interactive quantum computing simulation platform that visualizes quantum mechanics concepts through intuitive comparisons with classical systems. Built with pure JavaScript, HTML, and CSS.
 
-## 🌟 Overview
+## Overview
 
 Quantum Explorer transforms complex quantum mechanics into interactive visual experiences. From qubit superposition and quantum gates to entanglement and wave interference, this platform makes quantum concepts tangible through real-time visualization and hands-on experimentation.
 
-## ✨ Features
+## Features
 
-### 🎯 Qubit Explorer
+### Learning Roadmap
+A "Simulations / Roadmap" switch in the header toggles between the interactive simulator (below) and a lightweight learning tracker: **Lessons** (a short write-up per simulation, with a "Try it" button that jumps straight into that tab), **Progress Tracking** (a completed-lessons bar and best quiz score), and a **Quiz** covering the app's core concepts. Progress is stored locally in the browser — no account needed.
+
+### Qubit Explorer
 - **Classical vs Quantum Comparison**: Side-by-side interaction with classical bits and qubits
 - **Bloch Sphere Visualization**: Real-time 3D state representation with smooth animations
 - **State Vector Display**: Visualize probability amplitudes and superposition
 - **Preset States**: Quick-switch between |0⟩, |1⟩, |+⟩, |-⟩, |i⟩, |-i⟩
 
-### 🎮 Quantum Gates
+### Quantum Gates
 - **All Standard Gates**: H, X, Y, Z, S, T gates with visual feedback
 - **Rotation Gates**: Parametrized Rx/Ry/Rz with a live angle slider, alongside the fixed gate set
 - **Gate Matrix Display**: See the mathematical representation of each operation
@@ -29,7 +32,7 @@ Quantum Explorer transforms complex quantum mechanics into interactive visual ex
 - **2-Qubit Mode**: Switch to a real two-qubit circuit with a per-qubit gate palette and CNOT — build H + CNOT yourself and watch entanglement emerge in the |00⟩/|01⟩/|10⟩/|11⟩ probability bars
 - **Shareable Links**: Copy a link that reproduces the current qubit state or circuit for someone else to open
 
-### 📊 Measurement & Statistics
+### Measurement & Statistics
 - **Single Measurement**: Collapse superposition and observe the result
 - **Batch Measurement**: Run 10, 100, or 1000 measurements to see statistical convergence
 - **Histogram Visualization**: Watch probability distribution emerge from repeated measurements
@@ -52,7 +55,7 @@ Quantum Explorer transforms complex quantum mechanics into interactive visual ex
 - **2D Complex Plane**: See α|0⟩ + β|1⟩ represented geometrically
 - **Probability Bars**: Real-time amplitude visualization
 
-## 🚀 Getting Started
+## Getting Started
 
 ### Prerequisites
 - Modern web browser (Chrome, Firefox, Edge, Safari)
@@ -99,6 +102,7 @@ quantum-explorer/
     │   ├── entanglement-tab.js
     │   ├── tunneling-tab.js     # Real time-dependent Schrödinger solver
     │   └── interference-tab.js # Double-slit wave + rejection-sampled hits
+    ├── roadmap.js                 # Roadmap mode: lessons, progress tracking, quiz
     ├── tour.js                   # First-run guided tour (shown once, via localStorage)
     └── app.js                    # App state + DOMContentLoaded init (loads last)
 ```
@@ -112,7 +116,7 @@ All scripts are plain classic `<script>` tags (no bundler, no ES modules) loaded
 node tests/run.js
 ```
 
-## 🎯 How It Works
+## How It Works
 
 ### Quantum Engine
 The simulation uses a complete quantum state vector representation:
@@ -133,7 +137,7 @@ The simulation uses a complete quantum state vector representation:
 - **Interactive Controls**: Sliders, buttons, and click interactions
 - **Explanatory Text**: Each interaction provides educational context
 
-## 🧪 Interactive Examples
+## Interactive Examples
 
 ### Explore Superposition
 1. Open the **Qubit** tab
@@ -159,14 +163,14 @@ The simulation uses a complete quantum state vector representation:
 3. Watch individual dots accumulate
 4. Switch to **Which-Path** to see the pattern vanish
 
-## 🎨 Theme
+## Theme
 
 The interface supports both light and dark themes:
 - **Light Theme**: Clean, bright, ideal for presentations
 - **Dark Theme**: Immersive, reduces eye strain
 - **Automatic Toggle**: Click the moon/sun icon in the header
 
-## 🔧 Technical Details
+## Technical Details
 
 ### Core Technologies
 - **HTML5**: Semantic structure with custom data attributes
@@ -186,7 +190,7 @@ The interface supports both light and dark themes:
 - **Canvas Efficient**: Pixel manipulation for wave rendering
 - **Minimal DOM Updates**: Batched state updates
 
-## 📚 Educational Value
+## Educational Value
 
 This tool is designed for:
 - **Students**: Learn quantum computing concepts visually
@@ -203,7 +207,7 @@ This tool is designed for:
 - Wave interference and the double-slit experiment
 - The measurement problem in quantum mechanics
 
-## 🤝 Contributing
+## Contributing
 
 Contributions are welcome! Here's how you can help:
 
@@ -218,9 +222,9 @@ Contributions are welcome! Here's how you can help:
 - Test across different browsers
 - Update README for significant changes
 
-## 📄 License
+## License
 
-## 🌐 Explore More
+## Explore More
 
 - **Quantum Computing**: Learn about qubits, gates, and algorithms
 - **CERN**: Discover the world's leading particle physics laboratory

@@ -1,10 +1,15 @@
 'use strict';
-// Depends on: core/theme.js (isDark, BLOCH_COLORS), read inside draw() at
-// call time — kept after theme.js in load order for readability only.
-// enableTooltips() also depends on core/dom-utils.js (showBlochTooltip/
-// hideBlochTooltip), which loads before this file.
-
-// ─── BLOCH RENDERER (theme-aware) ────────────────────────────────────
+// needs core/theme.js (isDark), read inside draw() at call time - kept
+// after theme.js in load order just for readability. enableTooltips() also
+// needs core/dom-utils.js (showBlochTooltip/hideBlochTooltip), which loads
+// before this file.
+//
+// styled as an Earth globe (ocean gradient, simplified continents, a polar
+// axle rod poking through top and bottom) instead of an abstract wireframe
+// sphere - the state is a small pin sitting on the surface with a callout
+// bubble, not a vector arrow from the center. the projection/drag math
+// (project/unproject) is unchanged from the original wireframe version,
+// only what gets drawn changed.
 class BlochRenderer {
   constructor(canvas) {
     this.canvas = canvas;
@@ -14,18 +19,17 @@ class BlochRenderer {
     this.r      = Math.min(canvas.width, canvas.height) * 0.37;
     this.cur    = { x: 0, y: 0, z: 1 };
     this.tgt    = { x: 0, y: 0, z: 1 };
+    this.label  = '';      // current state's short ket label, shown in the surface-pin callout
     this.animId = null;
-    this.hotspots = [];   // axis-label screen positions, refreshed each draw() — used for hover tooltips
-    this._dragPrev = null; // last 3D point during an active drag — used by unproject() for continuity
+    this.hotspots = [];   // axis-label screen positions, refreshed each draw() - used for hover tooltips
+    this._dragPrev = null; // last 3D point during an active drag, used by unproject() for continuity
   }
 
-  /**
-   * Projects a 3D Bloch-sphere point to 2D canvas coordinates using a
-   * fixed viewing angle (azimuth -30°, elevation 18°). Returns the
-   * rotated depth `d` alongside screen coords `sx`/`sy` — `d` is used
-   * by drawCircle() to split each great-circle into a solid front arc
-   * (d > 0, facing the viewer) and a dashed back arc (d <= 0).
-   */
+  // projects a 3D Bloch-sphere point to 2D canvas coords using a fixed
+  // viewing angle (azimuth -30°, elevation 18°). returns rotated depth `d`
+  // alongside screen coords sx/sy - drawCircle() uses d to split each
+  // great-circle into a solid front arc (d > 0, facing viewer) and a
+  // dashed back arc (d <= 0)
   project(x, y, z) {
     const az = -Math.PI / 6;
     const el =  Math.PI / 10;
@@ -42,7 +46,11 @@ class BlochRenderer {
     };
   }
 
-  animateTo(x, y, z) {
+  // label, if given, replaces the callout text and gets remembered for
+  // later no-label draw()/animateTo() calls (the theme-toggle redraw in
+  // theme.js doesn't know any tab's current state, for example)
+  animateTo(x, y, z, label) {
+    if (label !== undefined) this.label = label;
     this.tgt = { x, y, z };
     if (this.animId) cancelAnimationFrame(this.animId);
     const step = () => {
@@ -102,6 +110,108 @@ class BlochRenderer {
     ctx.restore();
   }
 
+  // extra latitude rings (parallels, fixed θ) and longitude rings
+  // (meridians, fixed φ) beyond the equator/axis-meridian great circles
+  // drawn separately - the standard globe-illustration graticule, 30°
+  // spacing like lines of lat/long on Earth. each meridian pair (φ and
+  // φ+180°) is one closed great circle through both poles, same trick as
+  // the |+⟩/|i⟩ axis meridians, so this just reuses drawCircle().
+  drawGlobeGrid(color) {
+    [30, 60, 120, 150].forEach(deg => {
+      const theta = deg * Math.PI / 180;
+      const z = Math.cos(theta), rad = Math.sin(theta);
+      this.drawCircle(t => [rad * Math.cos(t), rad * Math.sin(t), z], color, color, 0.6, 0.35);
+    });
+    [30, 60, 120, 150].forEach(deg => {
+      const phi = deg * Math.PI / 180;
+      this.drawCircle(t => [Math.sin(t) * Math.cos(phi), Math.sin(t) * Math.sin(phi), Math.cos(t)], color, color, 0.6, 0.35);
+    });
+  }
+
+  // the polar axle - drawn before the sphere fill so the segment between
+  // the two poles hides behind the opaque globe and only the two
+  // protruding stubs show (like a rod through a globe's mounting bracket)
+  drawPolarRod() {
+    const ctx = this.ctx;
+    const topOut    = this.project(0, 0, 1.42);
+    const topSphere = this.project(0, 0, 1.0);
+    const botSphere = this.project(0, 0, -1.0);
+    const botOut    = this.project(0, 0, -1.42);
+    const rodColor  = isDark ? '#B8BEC9' : '#DEE2E7';
+    const rodShadow = isDark ? '#6E7480' : '#AEB4BC';
+    const rw = Math.max(3, this.r * 0.05);
+
+    [[topOut, topSphere], [botSphere, botOut]].forEach(([a, b]) => {
+      ctx.save();
+      ctx.lineCap = 'round';
+      ctx.strokeStyle = rodColor;
+      ctx.lineWidth   = rw;
+      ctx.beginPath(); ctx.moveTo(a.sx, a.sy); ctx.lineTo(b.sx, b.sy); ctx.stroke();
+      // thin shadow stripe down one side, subtle cylindrical look
+      ctx.strokeStyle = rodShadow;
+      ctx.lineWidth   = rw * 0.32;
+      ctx.beginPath();
+      ctx.moveTo(a.sx + rw * 0.24, a.sy);
+      ctx.lineTo(b.sx + rw * 0.24, b.sy);
+      ctx.stroke();
+      ctx.restore();
+    });
+  }
+
+  // a handful of simplified, deliberately non-geographic "continent" blobs
+  // (θ/φ polygons in degrees) so the globe doesn't read as a flat blue
+  // disc. each blob gets skipped once its average depth faces away from
+  // the viewer - cheap approximation (real per-edge clipping against the
+  // terminator isn't worth it for decoration), just pops the whole shape
+  // near the horizon instead of clipping smoothly
+  drawContinents() {
+    const ctx = this.ctx;
+    const CONTINENTS = [
+      [[50,255],[38,285],[52,312],[74,302],[96,283],[100,255],[84,236],[64,233]],
+      [[42,8],[33,34],[48,56],[74,50],[94,28],[88,4],[68,-12],[54,-6]],
+      [[52,108],[42,138],[58,164],[84,158],[108,138],[98,108],[78,92]]
+    ];
+    const color = isDark ? 'rgba(88,198,120,0.88)' : 'rgba(58,168,94,0.92)';
+    CONTINENTS.forEach(poly => {
+      const pts = poly.map(([thetaDeg, phiDeg]) => {
+        const theta = thetaDeg * Math.PI / 180, phi = phiDeg * Math.PI / 180;
+        return this.project(Math.sin(theta) * Math.cos(phi), Math.sin(theta) * Math.sin(phi), Math.cos(theta));
+      });
+      const avgD = pts.reduce((s, p) => s + p.d, 0) / pts.length;
+      if (avgD <= 0.08) return;
+      ctx.beginPath();
+      pts.forEach((p, i) => i === 0 ? ctx.moveTo(p.sx, p.sy) : ctx.lineTo(p.sx, p.sy));
+      ctx.closePath();
+      ctx.fillStyle = color;
+      ctx.fill();
+    });
+  }
+
+  // small N/S tag on the sphere surface at each pole - Earth-globe framing
+  // alongside the |0⟩/|1⟩ ket labels that carry the actual physics
+  drawPoleMarker(pos, label) {
+    const p  = this.project(...pos);
+    const fs = Math.max(8, this.r * 0.076);
+    const ctx = this.ctx;
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(p.sx, p.sy, 2, 0, 2 * Math.PI);
+    ctx.fillStyle = '#fff';
+    ctx.fill();
+    ctx.font = `600 ${fs}px "JetBrains Mono", monospace`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = label === 'N' ? 'bottom' : 'top';
+    const ly = p.sy + (label === 'N' ? -5 : 5);
+    // stroked outline behind the fill - without it the label vanishes
+    // against the (also near-white) polar rod right behind it
+    ctx.lineWidth = 3;
+    ctx.strokeStyle = 'rgba(0,0,0,0.55)';
+    ctx.strokeText(label, p.sx, ly);
+    ctx.fillStyle = 'rgba(255,255,255,0.9)';
+    ctx.fillText(label, p.sx, ly);
+    ctx.restore();
+  }
+
   drawAxis(pos, neg, color, posLabel, negLabel) {
     const ctx = this.ctx;
     const p   = this.project(...pos);
@@ -121,7 +231,6 @@ class BlochRenderer {
     ctx.setLineDash([]);
 
     ctx.font         = `${fs}px "JetBrains Mono", monospace`;
-    ctx.fillStyle    = color;
     ctx.textAlign    = 'center';
     ctx.textBaseline = 'middle';
     const off = this.r * 0.16;
@@ -129,6 +238,14 @@ class BlochRenderer {
     const posY = p.sy + (p.sy < this.cy ? -off*0.4 :  off*0.4);
     const negX = n.sx + (n.sx > this.cx ?  off*0.7 : -off*0.7);
     const negY = n.sy + (n.sy < this.cy ? -off*0.4 :  off*0.4);
+    // same reasoning as the N/S pole tags - the Z axis labels sit right
+    // where the polar rod pokes out, close enough in tone (both near-white)
+    // that a plain fill just disappears
+    ctx.lineWidth   = 3;
+    ctx.strokeStyle = 'rgba(0,0,0,0.55)';
+    ctx.strokeText(posLabel, posX, posY);
+    ctx.strokeText(negLabel, negX, negY);
+    ctx.fillStyle = color;
     ctx.fillText(posLabel, posX, posY);
     ctx.fillText(negLabel, negX, negY);
     ctx.restore();
@@ -137,106 +254,134 @@ class BlochRenderer {
     this.hotspots.push({ sx: negX, sy: negY, text: negLabel });
   }
 
-  draw(bx, by, bz) {
+  // the state itself: a small pin on the globe's surface at the qubit's
+  // point (instead of an arrow reaching out from the center), plus a
+  // leader line to a rounded label bubble with its short ket. the callout
+  // offset follows the tip's direction from the sphere's center so it
+  // always leans away from the globe instead of overlapping it
+  drawStateMarker(bx, by, bz, label) {
+    const ctx = this.ctx;
+    const { r } = this;
+    const tip = this.project(bx, by, bz);
+
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(tip.sx, tip.sy, r * 0.055, 0, 2 * Math.PI);
+    ctx.fillStyle = '#FF6B4A';
+    ctx.fill();
+    ctx.strokeStyle = '#fff';
+    ctx.lineWidth = 1.4;
+    ctx.stroke();
+    ctx.restore();
+
+    if (!label) return;
+
+    const dx = tip.sx - this.cx, dy = tip.sy - this.cy;
+    const len = Math.hypot(dx, dy) || 1;
+    const ldx = dx / len, ldy = dy / len;
+    const leadLen = r * 0.55;
+    const lx = tip.sx + ldx * leadLen;
+    const ly = tip.sy + ldy * leadLen - r * 0.18;
+
+    const fs = Math.max(9, r * 0.1);
+    ctx.save();
+    ctx.font = `600 ${fs}px 'Space Grotesk', sans-serif`;
+    const padX = 7, padY = 5, margin = 4;
+    const textW = ctx.measureText(label).width;
+    const boxW  = textW + padX * 2, boxH = fs + padY * 2;
+
+    // clamp the bubble so it stays fully inside the canvas - a tip near the
+    // sphere's edge (|+⟩-ish states) would otherwise push the leader line
+    // and bubble right off the side, and there's no scroll/overflow to
+    // recover from on a fixed-size canvas
+    let boxX = lx - (ldx < 0 ? boxW : 0);
+    let boxY = ly - boxH / 2;
+    boxX = Math.min(Math.max(boxX, margin), this.canvas.width  - boxW - margin);
+    boxY = Math.min(Math.max(boxY, margin), this.canvas.height - boxH - margin);
+
+    // leader line points from the pin to whichever box edge is nearest, so
+    // it still reads as "this label belongs to that pin" after clamping
+    // moves the box
+    const boxCx = boxX + boxW / 2, boxCy = boxY + boxH / 2;
+    const edgeX = Math.min(Math.max(tip.sx, boxX), boxX + boxW);
+    const edgeY = Math.min(Math.max(tip.sy, boxY), boxY + boxH);
+
+    ctx.strokeStyle = 'rgba(0,0,0,0.35)';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(tip.sx, tip.sy);
+    ctx.lineTo(edgeX, edgeY);
+    ctx.stroke();
+
+    ctx.fillStyle = 'rgba(255,255,255,0.94)';
+    ctx.beginPath();
+    if (ctx.roundRect) ctx.roundRect(boxX, boxY, boxW, boxH, 5);
+    else ctx.rect(boxX, boxY, boxW, boxH);
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(0,0,0,0.15)';
+    ctx.stroke();
+
+    ctx.fillStyle = '#1a1a1a';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(label, boxCx, boxCy);
+    ctx.restore();
+  }
+
+  // label, if given, replaces the callout text (see the constructor's
+  // this.label comment) - omit it to redraw the last-known label
+  // unchanged, which is what the theme-toggle redraw in theme.js relies on
+  draw(bx, by, bz, label) {
+    if (label !== undefined) this.label = label;
     const ctx = this.ctx;
     const { cx, cy, r } = this;
-    const BC  = BLOCH_COLORS;
 
     ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
     this.hotspots.length = 0;
 
-    // ── Sphere ────────────────────────────────────────
-    const grd = ctx.createRadialGradient(cx - r*0.18, cy - r*0.28, r*0.04, cx, cy, r);
-    grd.addColorStop(0, BC.sphereBg);
-    grd.addColorStop(1, isDark ? 'rgba(255,255,255,0)' : 'rgba(0,0,0,0)');
+    // polar axle, behind the globe - only its stubs will show
+    this.drawPolarRod();
+
+    // Earth-like sphere
+    const grd = ctx.createRadialGradient(cx - r*0.32, cy - r*0.36, r*0.05, cx, cy, r*1.05);
+    grd.addColorStop(0,    isDark ? '#6FA3E8' : '#8FC1F5');
+    grd.addColorStop(0.55, isDark ? '#2F63B0' : '#3E7FD6');
+    grd.addColorStop(1,    isDark ? '#132A52' : '#1D4A8C');
     ctx.beginPath();
     ctx.arc(cx, cy, r, 0, 2 * Math.PI);
-    ctx.fillStyle   = grd;
+    ctx.fillStyle = grd;
     ctx.fill();
-    ctx.strokeStyle = BC.sphereRing;
-    ctx.lineWidth   = 1;
+    ctx.strokeStyle = 'rgba(255,255,255,0.35)';
+    ctx.lineWidth = 1;
     ctx.stroke();
 
-    // ── Great circles ──────────────────────────────────
-    const gridDim = isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)';
-    this.drawCircle(t => [Math.cos(t), Math.sin(t), 0], BC.grid, BC.gridBack);
-    this.drawCircle(t => [Math.cos(t), 0, Math.sin(t)], gridDim, BC.gridBack);
-    this.drawCircle(t => [0, Math.cos(t), Math.sin(t)], gridDim, BC.gridBack);
+    this.drawContinents();
 
-    // ── Axes ───────────────────────────────────────────
-    this.drawAxis([0, 0, 1.12], [0, 0, -1.12], BC.axisZ,     '|0⟩', '|1⟩');
-    this.drawAxis([1.12,0,0], [-1.12,0,0],      BC.axisMuted, '|+⟩', '|-⟩');
-    this.drawAxis([0, 1.12,0], [0,-1.12,0],     BC.axisMuted, '|i⟩', '|-i⟩');
+    // lat/long grid on top of the ocean
+    const gridColor    = 'rgba(255,255,255,0.30)';
+    const gridColorDim = 'rgba(255,255,255,0.16)';
+    this.drawCircle(t => [Math.cos(t), Math.sin(t), 0], gridColor, gridColorDim, 1, 0.6);
+    this.drawCircle(t => [Math.cos(t), 0, Math.sin(t)], gridColorDim, gridColorDim, 0.7, 0.4);
+    this.drawCircle(t => [0, Math.cos(t), Math.sin(t)], gridColorDim, gridColorDim, 0.7, 0.4);
+    this.drawGlobeGrid(gridColorDim);
 
-    // ── Projection dashes ──────────────────────────────
-    const o    = this.project(0,  0,  0);
-    const tip  = this.project(bx, by, bz);
-    const proj = this.project(bx, by, 0);
+    this.drawAxis([0, 0, 1.12], [0, 0, -1.12], '#ffffff',            '|0⟩', '|1⟩');
+    this.drawAxis([1.12,0,0], [-1.12,0,0],     'rgba(255,255,255,0.72)', '|+⟩', '|-⟩');
+    this.drawAxis([0, 1.12,0], [0,-1.12,0],    'rgba(255,255,255,0.72)', '|i⟩', '|-i⟩');
 
-    ctx.save();
-    ctx.strokeStyle = BC.proj;
-    ctx.lineWidth   = 1;
-    ctx.setLineDash([3, 5]);
-    ctx.beginPath(); ctx.moveTo(o.sx, o.sy);    ctx.lineTo(proj.sx, proj.sy); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(proj.sx, proj.sy); ctx.lineTo(tip.sx,  tip.sy);  ctx.stroke();
-    ctx.setLineDash([]);
-    ctx.restore();
+    this.drawPoleMarker([0, 0, 1],  'N');
+    this.drawPoleMarker([0, 0, -1], 'S');
 
-    // Equatorial shadow dot
-    ctx.beginPath();
-    ctx.arc(proj.sx, proj.sy, 2.5, 0, 2*Math.PI);
-    ctx.fillStyle = BC.proj;
-    ctx.fill();
-
-    // ── State vector arrow (glow in dark, crisp in light) ──
-    ctx.save();
-    if (isDark) {
-      ctx.shadowBlur  = 16;
-      ctx.shadowColor = BC.arrow;
-    }
-    ctx.strokeStyle = BC.arrow;
-    ctx.lineWidth   = 2.4;
-    ctx.lineCap     = 'round';
-    ctx.beginPath();
-    ctx.moveTo(o.sx, o.sy);
-    ctx.lineTo(tip.sx, tip.sy);
-    ctx.stroke();
-
-    // Arrowhead
-    const ang = Math.atan2(tip.sy - o.sy, tip.sx - o.sx);
-    const as  = r * 0.082;
-    ctx.beginPath();
-    ctx.moveTo(tip.sx, tip.sy);
-    ctx.lineTo(tip.sx - as * Math.cos(ang - 0.4), tip.sy - as * Math.sin(ang - 0.4));
-    ctx.lineTo(tip.sx - as * Math.cos(ang + 0.4), tip.sy - as * Math.sin(ang + 0.4));
-    ctx.closePath();
-    ctx.fillStyle = BC.arrow;
-    ctx.fill();
-
-    // Tip dot
-    if (isDark) ctx.shadowBlur = 22;
-    ctx.beginPath();
-    ctx.arc(tip.sx, tip.sy, r * 0.030, 0, 2 * Math.PI);
-    ctx.fillStyle = BC.tip;
-    ctx.fill();
-    ctx.restore();
-
-    // Origin dot
-    ctx.beginPath();
-    ctx.arc(o.sx, o.sy, 2, 0, 2 * Math.PI);
-    ctx.fillStyle = isDark ? 'rgba(255,255,255,0.38)' : 'rgba(0,0,0,0.32)';
-    ctx.fill();
+    this.drawStateMarker(bx, by, bz, this.label);
   }
 
-  /**
-   * Inverse of project(): given a screen point, reconstructs the unit
-   * Bloch vector whose projection lands there. The projection collapses
-   * one dimension (depth), so each screen point actually matches two
-   * possible sphere points (near/far side) — the ambiguity is resolved
-   * by picking whichever candidate is closer to `_dragPrev` (the point
-   * from the previous call), so a continuous drag traces a smooth path
-   * across the sphere instead of snapping to a fixed hemisphere.
-   */
+  // inverse of project(): given a screen point, reconstructs the unit
+  // Bloch vector whose projection lands there. the projection collapses
+  // one dimension (depth), so each screen point actually matches two
+  // possible sphere points (near/far side) - resolved by picking whichever
+  // candidate is closer to _dragPrev (the point from the previous call),
+  // so a continuous drag traces a smooth path instead of snapping to a
+  // fixed hemisphere
   unproject(mx, my) {
     const az = -Math.PI / 6;
     const el =  Math.PI / 10;
@@ -274,11 +419,9 @@ class BlochRenderer {
     return { theta, phi };
   }
 
-  /**
-   * Makes the sphere directly draggable: mousedown/touchstart begins
-   * tracking from the currently-displayed arrow position (`this.cur`),
-   * and onDrag(theta, phi) fires on every subsequent move.
-   */
+  // makes the sphere directly draggable: mousedown/touchstart starts
+  // tracking from the currently-displayed state position (this.cur), and
+  // onDrag(theta, phi) fires on every move after that
   enableDrag(onDrag) {
     const canvas = this.canvas;
     let dragging = false;
@@ -314,7 +457,7 @@ class BlochRenderer {
     window.addEventListener('touchend', end);
   }
 
-  /** Shows a small tooltip explaining an axis ket when the mouse hovers its label. */
+  // small tooltip explaining an axis ket on hover
   enableTooltips() {
     const canvas = this.canvas;
     canvas.addEventListener('mousemove', e => {
@@ -332,8 +475,8 @@ class BlochRenderer {
   }
 }
 
-// Plain-language meaning of each basis-state label drawn on the sphere,
-// shown in the hover tooltip enabled by enableTooltips().
+// plain-language meaning of each basis-state label, shown in the hover
+// tooltip from enableTooltips()
 const BLOCH_KET_MEANINGS = {
   '|0⟩':  'Definite 0 — the north pole. A classical bit can only ever be here or at |1⟩.',
   '|1⟩':  'Definite 1 — the south pole.',

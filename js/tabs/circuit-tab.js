@@ -1,31 +1,47 @@
 'use strict';
 // Depends on: core/gates.js (GATES), core/utils.js (delay),
-// core/dom-utils.js (copyShareLink),
+// core/dom-utils.js (copyShareLink, buildGatePalette),
 // app.js state (circuitGates, SLOT_COUNT, qubitCircuit, rendererCircuit).
 
-// ═══════════════════════════════════════════════════════════════════
-// CIRCUIT TAB
-// ═══════════════════════════════════════════════════════════════════
+// three presets: a superposition (H), a plain bit flip (X), and a
+// Z-then-H sandwich that makes Z's otherwise-invisible phase flip show up
+// as an actual state change - matches Z's own "hand it to a Hadamard"
+// explain text in gates.js
+const CIRCUIT_PRESETS = [
+  { name: 'Superposition', gates: ['H'] },
+  { name: 'Bit Flip',      gates: ['X'] },
+  { name: 'Hidden Phase',  gates: ['H', 'Z', 'H'] }
+];
+
+function loadCircuitPreset(preset) {
+  circuitGates = [...preset.gates];
+  renderCircuitSlots();
+  runCircuit();
+}
+
 function initCircuitTab() {
   document.getElementById('btn-run-circuit').addEventListener('click', runCircuit);
   document.getElementById('btn-clear-circuit').addEventListener('click', clearCircuit);
   document.getElementById('btn-share-circuit').addEventListener('click', e => {
     copyShareLink({ tab: 'circuit', circuit: circuitGates.join(',') }, e.currentTarget);
   });
+  document.querySelectorAll('.mode-btn[data-circuit-domain]').forEach(btn =>
+    btn.addEventListener('click', () => setCircuitDomain(btn.dataset.circuitDomain)));
+  renderTryMe('circuit-try-me', CIRCUIT_PRESETS, loadCircuitPreset);
+}
+
+// top-level Classical/Quantum switch, sits above the quantum builder's own
+// 1Q/2Q/3Q sub-toggle (setCircuitMode in circuit-multiqubit-tab.js) - same
+// two-tier pattern as Concept Map/My Progress on the home page
+function setCircuitDomain(domain) {
+  document.querySelectorAll('.mode-btn[data-circuit-domain]').forEach(btn =>
+    btn.classList.toggle('active', btn.dataset.circuitDomain === domain));
+  document.getElementById('circuit-classical-panel').style.display = domain === 'classical' ? '' : 'none';
+  document.getElementById('circuit-quantum-panel').style.display   = domain === 'quantum'   ? '' : 'none';
 }
 
 function buildCircuitPalette() {
-  const palette = document.getElementById('circuit-palette');
-  Object.entries(GATES).forEach(([key, gate]) => {
-    const btn = document.createElement('button');
-    btn.className         = 'circuit-gate-btn';
-    btn.textContent       = gate.name;
-    btn.style.color       = gate.color;
-    btn.style.borderColor = gate.color + '55';
-    btn.title   = gate.desc;
-    btn.addEventListener('click', () => addGateToCircuit(key));
-    palette.appendChild(btn);
-  });
+  buildGatePalette('circuit-palette', key => addGateToCircuit(key));
 }
 
 function buildCircuitSlots() {
@@ -70,7 +86,12 @@ function removeCircuitGate(i) {
 }
 
 function renderCircuitSlots() {
-  const slots = document.querySelectorAll('.gate-slot');
+  // Scoped to #gate-slots — the Classical Circuit builder (classical-
+  // circuit-tab.js) has its own, separate set of .gate-slot elements on
+  // the same page; an unscoped query here used to silently match those
+  // first (they sit earlier in the DOM) and write gate labels into the
+  // wrong wire, leaving this one always blank.
+  const slots = document.querySelectorAll('#gate-slots .gate-slot');
   slots.forEach((slot, i) => {
     const key = circuitGates[i];
     if (key) {
@@ -79,6 +100,13 @@ function renderCircuitSlots() {
       slot.style.color       = g.color;
       slot.style.borderColor = g.color;
       slot.className = 'gate-slot filled';
+    } else if (i === 0 && circuitGates.length === 0) {
+      // Empty-state hint: the wire is otherwise just 8 blank dashed boxes
+      // with no cue that clicking a palette gate above is what fills them.
+      slot.textContent = '+';
+      slot.style.color = '';
+      slot.style.borderColor = '';
+      slot.className = 'gate-slot empty gate-slot-hint';
     } else {
       slot.textContent       = '';
       slot.style.color       = '';
@@ -88,16 +116,31 @@ function renderCircuitSlots() {
   });
 }
 
+// Run History (circuit-builder rollback) - snapshots the qubit's exact
+// (theta, phi) after each step of the latest Run, shown as clickable chips
+// (reuses .hist-tag like everything else). rebuilt fresh each Run rather
+// than accumulated, same as the Try Me history strips. circuitRunning
+// guards against a rollback click or second Run racing an animation in
+// progress.
+let circuitRunHistory   = [];
+let circuitHistoryCursor = -1;
+let circuitRunning       = false;
+
 async function runCircuit() {
+  if (circuitRunning) return;
   if (circuitGates.length === 0) {
     setCircuitStatus('Add gates first');
     setCircuitExplainer('The wire is empty — there\'s no path to walk yet. Click gates in the palette above to lay one down, then press Run.');
     return;
   }
+  circuitRunning = true;
   qubitCircuit = new Qubit();
-  const slots  = document.querySelectorAll('.gate-slot');
+  const slots  = document.querySelectorAll('#gate-slots .gate-slot'); // see renderCircuitSlots()'s comment above — same scoping fix
   setCircuitStatus('Running…');
   setCircuitExplainer('The qubit steps onto the wire at |0⟩ and starts walking the line, left to right…');
+  circuitRunHistory = [];
+  circuitHistoryCursor = -1;
+  renderCircuitHistory();
 
   for (let i = 0; i < circuitGates.length; i++) {
     const key  = circuitGates[i];
@@ -108,14 +151,60 @@ async function runCircuit() {
     await delay(320);
     qubitCircuit.applyGate(gate.matrix);
     updateCircuitUI();
+    const b = qubitCircuit.getBloch();
+    const p0 = Math.round(qubitCircuit.prob0() * 100);
+    const p1 = Math.round(qubitCircuit.prob1() * 100);
+    const explain = `<strong style="color:${gate.color}">Step ${i + 1}: ${gate.name} — ${gate.desc}.</strong> ${gate.explain} <br><br>State is now <span style="font-family:'JetBrains Mono',monospace">${qubitCircuit.getFormula()}</span> — ${p0}% |0⟩, ${p1}% |1⟩.`;
+    circuitRunHistory.push({
+      theta: b.theta, phi: b.phi, label: String(i + 1), color: gate.color,
+      title: `Step ${i + 1}: ${gate.name} — ${qubitCircuit.getFormula()}`, explain
+    });
+    circuitHistoryCursor = circuitRunHistory.length - 1;
+    renderCircuitHistory();
     await delay(130);
     slots[i].classList.remove('running');
     slots[i].style.boxShadow = '';
   }
+  circuitRunning = false;
   setCircuitStatus(`Done · ${qubitCircuit.getLabel()}`);
   const p0 = Math.round(qubitCircuit.prob0() * 100);
   const p1 = Math.round(qubitCircuit.prob1() * 100);
   setCircuitExplainer(`Journey complete. After passing through ${circuitGates.map(k => GATES[k].name).join(' → ')}, the qubit arrives at ${qubitCircuit.getFormula()} — a ${p0}% / ${p1}% shot at |0⟩ vs |1⟩ if you measured it right now.`);
+}
+
+function renderCircuitHistory() {
+  const hist = document.getElementById('circuit-history');
+  if (!hist) return;
+  if (!circuitRunHistory.length) { hist.innerHTML = '<span class="muted-text">—</span>'; return; }
+  hist.innerHTML = '';
+  circuitRunHistory.forEach((entry, i) => {
+    const chip = document.createElement('button');
+    chip.type = 'button';
+    chip.className = 'hist-tag' + (i === circuitHistoryCursor ? ' is-current' : '');
+    chip.style.color = entry.color;
+    chip.style.borderColor = entry.color + '44';
+    chip.textContent = entry.label;
+    chip.title = entry.title;
+    chip.addEventListener('click', () => {
+      if (circuitRunning) return;
+      restoreCircuitHistoryStep(i);
+    });
+    hist.appendChild(chip);
+  });
+}
+
+// jumps straight to step i's recorded (theta, phi) instead of replaying
+// gates from |0⟩, and puts the explainer back to the full gate.explain
+// writeup it showed at that step, not the terse "Checkpoint N of M" line
+function restoreCircuitHistoryStep(i) {
+  const entry = circuitRunHistory[i];
+  if (!entry) return;
+  circuitHistoryCursor = i;
+  qubitCircuit.setState(entry.theta, entry.phi);
+  updateCircuitUI();
+  renderCircuitHistory();
+  setCircuitStatus(`Step ${entry.label} of ${circuitRunHistory.length}`);
+  setCircuitExplainer(entry.explain);
 }
 
 function clearCircuit() {
@@ -125,6 +214,9 @@ function clearCircuit() {
   updateCircuitUI();
   setCircuitStatus('');
   setCircuitExplainer('Route cleared. Lay down a path by clicking gates above — each one claims the next checkpoint on the wire. Press Run and the qubit walks it from |0⟩ to the end, one stop at a time.');
+  circuitRunHistory = [];
+  circuitHistoryCursor = -1;
+  renderCircuitHistory();
 }
 
 function setCircuitExplainer(msg) {
@@ -135,7 +227,7 @@ function updateCircuitUI() {
   const b  = qubitCircuit.getBloch();
   const p0 = qubitCircuit.prob0() * 100;
   const p1 = qubitCircuit.prob1() * 100;
-  rendererCircuit.animateTo(b.x, b.y, b.z);
+  rendererCircuit.animateTo(b.x, b.y, b.z, qubitCircuit.getLabel());
   document.getElementById('bloch-circuit').setAttribute('aria-label',
     `Bloch sphere showing the circuit's output state. State: ${qubitCircuit.getFormula()}.`);
   document.getElementById('label-circuit').textContent = qubitCircuit.getLabel();
