@@ -1,0 +1,58 @@
+/* bloch sphere chrome - card wrapper, hover tooltip, and the pulse
+   animation fired alongside a gate application. actual 3D rendering is
+   in js/core/bloch-renderer.js, this is just the surrounding DOM/CSS.
+   needs base.css */
+
+.bloch-wrap {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 14px 14px 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  box-shadow: var(--shadow-md);
+  transition: background 0.28s, border-color 0.28s, box-shadow 0.28s;
+}
+
+/* fires alongside .gate-btn.pulsing when a gate is applied so the click
+   and the sphere rotating read as one action, not two separate things */
+@keyframes bloch-wrap-pulse {
+  0%   { box-shadow: var(--shadow-md), 0 0 0 0 var(--zero-dim); }
+  40%  { box-shadow: var(--shadow-md), 0 0 0 10px var(--zero-dim); }
+  100% { box-shadow: var(--shadow-md), 0 0 0 0 transparent; }
+}
+.bloch-wrap.pulsing { animation: bloch-wrap-pulse 0.55s ease-out; }
+@media (prefers-reduced-motion: reduce) {
+  .bloch-wrap.pulsing { animation: none; }
+}
+
+canvas { display: block; }
+
+/* the main Qubit-tab sphere is draggable to set state; Gates/Circuit
+   spheres are read-only outputs so no grab cursor there */
+#bloch-main { cursor: grab; touch-action: none; border-radius: 8px; }
+#bloch-main.dragging { cursor: grabbing; }
+#bloch-main:focus-visible { outline: 2px solid var(--zero); outline-offset: 3px; }
+
+/* tooltip on hovering an axis label */
+.bloch-tooltip {
+  position: fixed;
+  pointer-events: none;
+  background: var(--surface2);
+  border: 1px solid var(--border2);
+  color: var(--text);
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 0.82rem;
+  line-height: 1.45;
+  padding: 7px 10px;
+  border-radius: 7px;
+  max-width: 220px;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.18);
+  opacity: 0;
+  transform: translate(-50%, -100%);
+  transition: opacity 0.12s;
+  z-index: 200;
+}
+.bloch-tooltip.visible { opacity: 1; }

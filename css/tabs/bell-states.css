@@ -1,0 +1,97 @@
+/* Bell States tab (js/tabs/bell-states-tab.js) - the four-way picker
+   reuses .mode-grid/.mode-btn (components.css), and the probability
+   bars reuse the Entangle tab's .entangle-stats/.prob-row/.track/.fill
+   markup (tabs/entanglement.css), but driven by the exact Born-rule
+   split for the selected state (50/50 on its two possible kets) rather
+   than repeated sampling - the interactive measure demo already lives
+   on the Entangle tab, no need to repeat it here. needs
+   ../components.css (.card, .mode-grid/.mode-btn, .formula,
+   .prob-row/.track/.fill/.ket/.pct, .quantum-list), ../tabs/entanglement.css
+   (.entangle-stats) */
+
+.bellstates-layout {
+  max-width: 680px;
+  margin: 0 auto;
+}
+
+/* neutral fill/ket color for |01>/|10> rows - neither all-zeros nor
+   all-ones so .zero-fill/.one-fill don't apply; pairs with .mid-color
+   already defined in components.css for the same "neither" case */
+.mid-fill { background: var(--text2); }
+
+/* dims whichever two kets are impossible for the selected Bell state
+   (toggled in JS as the picker changes) */
+.prob-row.bell-impossible {
+  opacity: 0.35;
+}
+
+/* the two X gates (#bellstate-gate-xa/-xb) fade out via .circuit-gate-off
+   when the selected state doesn't need them; H and CNOT stay for all
+   four states. a looping staggered glow sweeps across whichever gates
+   are on - purely decorative "signal flow", replaces the old
+   click-to-fire demo with something alive without needing a button */
+.circuit-gate {
+  transition: opacity 0.25s ease;
+  transform-origin: center;
+}
+.circuit-gate.circuit-gate-off {
+  opacity: 0.12;
+}
+.circuit-gate:not(.circuit-gate-off) {
+  animation: circuit-gate-glow 2.4s ease-in-out infinite;
+}
+#bellstate-gate-xa, #bellstate-gate-xb { animation-delay: 0s; }
+#bellstate-gate-h                     { animation-delay: 0.5s; }
+#bellstate-gate-cnot                  { animation-delay: 1s; }
+
+@keyframes circuit-gate-glow {
+  0%, 60%, 100% { filter: drop-shadow(0 0 0 transparent); }
+  20% { filter: drop-shadow(0 0 5px var(--zero)); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .circuit-gate:not(.circuit-gate-off) { animation: none; }
+}
+
+/* 2x2 taxonomy of the four states - row = same vs opposite outcomes,
+   column = relative phase - with a corner cell and header row/column so
+   it reads like a small table. each cell is also a live [data-bell]
+   selector like the picker above; clicking either stays in sync
+   (setBellState() in bell-states-tab.js toggles .active on both) */
+.bell-family-grid {
+  display: grid;
+  grid-template-columns: auto 1fr 1fr;
+  gap: 8px;
+  max-width: 380px;
+  margin-left: auto;
+  margin-right: auto;
+}
+.bell-family-corner { }
+.bell-family-colhead, .bell-family-rowhead {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text3);
+}
+.bell-family-rowhead { justify-content: flex-end; padding-right: 6px; }
+.bell-family-cell {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 1.05rem;
+  font-weight: 700;
+  padding: 14px 0;
+  border-radius: 8px;
+  border: 1px solid var(--border2);
+  background: var(--surface2);
+  color: var(--text);
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, transform 0.1s;
+}
+.bell-family-cell:hover { border-color: var(--zero); transform: translateY(-1px); }
+.bell-family-cell.active {
+  background: var(--zero);
+  border-color: var(--zero);
+  color: #fff;
+}

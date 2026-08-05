@@ -1,0 +1,82 @@
+/* Beam Splitter tab (js/tabs/beam-splitter-tab.js) - the SVG diagram
+   card and its controls row. needs ../base.css, ../components.css
+   (.btn-run, .muted-text) */
+
+.beamsplitter-layout {
+  max-width: 900px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.beamsplitter-canvas-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 16px 16px 12px;
+  box-shadow: var(--shadow-md);
+  transition: background 0.28s, border-color 0.28s, box-shadow 0.28s;
+}
+
+#beamsplitter-svg {
+  width: 100%;
+  height: auto;
+  display: block;
+  overflow: visible;
+}
+
+.beamsplitter-actions {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+}
+
+.beamsplitter-controls-grid {
+  display: grid;
+  grid-template-columns: 1fr 1.6fr;
+  gap: 14px;
+}
+
+@media (max-width: 760px) {
+  .beamsplitter-controls-grid { grid-template-columns: 1fr; }
+}
+
+/* the incoming laser beam breathes gently - a continuous light source,
+   not a static arrow */
+.bs-beam { animation: bs-beam-pulse 1.8s ease-in-out infinite; }
+@keyframes bs-beam-pulse {
+  0%, 100% { opacity: 0.55; }
+  50%      { opacity: 1; }
+}
+
+/* dashed "possibility" guide lines toward each detector, always faintly
+   present and slowly marching so the diagram reads as "light could go
+   either way" even before a photon fires */
+.bs-path-ghost {
+  animation: bs-dash-flow 1.1s linear infinite;
+  pointer-events: none;
+}
+@keyframes bs-dash-flow { to { stroke-dashoffset: -24; } }
+
+/* expanding ring "click" flash on whichever detector a photon lands in,
+   fired via pulseElement(ping, 'active', ...) in beam-splitter-tab.js.
+   transform-box/transform-origin center the scale on the ring itself -
+   SVG elements otherwise scale from the viewBox origin */
+.bs-ping {
+  transform-box: fill-box;
+  transform-origin: center;
+  pointer-events: none;
+}
+.bs-ping.active { animation: bs-ping-expand 0.6s ease-out; }
+@keyframes bs-ping-expand {
+  0%   { transform: scale(0.4); opacity: 0.85; }
+  100% { transform: scale(2.1); opacity: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bs-beam, .bs-path-ghost, .bs-ping.active { animation: none; }
+}

@@ -2,9 +2,6 @@
 // Depends on: core/dom-utils.js (setExplainer), app.js state
 // (qubitMeasure, measureCounts).
 
-// ═══════════════════════════════════════════════════════════════════
-// MEASURE TAB
-// ═══════════════════════════════════════════════════════════════════
 function initMeasureTab() {
   document.getElementById('btn-measure').addEventListener('click', doMeasure);
   document.getElementById('btn-reset-stats').addEventListener('click', resetStats);

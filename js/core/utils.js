@@ -1,5 +1,4 @@
 'use strict';
-// No dependencies. Used by several tabs/*.js async flows (call-time only).
+// used by a few tabs/*.js async flows
 
-// ─── UTILITY ──────────────────────────────────────────────────────────
 function delay(ms) { return new Promise(r => setTimeout(r, ms)); }
