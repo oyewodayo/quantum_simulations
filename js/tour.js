@@ -81,9 +81,9 @@ function showTourStep() {
         <button class="btn-run" id="tour-next">${tourIndex === TOUR_STEPS.length - 1 ? 'Done' : 'Next'}</button>
       </div>
     `;
-    // normally anchors below the target, but something tall like the
-    // full-height sidebar leaves no room, so fall back to the side instead
-    // of letting it run off screen
+    // the popover normally anchors below the target, but something tall
+    // like the full-height sidebar leaves no room, so fall back to the
+    // side instead of letting it run off screen
     const popoverH = 170;
     let top, left;
     if (rect.bottom + 12 + popoverH <= window.innerHeight) {

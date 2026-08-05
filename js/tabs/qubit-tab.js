@@ -291,9 +291,9 @@ function initQubit3Panel() {
       describeStep: (s, i) => {
         const label  = QUBIT_TRYME_LABELS[i % 4];
         const detail = QUBIT_TRYME_DETAILS[i % 4];
-        // only ever |0⟩/|1⟩/|+⟩/|-⟩ here, so the joint outcome is always
-        // one of two shapes - fully deterministic or a flat eighth each -
-        // no need to spell out all 8 percentages
+        // the Try Me presets only ever land on |0⟩/|1⟩/|+⟩/|-⟩, so the joint
+        // outcome is always one of two shapes - fully deterministic or a
+        // flat eighth each - no need to spell out all 8 percentages
         const p0 = qubit3A.prob0(), p1 = qubit3A.prob1();
         const jointDesc = p0 > 0.999
           ? 'always |000⟩ — 100% certain, zero superposition anywhere in the joint state'

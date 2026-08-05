@@ -22,17 +22,18 @@ const CIRCUIT_MULTIQUBIT_MAX_STEPS = 10;
 
 const CIRCUIT3_KETS = ['000', '001', '010', '011', '100', '101', '110', '111'];
 
-// standard Bell pair, a same-basis flip with no entanglement, and an
-// anti-correlated variant (X before CNOT flips which pairs show up)
+// three 2-qubit presets: a standard Bell pair, a same-basis flip with no
+// entanglement, and an anti-correlated variant (X before CNOT flips which
+// pairs show up)
 const CIRCUIT2_PRESETS = [
   { name: 'Bell Pair',       gates: [{ type: 'single', qubit: 0, key: 'H' }, { type: 'cnot', control: 0, target: 1 }] },
   { name: 'Flip Both',       gates: [{ type: 'single', qubit: 0, key: 'X' }, { type: 'single', qubit: 1, key: 'X' }] },
   { name: 'Anti-Correlated', gates: [{ type: 'single', qubit: 0, key: 'H' }, { type: 'single', qubit: 1, key: 'X' }, { type: 'cnot', control: 0, target: 1 }] }
 ];
 
-// GHZ state (one H, CNOT fanning out to each qubit), plain triple flip,
-// and a Bell pair on just two of the three wires - entanglement doesn't
-// have to touch every qubit
+// three 3-qubit presets: a GHZ state (one H, CNOT fanning out to each
+// qubit), plain triple flip, and a Bell pair on just two of the three
+// wires - entanglement doesn't have to touch every qubit
 const CIRCUIT3_PRESETS = [
   { name: 'GHZ State',        gates: [{ type: 'single', qubit: 0, key: 'H' }, { type: 'cnot', control: 0, target: 1 }, { type: 'cnot', control: 0, target: 2 }] },
   { name: 'Flip All Three',   gates: [{ type: 'single', qubit: 0, key: 'X' }, { type: 'single', qubit: 1, key: 'X' }, { type: 'single', qubit: 2, key: 'X' }] },

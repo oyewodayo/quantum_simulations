@@ -24,7 +24,7 @@ A "Simulations / Roadmap" switch in the header toggles between the interactive s
 - **Applied Sequence History**: Track the gate sequence applied to the qubit
 - **Live State Updates**: Watch the Bloch sphere rotate in real-time
 
-### 🔬 Quantum Circuit Builder
+### Quantum Circuit Builder
 - **Drag-and-Drop Gate Palette**: Build custom quantum circuits
 - **Visual Circuit Representation**: See gates arranged along a quantum wire
 - **Circuit Execution**: Run the circuit step-by-step with animations
@@ -38,19 +38,19 @@ A "Simulations / Roadmap" switch in the header toggles between the interactive s
 - **Histogram Visualization**: Watch probability distribution emerge from repeated measurements
 - **Quantum vs Classical**: Compare deterministic vs probabilistic outcomes
 
-### 🔗 Entanglement
+### Entanglement
 - **Bell State Simulation**: Visualize the (|00⟩ + |11⟩)/√2 entangled state
 - **Instantaneous Correlation**: Measure one qubit and see the other collapse simultaneously
 - **Statistics Tracking**: Observe the perfect correlation between entangled qubits
 - **Interactive Coins**: Visual representation of qubit states with flip animations
 
-### 🌊 Wave Phenomena
+### Wave Phenomena
 - **Quantum Tunneling**: Watch wave packets pass through classically forbidden barriers
 - **Real-Time Schrödinger Solver**: Physics-based simulation, not just animation
 - **Wave Interference**: Double-slit experiment with particle-by-particle accumulation
 - **Which-Path Detection**: See interference disappear when path information is available
 
-### 📐 State Vector Visualization
+### State Vector Visualization
 - **Classical vs Quantum State Space**: Visual comparison of discrete vs continuous states
 - **2D Complex Plane**: See α|0⟩ + β|1⟩ represented geometrically
 - **Probability Bars**: Real-time amplitude visualization
