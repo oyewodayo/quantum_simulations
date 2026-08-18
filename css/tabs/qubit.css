@@ -1,13 +1,15 @@
-/* Bits tab (js/tabs/qubit-tab.js, js/tabs/classical-bit.js) - the
-   classical-bit info panel and its flip-history trail. everything else
+/* Bits tab (js/tabs/qubit-tab.js, js/tabs/classical-bit.js) — the
+   classical-bit info panel and its flip-history trail. Everything else
    this tab uses (compare layout, toggle switch, classical display,
-   sphere wrap) is shared, see ../components.css and ../bloch.css.
-   needs ../base.css */
+   Bloch sphere wrap) is shared — see ../components.css and ../bloch.css.
+   Depends on: ../base.css. */
 
-/* deliberately not a .card - it used to duplicate .card's full
-   bg/border/shadow, which made it compete as an equal-weight box
-   against the digit display / sphere above it (the actual focal point).
-   a quiet top-rule instead lets it read as supporting detail */
+/* ─── CLASSICAL INFO / QUANTUM INFO ──────────────────── */
+/* Deliberately NOT a .card — this used to duplicate .card's full
+   bg/border/shadow, which made it compete as an equal-weight box against
+   the classical digit display / Bloch sphere right above it (the thing
+   that's actually meant to be this screen's focal point). A quiet
+   top-rule instead of a full box lets it read as supporting detail. */
 .classical-info, .quantum-info {
   border-top: 1px solid var(--border);
   padding-top: var(--space-4);
@@ -32,9 +34,11 @@
   font-size: var(--text-sm);
 }
 
-/* three equal .compare-col columns side by side - .compare-layout (2
-   cols + a divider) doesn't fit a 3-way split so this is its own grid.
-   collapses to one column per row on narrow screens */
+/* ─── THREE QUBITS (item 7) ──────────────────────────── */
+/* Three equal .compare-col columns side by side — .compare-layout (2 cols
+   + a divider) doesn't fit a 3-way split, so this is its own grid rather
+   than a repurposed variant. Collapses to one column per row on narrow
+   screens (see ../responsive.css). */
 .qubit3-layout {
   display: grid;
   grid-template-columns: repeat(3, 1fr);

@@ -1,7 +1,8 @@
 'use strict';
-// canonical locale - every key here should exist in fr.js/es.js too.
-// t() in i18n.js falls back to this file if the active language is
-// missing a key, so this is basically the full key list for the app
+// English — the canonical locale. Every key here should also exist in
+// fr.js/es.js; core/i18n.js's t() falls back to this file first if the
+// active language is missing a key, so this file effectively defines the
+// full set of translatable keys for the app.
 registerLocale('en', {
   header: {
     tag: 'Quantum Explorer · CERN',
@@ -26,7 +27,10 @@ registerLocale('en', {
     tunnel: 'Tunnel',
     interference: 'Interference',
     beamSplitter: 'Beam Splitter',
-    sternGerlach: 'Stern–Gerlach'
+    sternGerlach: 'Stern–Gerlach',
+    teleport: 'Teleport',
+    superdense: 'Superdense Coding',
+    noise: 'Noise'
   },
   qubitTab: {
     classical: 'Classical',
@@ -161,13 +165,10 @@ registerLocale('en', {
     subtitle: 'Classical gates combine bits with strict rules; quantum circuits walk a qubit through a route of gates, picking up rotations — pick a builder below',
     classicalCircuit: 'Classical Circuit',
     quantumCircuit: 'Quantum Circuit',
+    compareHalfAdder: 'Compare',
     gatePalette: 'Gate Palette — click to add',
-    companionBit: 'Companion bit — used by AND/OR/XOR-family gates when added',
-    startBit: 'Start Bit',
     circuitWire: 'Circuit Wire',
     whatsGoingOn: 'What\'s going on',
-    afterRunning: 'After running',
-    truthTableStartOutput: 'Truth Table — start bit → output',
     oneQubit: '1 Qubit',
     twoQubits: '2 Qubits',
     threeQubits: '3 Qubits',
@@ -179,11 +180,26 @@ registerLocale('en', {
     perQubitBlochSpheres: 'Per-Qubit Bloch Spheres — shrink toward center when entangled',
     targetQubit3: 'Target Qubit — new single-qubit gates apply to',
     addCnot: 'Add CNOT',
+    addToffoli: 'Add Toffoli (2 controls → 1 target)',
     outputState3Q: 'Output State (3 Qubits)',
-    runHistory: 'Run History — click a step to revisit it'
+    runHistory: 'Run History — click a step to revisit it',
+    gatePaletteDrag: 'Gate Palette — drag onto the circuit (or click, then click the circuit)',
+    halfAdderCircuit: 'Circuit — drag gates here, A and B wire into every one',
+    sum: 'Sum',
+    carry: 'Carry',
+    truthTableHalfAdder: 'Target Truth Table — A, B → Sum, Carry',
+    halfAdderCompareTitle: 'Classical vs Quantum — Same Half Adder',
+    halfAdderCompareBody: 'The classical circuit reaches Sum/Carry with AND/XOR gates. The quantum circuit above (shown for A=1, B=1) reaches the exact same two numbers using only reversible gates: X gates set q0=A and q1=B, two CNOTs copy their XOR into ancilla q2 for Sum = A⊕B, and a Toffoli copies their AND into ancilla q3 for Carry = A·B — then q2 and q3 are measured out. You can build a related reversible half adder yourself, gate by gate, under Quantum Circuit → 3 Qubits → Try me → Half Adder.',
+    compareClassicalDesc: 'XOR and AND gates, wired straight to A and B',
+    compareQuantumDesc: 'X, CNOT and Toffoli — reversible gates reaching the same answer',
+    sumClassical: 'Sum (Classical)',
+    carryClassical: 'Carry (Classical)',
+    sumQuantum: 'Sum (Quantum)',
+    carryQuantum: 'Carry (Quantum)'
   },
   common: {
     run: '▶ Run',
+    running: 'running…',
     clear: 'Clear',
     add: 'Add',
     reset: 'Reset',
@@ -463,7 +479,9 @@ registerLocale('en', {
     postulateFormula: 'P(0) = |α|²&nbsp;&nbsp;&nbsp; P(1) = |β|²&nbsp;&nbsp;&nbsp; α|0⟩ + β|1⟩ → |0⟩ or |1⟩',
     postulateBody2: 'Note what\'s absent: nothing in this rule says which outcome you\'ll get on any single run — only the odds across many identical qubits, which is exactly what the histogram below is for.',
     measurementStatistics: 'Measurement Statistics',
-    confirmOddsBody: 'This is the only way to actually confirm those odds — ask the same question of many identical qubits and watch the histogram settle into the predicted split. A single qubit only ever gives you one answer; the pattern only shows up across a crowd.'
+    confirmOddsBody: 'This is the only way to actually confirm those odds — ask the same question of many identical qubits and watch the histogram settle into the predicted split. A single qubit only ever gives you one answer; the pattern only shows up across a crowd.',
+    unmeasured: 'Unmeasured',
+    measuring: 'Measuring…'
   },
   entangle: {
     title: 'Quantum Entanglement',
@@ -486,13 +504,23 @@ registerLocale('en', {
     tensorBody3: 'That\'s the literal, checkable definition of entanglement: a joint state that can\'t be split back into two independent single-qubit factors. Neither qubit alone has a well-defined state — only the pair does.',
     relativityTitle: 'Why This Doesn\'t Break Relativity',
     relativityBody1: 'This setup is a version of the Einstein-Podolsky-Rosen (EPR) thought experiment: Alice measures Qubit A and instantly knows Qubit B\'s outcome, even if B is light-years away. It looks like faster-than-light signaling — but it isn\'t.',
-    relativityBody2: 'Alice can\'t choose which outcome she gets — that\'s still random, same 50/50 odds as any single qubit. So there\'s nothing for her to control, and therefore nothing she can encode into a message. The correlation is only visible after the fact, once Alice and Bob compare notes over an ordinary (slower-than-light) channel. No energy, no information, and no signal actually crosses the distance between them at the moment of measurement.'
+    relativityBody2: 'Alice can\'t choose which outcome she gets — that\'s still random, same 50/50 odds as any single qubit. So there\'s nothing for her to control, and therefore nothing she can encode into a message. The correlation is only visible after the fact, once Alice and Bob compare notes over an ordinary (slower-than-light) channel. No energy, no information, and no signal actually crosses the distance between them at the moment of measurement.',
+    cernTitle: 'Why CERN Cares About Entanglement',
+    cernBody1: 'This isn\'t only a teaching example. Physicists at the LHC have measured genuine quantum entanglement directly in the particles produced by proton-proton collisions — most notably between a top quark and its antiquark, created and decaying within a fraction of a trillionth of a trillionth of a second. The same Bell-state math on this page, (|00⟩ + |11⟩)/√2, describes a real, measured correlation in the highest-energy environment humans have ever built.',
+    cernBody2: 'CERN\'s Quantum Technology Initiative treats entanglement and superposition as engineering resources, not just curiosities: quantum computers for simulating the quantum field theories behind particle physics itself — a problem classical computers scale badly on — and quantum sensors built from entangled or squeezed states, aimed at the kind of extreme-precision measurements that searches for dark matter and other new physics depend on.'
   },
   bellstates: {
     title: 'Bell States',
     subtitle: 'The four maximally entangled two-qubit states — pick one to see how it\'s built, how it\'s classified, and exactly what it predicts',
     pickTitle: 'Choose a Bell State',
     circuitTitle: 'Circuit Diagram',
+    animStart: 'Both qubits start at |0⟩ — watch the value on each wire as it moves through the gates.',
+    animFlipA: 'X flips qubit A: 0 → 1.',
+    animFlipB: 'X flips qubit B: 0 → 1.',
+    animNoFlip: 'This state needs no X gate — both qubits stay at |0⟩ so far.',
+    animSuperpose: 'H puts qubit A into a genuine superposition — no longer a definite 0 or 1, both at once.',
+    animEntangle: 'CNOT entangles B with A — B is now correlated with A\'s superposition, not independently random.',
+    animDone: 'Final state: {formula} — A and B are perfectly correlated: measuring one instantly tells you the other.',
     recipe: {
       phiplus: 'Start at |00⟩, apply H to qubit A, then CNOT (A → B).',
       phiminus: 'Start at |00⟩, apply X to qubit A, then H to qubit A, then CNOT (A → B).',
@@ -525,7 +553,12 @@ registerLocale('en', {
     reflected: 'Reflected',
     transmitted: 'Transmitted',
     barrier: 'Barrier',
-    fireAgain: '↻ Fire again'
+    fireAgain: '↻ Fire again',
+    runHistory: 'Run history',
+    clearHistory: 'Clear',
+    historyEmpty: 'No completed runs yet.',
+    historyCount: '· {count} runs',
+    validationNote: 'Solver validated automatically: probability conserved to <0.3% over a full run; transmission correctly falls from >10% at V₀=E to <2% at V₀=2.5E.'
   },
   interference: {
     title: 'Wave Interference',
@@ -560,14 +593,22 @@ registerLocale('en', {
   sterngerlach: {
     title: 'Stern–Gerlach Experiment',
     subtitle: 'Send atoms one at a time through a magnetic field and watch spin — a purely quantum property — reveal itself as a small number of discrete spots, never a continuous smear',
-    svgAlt: 'Diagram of an oven emitting silver atoms through collimating slits into a Stern-Gerlach magnet with a sharp knife-edge south pole above and a broad curved north pole below, splitting the beam toward an Up detector or a Down detector depending on the atom\'s spin.',
+    definitionTitle: 'What Is Spin?',
+    definitionBody1: 'Spin is an intrinsic form of angular momentum carried by every elementary particle and atom — not a literal physical rotation, but a genuine, permanent property present even for a particle with no internal structure to spin. It is quantized: a measurement of spin along any chosen axis can return only one of a small, fixed set of discrete values, never a continuously variable one. For a spin-½ particle, such as the unpaired electron responsible for a silver atom\'s magnetic moment, that measurement has exactly two possible outcomes — conventionally labeled "up" and "down" along the measured axis — with the probability of each fixed by the atom\'s quantum state via the Born rule, the same rule that governs every measurement outcome elsewhere in this app.',
+    definitionBody2: 'The Stern–Gerlach experiment (1922) was the first direct observation of this quantization: a beam of silver atoms sent through a magnetic field with a strong spatial gradient split into exactly two discrete spots on a detector screen, rather than the continuous smear a classical, arbitrarily-oriented magnetic moment would have produced. The interactive apparatus below reproduces that same measurement, one atom at a time.',
+    svgAlt: 'Diagram of silver atoms entering a Stern-Gerlach magnet with a sharp knife-edge south pole above and a broad curved north pole below, splitting the beam toward an Up or Down outcome. The atoms can come straight from an oven with adjustable input spin, or already pre-measured with the axis of this magnet selectable, to test whether a second measurement disturbs a spin that was already definite.',
     atomSource: 'Oven',
     silverAtomsArrow: 'Silver atoms',
     collimatingSlits: 'Collimating slits',
     magnetLabel: 'Inhomogeneous field',
     detectorUp: 'Up detector',
     detectorDown: 'Down detector',
+    detectorPlus: '"+" detector',
+    detectorMinus: '"−" detector',
     fireAtom: 'Fire atom',
+    magnetCountTitle: 'Number of Magnets',
+    oneMagnet: '1 magnet',
+    twoMagnets: '2 magnets (sequential)',
     inputSpinTitle: 'Input Spin Angle',
     inputSpinBody: 'Same θ as the Bloch sphere — θ = 0° prepares spin certainly up, θ = 180° certainly down, and anything in between is a genuine superposition of the two.',
     detectorTally: 'Detector Tally',
@@ -576,10 +617,9 @@ registerLocale('en', {
     whyTwoSpotsFormula: 'F<sub>z</sub> ≈ μ<sub>z</sub> (∂B<sub>z</sub> / ∂z) &nbsp;&nbsp;&nbsp; if B is uniform ⇒ F = 0',
     whyTwoSpotsBody2: 'Classically, μ<sub>z</sub> could point in any direction, so a beam of randomly-oriented atoms should smear continuously across the screen, from fully deflected up to fully deflected down. When Stern and Gerlach actually ran this experiment in 1922, silver atoms landed in exactly two discrete spots — nothing in between, no matter how the magnet was tilted. That\'s the same quantization already built into every qubit in this app: a measurement returns one of exactly two outcomes, never a partial result.',
     sequentialTitle: 'Measuring Twice: Why Order Matters',
-    sequentialIntro: 'Every atom below already has a definite spin — it\'s the "up" output of a first magnet, with the "down" half physically blocked. Now send it through a second magnet:',
+    sequentialIntro: 'The atom above already has a definite spin — it\'s the "up" output of a first magnet (not shown), with the "down" half physically blocked. Choose this magnet\'s axis to see whether measuring it again disturbs that spin.',
     sameAxis: 'Same axis (Z)',
     differentAxis: 'Different axis (X)',
-    svg2Alt: 'Diagram of an atom prepared with spin up along Z entering a second Stern-Gerlach magnet with a knife-edge south pole and a curved north pole, splitting toward a plus detector or a minus detector depending on the second magnet\'s axis.',
     preparedLabel: 'prepared: spin ↑ (Z)',
     blockedLabel: '("down" half blocked)',
     magnet2AxisZ: 'Magnet 2 — Z axis',
@@ -597,6 +637,99 @@ registerLocale('en', {
     result2Minus: '"−" detector clicked',
     explainer2Z: 'Measuring the same axis twice in a row just confirms the earlier result — no surprise here. Fire again as many times as you like: it will always land "+".',
     explainer2X: 'Even though this atom had a perfectly definite spin along Z, measuring a different, incompatible axis (X) erased that information and produced a fresh, genuinely random result. This is the heart of the Stern–Gerlach discovery: measuring one property can disturb another that doesn\'t commute with it.'
+  },
+  teleport: {
+    title: 'Quantum Teleportation',
+    subtitle: 'Transferring a qubit\'s exact state onto a second, physically separate qubit — using a shared entangled pair and two classical bits, without ever transporting the qubit itself',
+    definitionTitle: 'What Is Quantum Teleportation?',
+    definitionBody1: 'Quantum teleportation is a protocol for transferring the exact state of one qubit onto a second, physically separate qubit, using a previously shared pair of entangled qubits together with two bits of classical communication — without the original qubit ever being physically transported or directly measured. It moves quantum information, not matter or energy, and it cannot be used to send a signal faster than light: recovering the transferred state at the receiving end requires those two classical bits to actually arrive, and they travel no faster than any ordinary signal.',
+    definitionBody2: 'Nor does it create a copy. The source qubit\'s own state is necessarily destroyed by the measurement the protocol requires, consistent with the no-cloning theorem, which forbids any procedure from duplicating an unknown quantum state while leaving the original intact. In the walkthrough below, the two parties exchanging the qubit are given the conventional labels used throughout quantum information theory — Alice for the sender, Bob for the receiver.',
+    circuitTitle: 'The Protocol',
+    svgAlt: 'Circuit diagram: Alice\'s message qubit and two halves of an entangled pair. A Hadamard and CNOT create the entangled pair between Alice\'s second qubit and Bob\'s qubit. A CNOT and Hadamard put Alice\'s message qubit and her half of the pair into the Bell basis. Both are measured, and the two classical results travel down double lines to conditionally-applied Z and X correction gates on Bob\'s qubit.',
+    finalLabel: 'Bob\'s qubit ≡ ψ',
+    teleportBtn: 'Teleport',
+    aliceBadge: 'Alice\'s message',
+    aliceDesc: 'Set any state — this is what gets teleported',
+    bobBadge: 'Bob\'s qubit',
+    bobDescWaiting: 'Not entangled yet — press Teleport',
+    bobDescEntangled: 'Entangled with Alice — undetermined on its own',
+    bobDescWrong: 'Definite now, but not yet ψ — waiting on Alice\'s bits',
+    bobDescMatch: 'Matches Alice\'s message exactly',
+    bobFormulaUndetermined: '|ψ⟩ = ?',
+    classicalBitsTitle: 'Classical Bits',
+    classicalBitsBody: 'Alice must physically send these two bits to Bob — by phone, radio, the postal service, anything classical. Without them, Bob\'s qubit is useless to him even though it\'s already sitting right there.',
+    outcomeTally: 'Outcome Tally',
+    resultRunning: 'running…',
+    resultDone: 'Teleportation complete',
+    stepPair: 'Alice and Bob share an entangled pair, prepared before any message existed.',
+    stepBell: 'Alice entangles her message qubit with her half of the pair — this reads ψ out against the entanglement, it doesn\'t copy it.',
+    stepMeasure: 'Alice measures both her qubits, collapsing them to two genuinely random classical bits — and collapsing Bob\'s qubit to a definite state in the same instant.',
+    stepSend: 'Alice sends her two classical bits to Bob — an ordinary channel, no faster than light. He conditionally applies Z and/or X to fix his qubit up.',
+    stepDone: 'Bob\'s qubit now equals Alice\'s original message exactly — teleported, not cloned: her own qubit was destroyed by measurement back in step 2, so the no-cloning theorem stays intact. Alice never learned ψ either; she just relayed two random bits, m₀={m0}, m₁={m1}, that happened to be exactly what Bob needed.',
+    explainerDefault: 'Set Alice\'s message state above, then press Teleport. Watch Bob\'s sphere: it starts undetermined, jumps to some definite but wrong point the instant Alice measures, then snaps to match Alice\'s exactly once her classical bits arrive and Bob corrects for them.',
+    trialCount: '· {count} runs',
+    whyNotFtlTitle: 'Why This Isn\'t Faster-Than-Light',
+    whyNotFtlBody: 'The instant Alice measures her two qubits, Bob\'s qubit does become a definite state — but which one is anyone\'s guess without Alice\'s two classical bits, and those can only travel at the speed of light or slower, same as a phone call. Until they arrive, Bob\'s qubit reads as pure noise: measuring it himself early would just give a random 50/50 result, no matter what ψ was. The entanglement makes teleportation possible; it doesn\'t make it instant.',
+    noCloningTitle: 'Not a Copy — the No-Cloning Theorem',
+    noCloningBody: 'Alice\'s original message qubit doesn\'t survive this: her Bell-basis measurement in Step 2 collapses it along with her half of the pair, permanently erasing whatever ψ used to be on her side. That\'s not a limitation of this particular protocol — the no-cloning theorem proves <em>no</em> quantum procedure can ever copy an unknown state while leaving the original intact. Teleportation moves a state; it never duplicates one.'
+  },
+  superdense: {
+    title: 'Superdense Coding',
+    subtitle: 'Transmitting two classical bits of information by physically sending only one qubit, given a shared entangled pair prepared in advance',
+    definitionTitle: 'What Is Superdense Coding?',
+    definitionBody1: 'Superdense coding is a quantum communication protocol that transmits two classical bits of information by physically sending only a single qubit, provided the sender and receiver already share one half each of an entangled pair prepared in advance. It is the logical converse of quantum teleportation: teleportation spends two classical bits and a shared entangled pair to move one qubit of quantum information, while superdense coding spends one qubit and that same kind of shared pair to move two classical bits.',
+    definitionBody2: 'It is not a loophole in classical communication limits — an actual physical qubit still has to travel from sender to receiver for the protocol to work, so the transmission remains bounded by ordinary signal speed. As in the Teleportation tab, the two parties below are given their conventional quantum-information-theory labels: Alice for the sender, Bob for the receiver.',
+    circuitTitle: 'The Protocol',
+    svgAlt: 'Circuit diagram: Alice\'s qubit and Bob\'s qubit. A Hadamard and CNOT create an entangled pair. Alice conditionally applies X and/or Z to her own qubit only, encoding two classical bits. She then physically sends that qubit to Bob over a quantum channel. Bob, now holding both qubits, applies a CNOT and Hadamard to decode, then measures both to recover Alice\'s exact two bits.',
+    channelLabel: 'quantum channel',
+    finalLabelA: 'd₀',
+    finalLabelB: 'd₁',
+    sendBtn: 'Send',
+    messageTitle: 'Message to Send',
+    messageBody: 'Pick any 2-bit message — this is what Alice encodes onto her single qubit before sending it to Bob.',
+    sentLabel: 'Alice sent',
+    receivedLabel: 'Bob decoded',
+    resultRunning: 'running…',
+    resultMatch: 'Decoded exactly right',
+    resultMismatch: 'Mismatch — check the console, this should never happen',
+    stepPair: 'Alice and Bob share an entangled pair, prepared in advance.',
+    stepEncode: 'Alice encodes her message onto her own qubit alone — Bob\'s half of the pair is never touched.',
+    stepSend: 'Alice physically sends that one qubit to Bob over a real quantum channel — the one step with no classical substitute.',
+    stepDecode: 'Bob, now holding both qubits, runs the same Bell-basis circuit Teleport\'s Alice used — a CNOT then a Hadamard — to tell the four possible messages apart.',
+    stepMeasure: 'Bob measures both qubits and reads off Alice\'s exact two bits.',
+    stepDone: 'Bob decoded {received} — exactly what Alice sent, {sent}. Nothing here was random: the four possible messages land on four mutually orthogonal states, so Bob\'s measurement has zero uncertainty left in it once the qubit arrives.',
+    explainerDefault: 'Pick a 2-bit message above, then press Send. Watch Alice encode it onto her own qubit alone, physically hand that one qubit to Bob, and Bob decode both bits back out exactly — nothing here is random.',
+    tally: '{sent} sent · {match}/{sent} decoded correctly',
+    whyChannelTitle: 'Why This Still Needs a Quantum Channel',
+    whyChannelBody: 'Teleportation moved a qubit\'s worth of information using only classical bits, which is why it can\'t outrun the speed of light. Superdense coding runs the opposite direction — it moves 2 classical bits using only 1 qubit of communication, which sounds like it\'s beating the classical limit, but it isn\'t a loophole: an actual physical qubit still has to travel from Alice to Bob for this to work. The "savings" is real (1 qubit instead of 2 classical bits\' worth of separate signal), but it\'s still bounded by however fast that qubit itself can travel.',
+    compareTitle: 'Teleportation vs. Superdense Coding',
+    compareBody: 'Same resource — one pre-shared entangled pair — spent in opposite directions. Teleportation sends 1 qubit of quantum information using 2 classical bits; superdense coding sends 2 classical bits of information using 1 qubit. Both need that entangled pair set up in advance, and both end by running essentially the same Bell-basis circuit (a CNOT then a Hadamard) — teleportation runs it on the sending side to read a state out, superdense coding runs it on the receiving side to read a message in.'
+  },
+  noise: {
+    title: 'Noise & Decoherence',
+    subtitle: 'The loss of quantum coherence through unwanted interaction with the environment — the dominant practical obstacle to building reliable, large-scale quantum computers',
+    definitionTitle: 'What Is Quantum Decoherence?',
+    definitionBody1: 'Quantum decoherence is the loss of quantum coherence: the process by which a system\'s phase information leaks into its surrounding environment through unwanted interaction, so that a state genuinely in superposition comes to behave, for all practical purposes, like a definite classical mixture. A system that is perfectly isolated stays in a pure state — one exactly described by a single state vector |ψ⟩ — indefinitely. Once it interacts with an uncontrolled environment, that guarantee no longer holds: the system becomes entangled with the environment\'s own many degrees of freedom, and tracing out everything except the system itself leaves a mixed state, described by a density matrix ρ rather than a single vector. Every other tab in this app treats gates and qubits as perfectly isolated in exactly that first sense; this one models what happens once they aren\'t.',
+    definitionBody2: 'On the Bloch sphere already used throughout this app, that loss of purity shows up as a shrinking vector — the same signature already seen for a qubit entangled with another (see the Entangle and Circuits tabs\' reduced Bloch spheres), just caused here by an uncontrolled environment instead of a deliberate second qubit. Decoherence is the dominant practical obstacle to building large-scale, reliable quantum computers: every gate in a real circuit has to complete before the coherence it depends on has leaked away. The simulation below models two of its standard phenomenological channels, T₁ (relaxation) and T₂ (dephasing), evolving a single qubit\'s Bloch vector in real time.',
+    qubitBadge: 'Decohering qubit',
+    statsTitle: 'Live Readout',
+    elapsed: 'Elapsed time',
+    vectorLength: 'Bloch vector length',
+    purity: 'Purity Tr(ρ²)',
+    densityMatrix: 'Density Matrix ρ',
+    initialStateTitle: 'Initial State',
+    decayTimesTitle: 'Decay Times',
+    t2CapNote: 'T₂ capped to {eff} μs (2×T₁) — dephasing can\'t outrun relaxation.',
+    pauseBtn: '⏸ Pause',
+    playBtn: '▶ Play',
+    restartBtn: '↻ Restart',
+    explainerDefault: 'Watch the Bloch vector shrink and drift toward the north pole — that shrinkage is real information loss, not just a visual effect. A shorter vector means the qubit\'s state is genuinely less certain, exactly the same "mixed state" idea already used for entangled qubits elsewhere in this app.',
+    explainerSettled: 'Settled at |0⟩ — and purity has actually climbed back near 100%, not bottomed out. That\'s not a rescue: T1 relaxation pulls a qubit toward its ground state, so given enough time it always ends up pure again, just pure and uninformative. A qubit sitting at |0⟩ looks identical whether it started as |+⟩, |−⟩, or anything else — the phase information T2 erased along the way never comes back, purity or no purity.',
+    t1t2Title: 'T₁ vs. T₂ — Two Different Ways to Forget',
+    t1t2Body: 'T₁ (relaxation) is how long the qubit takes to leak energy into its environment and settle toward |0⟩ — it\'s why the z-component of the Bloch vector drifts toward the north pole. T₂ (dephasing) is how long the qubit keeps track of the relative phase between |0⟩ and |1⟩ — it\'s why the x/y components, the part that actually carries superposition information, shrink away. Losing T₂ is often the bigger practical problem: a qubit can still "mostly" be |0⟩ or |1⟩ long after it\'s lost every trace of being in a genuine superposition.',
+    t1t2Formula: 'T₂ ≤ 2×T₁ &nbsp;&nbsp;&nbsp; (dephasing can never be slower than relaxation allows)',
+    whyMattersTitle: 'Why This Fight Never Stops on Real Hardware',
+    whyMattersBody: 'Every other simulation in this app runs gates and measurements as mathematically perfect operations, because that\'s the right way to learn the ideas first. Real quantum processors — including the superconducting and trapped-ion devices CERN\'s own Quantum Technology Initiative experiments with for particle-physics simulation — only stay coherent for a limited window measured in exactly these T₁/T₂ numbers, typically tens to hundreds of microseconds. Every gate in a real circuit has to finish well inside that window, which is the entire reason quantum error correction and hardware-aware circuit design are active engineering problems, not solved ones.'
   },
   // Mirrors ROADMAP_LESSONS in js/roadmap.js exactly (same ids, same
   // title/body content) — that file keeps its own English copies as the
@@ -666,6 +799,18 @@ registerLocale('en', {
     sterngerlach: {
       title: 'Stern–Gerlach Experiment',
       body: 'A beam of silver atoms passing through an inhomogeneous magnetic field splits into exactly two discrete spots, never a continuous smear — direct evidence that spin is quantized, with only two possible outcomes along any measurement axis, exactly like a qubit\'s own |0⟩/|1⟩ measurement results.'
+    },
+    teleport: {
+      title: 'Quantum Teleportation',
+      body: 'Alice can send Bob the exact state of a qubit without ever sending the qubit itself — using one pre-shared entangled pair and two classical bits. Her own qubit is destroyed by the measurement this requires, so no copy ever exists at both ends at once, exactly as the no-cloning theorem demands.'
+    },
+    superdense: {
+      title: 'Superdense Coding',
+      body: 'Teleportation\'s mirror image: Alice sends Bob two classical bits using only one qubit, by encoding her message onto her half of a pre-shared entangled pair and physically sending Bob that single qubit. Bob decodes both bits exactly, every time — nothing about this protocol is probabilistic.'
+    },
+    noise: {
+      title: 'Noise & Decoherence',
+      body: 'Real qubits aren\'t perfectly isolated: T₁ relaxation lets them leak energy toward |0⟩, and T₂ dephasing erases the relative phase that makes a superposition meaningful. Both shrink the Bloch vector toward the center — the same "mixed state" signature already seen when tracing out an entangled qubit, just caused by an uncontrolled environment instead of a deliberate measurement.'
     }
   },
   // Mirrors ROADMAP_QUIZ in js/roadmap.js exactly — same lessonIds as
@@ -750,6 +895,21 @@ registerLocale('en', {
       q: 'A beam of silver atoms passes through a Stern–Gerlach magnet. What does the experiment actually show on the detector screen?',
       options: ['A continuous smear from one extreme to the other', 'Exactly two discrete spots, never anything in between', 'A single spot in the exact center', 'No pattern at all — the atoms are absorbed'],
       explanation: 'Classically, a randomly-oriented magnetic dipole should deflect by any amount, producing a continuous smear. Stern and Gerlach found only two discrete spots — direct evidence that spin, like a qubit\'s own measurement outcomes, is quantized into just two possibilities along any axis.'
+    },
+    teleport: {
+      q: 'After Bob applies his correction gates, how does his qubit compare to Alice\'s original message?',
+      options: ['It\'s a good approximation, close but not exact', 'It exactly matches — same amplitudes, same state', 'It\'s a classical copy, not a real quantum state', 'It only matches half the time'],
+      explanation: 'Once the correct Z/X correction is applied, Bob\'s qubit equals Alice\'s original exactly, not approximately — that\'s the whole point of the protocol\'s classically-controlled correction step.'
+    },
+    superdense: {
+      q: 'In superdense coding, what actually has to physically travel from Alice to Bob?',
+      options: ['Two classical bits, sent by radio or phone', 'A single qubit', 'Nothing — the entangled pair alone is enough', 'Four qubits, one per possible message'],
+      explanation: 'Only Alice\'s one qubit ever travels. The entangled pair was shared in advance, and her message is encoded onto that single qubit before she sends it — that\'s what makes it "superdense": 2 bits of information from just 1 qubit of communication.'
+    },
+    noise: {
+      q: 'A qubit starts in a genuine superposition. After it fully decoheres (T₂ has elapsed many times over), what happens to its Bloch vector?',
+      options: ['Nothing — decoherence only affects measurement, not the state', 'It shrinks toward the center, the same signature as a mixed/entangled state', 'It grows longer than 1', 'It instantly jumps to the south pole'],
+      explanation: 'Losing coherence to the environment is mathematically identical to becoming entangled with something you can\'t track — both leave the qubit\'s own Bloch vector shorter than 1, a genuinely mixed state, not just a randomized pure one.'
     }
   }
 });

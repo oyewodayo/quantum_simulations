@@ -4,21 +4,26 @@
 // core/tab-registry.js (registerTab), app.js state (qubitMain, gateHistory,
 // rendererGates), tabs/qubit-tab.js (updateQubitUI, called after applying a gate).
 //
-// gateHistory entries carry a label/color, a snapshot of the qubit's exact
-// (theta, phi) right after that step, the explainer HTML shown at the
-// time, and enough to redraw the matrix (matrixKey for fixed gates,
-// matrix/rotationAxis/rotationAngle for rotation gates) - see
-// restoreGateHistoryStep() below. using snapshots instead of replayable
-// ops because entries come from two different places that behave
-// differently: manual clicks compound on the previous state, but a Try Me
-// run resets to |0⟩ before each step (initGatesTryMe()). snapshotting the
-// result means rollback doesn't need to care which kind it's restoring.
-// gateHistoryCursor is whichever entry's currently on screen, not
-// necessarily the last one once you've clicked a rollback chip.
+// gateHistory entries carry a display label/color plus a snapshot of the
+// qubit's exact (theta, phi) right after that step, the explainer HTML
+// shown at the time, and enough to redraw that step's matrix (matrixKey
+// for fixed gates; matrix/rotationAxis/rotationAngle for rotation gates)
+// — see restoreGateHistoryStep() below. Snapshots rather than replayable
+// operations because entries come from two different sources that behave
+// differently: manual gate clicks compound on whatever state came
+// before, while a Try Me run resets to |0⟩ before each step (see
+// initGatesTryMe()) — a snapshot of the resulting state means rollback
+// doesn't need to know or care which kind of entry it's restoring.
+// gateHistoryCursor tracks which entry is currently on screen (not
+// necessarily the last one, once a rollback click has fired).
 
-// Classical Gates/Quantum Gates/Compare switch - same multi-panel pattern
-// as Circuits' domain toggle, plus a third Compare panel (item 14) whose
-// truth tables only need building once, on first visit.
+// ═══════════════════════════════════════════════════════════════════
+// GATES TAB
+// ═══════════════════════════════════════════════════════════════════
+/** Classical Gates/Quantum Gates/Compare switch for the Gates tab — same
+ *  multi-panel toggle pattern as Circuits' domain toggle, extended to a
+ *  third "Compare" panel (item 14) that needs both truth tables built
+ *  once, on first visit, rather than every switch. */
 function setGatesDomain(domain) {
   document.querySelectorAll('.mode-btn[data-gates-domain]').forEach(btn =>
     btn.classList.toggle('active', btn.dataset.gatesDomain === domain));
@@ -42,9 +47,9 @@ function buildGateButtons() {
   buildQuantumGateTruthTable('gates-compare-quantum-table');
   buildAllClassicalGatesTruthTables('gates-compare-classical-table');
 
-  // this sphere mirrors qubitMain but sits idle between visits, so jump
-  // its animation state on entry instead of tweening from wherever it
-  // was left last time
+  // The Gates-tab sphere mirrors qubitMain but is otherwise idle between
+  // visits, so jump its animation state to the current qubit on entry
+  // instead of tweening in from wherever it was last left.
   registerTab('gates', {
     onEnter: () => {
       const b = qubitMain.getBloch();
@@ -54,8 +59,10 @@ function buildGateButtons() {
     }
   });
 
-  // gate.desc/formalName go through t(), so a language switch needs these
-  // rebuilt - each clears its own container first so it's safe to call again
+  // gate.desc/formalName render translated text (see t() calls in
+  // renderGateGrid/buildRotationButtons/buildGateReference below), so a
+  // language switch needs these three rebuilt — each clears its own
+  // container first, so calling them again is safe, not a duplicate-append.
   onLangChange(() => {
     renderGateGrid();
     buildRotationButtons();
@@ -66,10 +73,11 @@ function buildGateButtons() {
   });
 }
 
-// truth table stuff (item 13)
-// formats a basis-state output as a ket sum, e.g. (0.707)|0⟩ + (-0.707)|1⟩
-// - a coefficient of exactly 1 shows as a bare ket (|1⟩ not (1)|1⟩) since
-// that's the common case for X/Z/S/T on a basis state
+// ─── TRUTH TABLE (item 13) ─────────────────────────────────────────────
+/** Formats a basis-state output (two complex amplitudes) as a ket sum,
+ *  e.g. (0.707)|0⟩ + (-0.707)|1⟩ — a coefficient of exactly 1 is shown as
+ *  a bare ket (|1⟩, not (1)|1⟩) since that's the common case (X, Z, S, T
+ *  acting on one of the two basis states). */
 function formatKetOutput(c0, c1) {
   const parts = [];
   [c0, c1].forEach((c, k) => {
@@ -80,13 +88,16 @@ function formatKetOutput(c0, c1) {
   return parts.length ? parts.join(' + ') : '0';
 }
 
-// renders a Gate/Input/Output table into targetId - every fixed gate's
-// action on |0⟩ and |1⟩, straight from its matrix (matrix[0][basis]/
-// matrix[1][basis] are exactly the output amplitudes for a basis-state
-// input since multiplying by a basis vector just picks out that column).
-// rotation gates skipped, no fixed table to show when the matrix depends
-// on a runtime angle. called for both the main table (item 13) and the
-// Compare panel's quantum table (item 14), plus again on language change.
+/** Renders a Gate/Input/Output table into `targetId` — every fixed GATES
+ *  entry's action on both basis states |0⟩ and |1⟩, computed directly
+ *  from its matrix (matrix[0][basis]/matrix[1][basis] are exactly the
+ *  output amplitudes for a basis-state input, since matrix-vector
+ *  multiplying by a basis vector just selects that column). Rotation
+ *  gates are excluded — their matrix depends on a runtime angle, so
+ *  there's no single fixed table to show. Called once per gates-tab.js
+ *  page (the main Quantum Gates panel's own table, item 13, and the
+ *  Compare panel's quantum-side table, item 14) plus again on every
+ *  language change, since the header cells go through t(). */
 function buildQuantumGateTruthTable(targetId) {
   const table = document.getElementById(targetId);
   if (!table) return;
@@ -102,8 +113,9 @@ function buildQuantumGateTruthTable(targetId) {
     rows.map(r => `<tr><td style="color:${r.gate.color};font-weight:700;">${r.gate.name}</td><td>|${r.input}⟩</td><td>${r.output}</td></tr>`).join('');
 }
 
-// split out from buildGateButtons() so a language switch can rebuild just
-// this - clears the grid first so re-calling doesn't duplicate buttons
+/** Builds the "Apply Gate" button grid — split out from buildGateButtons()
+ *  so a language switch can rebuild just this (clears the grid first,
+ *  so calling it again is idempotent rather than duplicating buttons). */
 function renderGateGrid() {
   const grid = document.getElementById('gate-grid');
   grid.innerHTML = '';
@@ -156,6 +168,7 @@ function showMatrix(key) {
   `;
 }
 
+// ─── ROTATION GATES ───────────────────────────────────────────────────
 function buildRotationButtons() {
   const grid = document.getElementById('rotation-gate-grid');
   grid.innerHTML = '';
@@ -179,9 +192,10 @@ function updateRotationAngleLabel() {
   document.getElementById('rotation-angle-val').textContent = val + '°';
 }
 
-// always-visible glossary of what each gate letter actually stands for -
-// the buttons above only show nicknames, this is the one place to see
-// formal names without hovering or applying a gate first
+/* A permanent, always-visible glossary of what each gate letter stands
+   for (Hadamard, the three Pauli gates, the phase gates) — the buttons
+   above only show playful nicknames, so this is the one place a visitor
+   can see the formal names without having to hover or apply a gate first. */
 function buildGateReference() {
   const rows = [
     ...Object.entries(GATES).map(([key, g]) => ({ key, ns: 'gates', name: g.name, color: g.color, formalName: g.formalName, desc: g.desc })),
@@ -234,7 +248,7 @@ function showRotationMatrix(axis, angleDeg, matrix) {
   `;
 }
 
-let gateHistoryCursor = -1; // entry currently on screen, not always the last one
+let gateHistoryCursor = -1; // index of the entry currently on screen — not always the last one, once a rollback click has fired
 
 function updateGatesUI() {
   const b = qubitMain.getBloch();
@@ -245,9 +259,11 @@ function updateGatesUI() {
   renderGateHistory();
 }
 
-// clickable rollback chips, same .hist-tag/.is-current styling as every
-// other Try Me history (components.css) - works for manual clicks or a
-// Try Me run alike, restoreGateHistoryStep() below just restores the snapshot
+/** Renders gateHistory as clickable rollback chips (real <button>s, same
+ *  .hist-tag/.is-current styling as every other Try Me's history — see
+ *  components.css) — click any step, whether it came from manually
+ *  clicking gates or from a Try Me run, and it restores that exact
+ *  snapshot via restoreGateHistoryStep() below. */
 function renderGateHistory() {
   const hist = document.getElementById('gate-history');
   if (!gateHistory.length) {
@@ -264,9 +280,10 @@ function renderGateHistory() {
     chip.textContent = entry.label;
     chip.title = 'Click to revisit this step and re-read its explanation';
     chip.addEventListener('click', () => {
-      // Try Me disables the gate/rotation buttons while running, so this
-      // doubles as the guard against a rollback click fighting the next
-      // auto-play tick - same trick every other Try Me uses
+      // A Try Me run disables the gate/rotation buttons for its
+      // duration (see initGatesTryMe()) — same signal doubles as the
+      // "don't let a rollback click fight the next auto-play tick"
+      // guard every other Try Me's chips use.
       if (document.getElementById('btn-gates-tryme').disabled) return;
       restoreGateHistoryStep(i);
     });
@@ -274,10 +291,13 @@ function renderGateHistory() {
   });
 }
 
-// jumps straight to entry i's recorded (theta, phi) instead of replaying
-// gates, works the same whether it came from a manual sequence or a Try
-// Me step that reset to |0⟩ first. also restores the matrix display and
-// explainer text. doesn't push a new history entry - just navigates.
+/** Rollback — jumps the qubit straight to history entry `i`'s recorded
+ *  (theta, phi) snapshot rather than replaying gates, so it works the
+ *  same whether that step came from a compounding manual sequence or a
+ *  Try Me step that reset to |0⟩ first. Also restores the matrix display
+ *  and explainer text exactly as they were at that step, and does NOT
+ *  push a new history entry — rollback navigates the trail, it doesn't
+ *  extend it. */
 function restoreGateHistoryStep(i) {
   const entry = gateHistory[i];
   if (!entry) return;
@@ -290,13 +310,15 @@ function restoreGateHistoryStep(i) {
   updateQubitUI();
 }
 
-const GATES_TRYME_INTERVAL_MS = 2800; // explainer paragraph's a few sentences, needs actual reading time
+const GATES_TRYME_INTERVAL_MS = 2800; // each step's explainer paragraph is a few sentences long — needs real reading time, not just animation-settle time
 
-// tours H, X, Y, Z, S, T once each, resetting to |0⟩ before every one so
-// each effect shows against the same baseline instead of compounding -
-// matches this tab's "pick one gate, see the effect" framing rather than
-// building a sequence. reuses runTryMeSequence() from qubit-tab.js instead
-// of duplicating the disable/loop/interval bookkeeping.
+/** Tours every fixed gate (H, X, Y, Z, S, T) once, resetting to |0⟩
+ *  before each so every gate's effect is shown against the same
+ *  baseline instead of compounding on top of the last one — matching
+ *  this tab's own framing ("Pick one gate and see its immediate
+ *  effect"), not a sequence to chain. Reuses runTryMeSequence() from
+ *  qubit-tab.js (loaded earlier, shared global scope) rather than
+ *  duplicating its disable/loop/interval bookkeeping. */
 function initGatesTryMe() {
   document.getElementById('btn-gates-tryme').addEventListener('click', () => {
     const gateBtns = document.querySelectorAll('#gate-grid .gate-btn');

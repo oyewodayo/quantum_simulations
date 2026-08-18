@@ -1,9 +1,10 @@
 'use strict';
-// needs to load before gates.js - the T gate's matrix literal calls
-// C.polar(...) at top-level script-execution time.
+// No dependencies. Must load before core/gates.js — the T gate's matrix
+// literal calls C.polar(...) at top-level script-execution time.
 
-// just the ops we actually need for qubit amplitudes and gate matrices,
-// not a general-purpose complex number lib.
+// ─── COMPLEX ARITHMETIC ──────────────────────────────────────────────
+// Intentionally a minimal, closed set of ops for this app's needs
+// (qubit amplitudes and gate matrices) — not a general-purpose library.
 const C = {
   add:   (a, b)     => ({ r: a.r + b.r, i: a.i + b.i }),
   mul:   (a, b)     => ({ r: a.r*b.r - a.i*b.i, i: a.r*b.i + a.i*b.r }),

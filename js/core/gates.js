@@ -1,7 +1,8 @@
 'use strict';
-// needs core/complex.js (C.polar) - the T gate matrix calls it at
-// top-level, so complex.js has to load first
+// Depends on: core/complex.js (C.polar) — the T gate matrix calls it at
+// top-level, during this script's execution, so complex.js must load first.
 
+// ─── GATES ────────────────────────────────────────────────────────────
 const INV2 = 1 / Math.SQRT2;
 const GATES = {
   H: {
@@ -60,14 +61,16 @@ const GATES = {
   }
 };
 
-// these take a runtime angle unlike the fixed gates above, so the matrix
-// gets built on demand rather than stored - see rotationMatrix()
+// ─── ROTATION GATES ───────────────────────────────────────────────────
+// Unlike the fixed gates above, these take a runtime angle, so their
+// matrix is built on demand rather than stored — see rotationMatrix().
 const ROTATION_GATES = {
   X: { label: 'Rx', formalName: 'X-axis rotation', color: '#F472B6', desc: 'Rotate around the X axis' },
   Y: { label: 'Ry', formalName: 'Y-axis rotation', color: '#A78BFA', desc: 'Rotate around the Y axis' },
   Z: { label: 'Rz', formalName: 'Z-axis rotation', color: '#94A3B8', desc: 'Rotate around the Z axis' }
 };
 
+/** Standard single-qubit rotation matrix Rx/Ry/Rz(angleDeg) about the given axis. */
 function rotationMatrix(axis, angleDeg) {
   const theta = angleDeg * Math.PI / 180;
   const c = Math.cos(theta / 2);

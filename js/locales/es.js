@@ -1,6 +1,9 @@
 'use strict';
-// traducción de en.js, misma estructura de claves, solo cambian los
-// valores - t() (i18n.js) recurre a en.js si falta una clave aquí
+// Español — traducción del locale canónico (en.js). Debe mantener
+// exactamente la misma estructura de claves anidadas que en.js; core/i18n.js's
+// t() recurre a en.js primero si el idioma activo no tiene una clave, así
+// que este archivo solo necesita cubrir el mismo conjunto de claves
+// traducibles definido allí.
 registerLocale('es', {
   header: {
     tag: 'Quantum Explorer · CERN',
@@ -25,7 +28,10 @@ registerLocale('es', {
     tunnel: 'Túnel',
     interference: 'Interferencia',
     beamSplitter: 'Divisor de Haz',
-    sternGerlach: 'Stern–Gerlach'
+    sternGerlach: 'Stern–Gerlach',
+    teleport: 'Teleportar',
+    superdense: 'Codificación Superdensa',
+    noise: 'Ruido'
   },
   qubitTab: {
     classical: 'Clásico',
@@ -483,7 +489,10 @@ registerLocale('es', {
     tensorBody3: 'Esa es la definición literal y comprobable del entrelazamiento: un estado conjunto que no puede separarse de nuevo en dos factores independientes de un solo qubit. Ninguno de los dos qubits tiene por separado un estado bien definido — solo lo tiene el par.',
     relativityTitle: 'Por Qué Esto No Viola la Relatividad',
     relativityBody1: 'Este montaje es una versión del experimento mental de Einstein-Podolsky-Rosen (EPR): Alice mide el Qubit A y conoce instantáneamente el resultado del Qubit B, incluso si B está a años luz de distancia. Parece una señal más rápida que la luz — pero no lo es.',
-    relativityBody2: 'Alice no puede elegir qué resultado obtiene — sigue siendo aleatorio, con las mismas probabilidades de 50/50 que cualquier qubit individual. Así que no hay nada que ella pueda controlar, y por lo tanto nada que pueda codificar en un mensaje. La correlación solo es visible después del hecho, una vez que Alice y Bob comparan sus notas a través de un canal ordinario (más lento que la luz). En el momento de la medición, ninguna energía, información ni señal cruza realmente la distancia entre ellos.'
+    relativityBody2: 'Alice no puede elegir qué resultado obtiene — sigue siendo aleatorio, con las mismas probabilidades de 50/50 que cualquier qubit individual. Así que no hay nada que ella pueda controlar, y por lo tanto nada que pueda codificar en un mensaje. La correlación solo es visible después del hecho, una vez que Alice y Bob comparan sus notas a través de un canal ordinario (más lento que la luz). En el momento de la medición, ninguna energía, información ni señal cruza realmente la distancia entre ellos.',
+    cernTitle: 'Por Qué a CERN Le Importa el Entrelazamiento',
+    cernBody1: 'Esto no es solo un ejemplo didáctico. Los físicos del LHC han medido entrelazamiento cuántico genuino directamente en las partículas producidas por colisiones protón-protón — sobre todo entre un quark top y su antiquark, creados y desintegrados en una fracción de billonésima de billonésima de segundo. La misma matemática de estado de Bell de esta página, (|00⟩ + |11⟩)/√2, describe una correlación real y medida en el entorno de mayor energía que la humanidad ha construido jamás.',
+    cernBody2: 'La Iniciativa de Tecnología Cuántica de CERN trata el entrelazamiento y la superposición como recursos de ingeniería, no solo curiosidades: computadoras cuánticas para simular las teorías cuánticas de campos detrás de la propia física de partículas — un problema que escala mal en computadoras clásicas — y sensores cuánticos construidos con estados entrelazados o comprimidos, dirigidos al tipo de mediciones de precisión extrema de las que dependen las búsquedas de materia oscura y otra física nueva.'
   },
   bellstates: {
     title: 'Estados de Bell',
@@ -522,7 +531,12 @@ registerLocale('es', {
     reflected: 'Reflejado',
     transmitted: 'Transmitido',
     barrier: 'Barrera',
-    fireAgain: '↻ Disparar de nuevo'
+    fireAgain: '↻ Disparar de nuevo',
+    runHistory: 'Historial de disparos',
+    clearHistory: 'Borrar',
+    historyEmpty: 'Aún no hay disparos completados.',
+    historyCount: '· {count} disparos',
+    validationNote: 'Solucionador validado automáticamente: la probabilidad se conserva a <0.3% durante una ejecución completa; la transmisión cae correctamente de >10% en V₀=E a <2% en V₀=2.5E.'
   },
   interference: {
     title: 'Interferencia de Ondas',
@@ -557,14 +571,22 @@ registerLocale('es', {
   sterngerlach: {
     title: 'Experimento de Stern–Gerlach',
     subtitle: 'Envía átomos uno a uno a través de un campo magnético y observa cómo el espín — una propiedad puramente cuántica — se revela como un pequeño número de puntos discretos, nunca una mancha continua',
-    svgAlt: 'Diagrama de un horno que emite átomos de plata a través de rendijas colimadoras hacia un imán de Stern-Gerlach con un polo sur en forma de filo de cuchillo arriba y un polo norte ancho y curvado abajo, dividiendo el haz hacia un detector Arriba o un detector Abajo según el espín del átomo.',
+    definitionTitle: '¿Qué Es el Espín?',
+    definitionBody1: 'El espín es una forma intrínseca de momento angular que porta cada partícula elemental y átomo — no una rotación física literal, sino una propiedad genuina y permanente presente incluso en una partícula sin ninguna estructura interna que pueda girar. Está cuantizado: una medición del espín a lo largo de cualquier eje elegido solo puede devolver uno de un conjunto pequeño y fijo de valores discretos, nunca uno continuamente variable. Para una partícula de espín ½, como el electrón desapareado responsable del momento magnético de un átomo de plata, esa medición tiene exactamente dos resultados posibles — llamados convencionalmente "arriba" y "abajo" a lo largo del eje medido — con la probabilidad de cada uno fijada por el estado cuántico del átomo mediante la regla de Born, la misma regla que gobierna cada resultado de medición en el resto de esta aplicación.',
+    definitionBody2: 'El experimento de Stern–Gerlach (1922) fue la primera observación directa de esta cuantización: un haz de átomos de plata enviado a través de un campo magnético con un fuerte gradiente espacial se dividió en exactamente dos puntos discretos en una pantalla detectora, en vez de la mancha continua que habría producido un momento magnético clásico orientado arbitrariamente. El aparato interactivo de abajo reproduce esa misma medición, un átomo a la vez.',
+    svgAlt: 'Diagrama de átomos de plata entrando en un imán de Stern-Gerlach con un polo sur en forma de filo de cuchillo arriba y un polo norte ancho y curvado abajo, dividiendo el haz hacia un resultado Arriba o Abajo. Los átomos pueden venir directamente de un horno con ángulo de espín de entrada ajustable, o ya premedidos con el eje de este imán seleccionable, para probar si una segunda medición altera un espín que ya era definido.',
     atomSource: 'Horno',
     silverAtomsArrow: 'Átomos de plata',
     collimatingSlits: 'Rendijas colimadoras',
     magnetLabel: 'Campo no homogéneo',
     detectorUp: 'Detector Arriba',
     detectorDown: 'Detector Abajo',
+    detectorPlus: 'Detector "+"',
+    detectorMinus: 'Detector "−"',
     fireAtom: 'Disparar átomo',
+    magnetCountTitle: 'Número de Imanes',
+    oneMagnet: '1 imán',
+    twoMagnets: '2 imanes (secuencial)',
     inputSpinTitle: 'Ángulo de Espín de Entrada',
     inputSpinBody: 'El mismo θ que en la esfera de Bloch — θ = 0° prepara un espín seguro hacia arriba, θ = 180° seguro hacia abajo, y cualquier valor intermedio es una superposición genuina de ambos.',
     detectorTally: 'Recuento de Detectores',
@@ -573,10 +595,9 @@ registerLocale('es', {
     whyTwoSpotsFormula: 'F<sub>z</sub> ≈ μ<sub>z</sub> (∂B<sub>z</sub> / ∂z) &nbsp;&nbsp;&nbsp; si B es uniforme ⇒ F = 0',
     whyTwoSpotsBody2: 'Clásicamente, μ<sub>z</sub> podría apuntar en cualquier dirección, así que un haz de átomos orientados al azar debería difuminarse continuamente por la pantalla, desde una desviación total hacia arriba hasta una desviación total hacia abajo. Cuando Stern y Gerlach realizaron realmente este experimento en 1922, los átomos de plata aterrizaron en exactamente dos puntos discretos — nada intermedio, sin importar cómo se inclinara el imán. Esa es la misma cuantización ya integrada en cada qubit de esta aplicación: una medición devuelve uno de exactamente dos resultados, nunca un resultado parcial.',
     sequentialTitle: 'Medir Dos Veces: Por Qué Importa el Orden',
-    sequentialIntro: 'Cada átomo de abajo ya tiene un espín definido — es la salida "arriba" de un primer imán, con la mitad "abajo" físicamente bloqueada. Ahora envíalo a través de un segundo imán:',
+    sequentialIntro: 'El átomo de arriba ya tiene un espín definido — es la salida "arriba" de un primer imán (no mostrado), con la mitad "abajo" físicamente bloqueada. Elige el eje de este imán para ver si medirlo de nuevo lo altera.',
     sameAxis: 'Mismo eje (Z)',
     differentAxis: 'Eje diferente (X)',
-    svg2Alt: 'Diagrama de un átomo preparado con espín hacia arriba a lo largo de Z entrando en un segundo imán de Stern-Gerlach con un polo sur en forma de filo de cuchillo y un polo norte curvado, dividiéndose hacia un detector más o un detector menos según el eje del segundo imán.',
     preparedLabel: 'preparado: espín ↑ (Z)',
     blockedLabel: '(mitad "abajo" bloqueada)',
     magnet2AxisZ: 'Imán 2 — eje Z',
@@ -594,6 +615,99 @@ registerLocale('es', {
     result2Minus: 'El detector "−" hizo clic',
     explainer2Z: 'Medir el mismo eje dos veces seguidas solo confirma el resultado anterior — nada sorprendente aquí. Dispara tantas veces como quieras: siempre caerá en "+".',
     explainer2X: 'Aunque este átomo tenía un espín perfectamente definido a lo largo de Z, medir un eje diferente e incompatible (X) borró esa información y produjo un resultado nuevo, genuinamente aleatorio. Este es el corazón del descubrimiento de Stern–Gerlach: medir una propiedad puede perturbar otra que no conmuta con ella.'
+  },
+  teleport: {
+    title: 'Teleportación Cuántica',
+    subtitle: 'Transferir el estado exacto de un qubit a un segundo qubit, físicamente separado — usando un par entrelazado compartido y dos bits clásicos, sin transportar jamás el propio qubit',
+    definitionTitle: '¿Qué Es la Teleportación Cuántica?',
+    definitionBody1: 'La teleportación cuántica es un protocolo para transferir el estado exacto de un qubit a un segundo qubit, físicamente separado, usando un par de qubits entrelazados compartido de antemano junto con dos bits de comunicación clásica — sin que el qubit original sea jamás transportado físicamente ni medido directamente. Mueve información cuántica, no materia ni energía, y no puede usarse para enviar una señal más rápida que la luz: recuperar el estado transferido en el extremo receptor requiere que esos dos bits clásicos realmente lleguen, y estos viajan tan rápido como cualquier señal ordinaria, no más.',
+    definitionBody2: 'Tampoco crea una copia. El estado del qubit de origen queda necesariamente destruido por la medición que exige el protocolo, de acuerdo con el teorema de no-clonación, que prohíbe que cualquier procedimiento duplique un estado cuántico desconocido dejando intacto el original. En el recorrido de abajo, a las dos partes que intercambian el qubit se les dan las etiquetas convencionales usadas en toda la teoría de la información cuántica — Alice para quien envía, Bob para quien recibe.',
+    circuitTitle: 'El Protocolo',
+    svgAlt: 'Diagrama de circuito: el qubit de mensaje de Alice y las dos mitades de un par entrelazado. Una puerta Hadamard y una CNOT crean el par entrelazado entre el segundo qubit de Alice y el qubit de Bob. Una CNOT y una Hadamard ponen el qubit de mensaje de Alice y su mitad del par en la base de Bell. Ambos se miden, y los dos resultados clásicos viajan por líneas dobles hacia puertas de corrección Z y X aplicadas condicionalmente sobre el qubit de Bob.',
+    finalLabel: 'El qubit de Bob ≡ ψ',
+    teleportBtn: 'Teleportar',
+    aliceBadge: 'Mensaje de Alice',
+    aliceDesc: 'Fija cualquier estado — esto es lo que se teleporta',
+    bobBadge: 'Qubit de Bob',
+    bobDescWaiting: 'Aún no entrelazado — pulsa Teleportar',
+    bobDescEntangled: 'Entrelazado con Alice — indeterminado por sí solo',
+    bobDescWrong: 'Ya es definido, pero aún no es ψ — esperando los bits de Alice',
+    bobDescMatch: 'Coincide exactamente con el mensaje de Alice',
+    bobFormulaUndetermined: '|ψ⟩ = ?',
+    classicalBitsTitle: 'Bits Clásicos',
+    classicalBitsBody: 'Alice debe enviarle físicamente estos dos bits a Bob — por teléfono, radio, correo postal, cualquier medio clásico. Sin ellos, el qubit de Bob no le sirve de nada aunque ya lo tenga delante.',
+    outcomeTally: 'Recuento de Resultados',
+    resultRunning: 'en curso…',
+    resultDone: 'Teleportación completa',
+    stepPair: 'Alice y Bob comparten un par entrelazado, preparado antes de que existiera ningún mensaje.',
+    stepBell: 'Alice entrelaza su qubit de mensaje con su mitad del par — esto lee ψ contra el entrelazamiento, no lo copia.',
+    stepMeasure: 'Alice mide sus dos qubits, colapsándolos a dos bits clásicos genuinamente aleatorios — y colapsando el qubit de Bob a un estado definido en el mismo instante.',
+    stepSend: 'Alice envía sus dos bits clásicos a Bob — un canal ordinario, nunca más rápido que la luz. Él aplica condicionalmente Z y/o X para corregir su qubit.',
+    stepDone: 'El qubit de Bob ahora es exactamente igual al mensaje original de Alice — teleportado, no copiado: su propio qubit fue destruido por la medición del paso 2, así que el teorema de no-clonación queda intacto. Alice tampoco llegó a conocer ψ; solo transmitió dos bits aleatorios, m₀={m0}, m₁={m1}, que resultaron ser exactamente lo que Bob necesitaba.',
+    explainerDefault: 'Fija arriba el estado del mensaje de Alice y luego pulsa Teleportar. Observa la esfera de Bob: empieza indeterminada, salta a un punto definido pero incorrecto en el instante en que Alice mide, y luego encaja exactamente con la de Alice en cuanto llegan sus bits clásicos y Bob los corrige.',
+    trialCount: '· {count} intentos',
+    whyNotFtlTitle: 'Por Qué Esto No Es Más Rápido Que la Luz',
+    whyNotFtlBody: 'En el instante en que Alice mide sus dos qubits, el qubit de Bob sí se vuelve un estado definido — pero cuál es, es un misterio sin los dos bits clásicos de Alice, y esos solo pueden viajar a la velocidad de la luz o más lento, igual que una llamada telefónica. Hasta que llegan, el qubit de Bob es puro ruido: medirlo antes solo daría un resultado aleatorio de 50/50, sin importar cuál fuera ψ. El entrelazamiento hace posible la teleportación; no la hace instantánea.',
+    noCloningTitle: 'No Es una Copia — el Teorema de No-Clonación',
+    noCloningBody: 'El qubit de mensaje original de Alice no sobrevive a esto: su medición en la base de Bell del Paso 2 lo colapsa junto con su mitad del par, borrando para siempre lo que fuera ψ de su lado. Esto no es una limitación de este protocolo en particular — el teorema de no-clonación demuestra que <em>ningún</em> procedimiento cuántico puede copiar jamás un estado desconocido dejando intacto el original. La teleportación mueve un estado; nunca duplica uno.'
+  },
+  superdense: {
+    title: 'Codificación Superdensa',
+    subtitle: 'Transmitir dos bits clásicos de información enviando físicamente solo un qubit, dado un par entrelazado compartido de antemano',
+    definitionTitle: '¿Qué Es la Codificación Superdensa?',
+    definitionBody1: 'La codificación superdensa es un protocolo de comunicación cuántica que transmite dos bits clásicos de información enviando físicamente solo un único qubit, siempre que el emisor y el receptor ya compartan una mitad cada uno de un par entrelazado preparado de antemano. Es el recíproco lógico de la teleportación cuántica: la teleportación gasta dos bits clásicos y un par entrelazado compartido para mover 1 qubit de información cuántica, mientras que la codificación superdensa gasta 1 qubit y ese mismo tipo de par compartido para mover dos bits clásicos.',
+    definitionBody2: 'No es una trampa a los límites de la comunicación clásica — un qubit físico real todavía tiene que viajar del emisor al receptor para que el protocolo funcione, así que la transmisión sigue limitada por la velocidad ordinaria de la señal. Igual que en la pestaña de Teleportación, a las dos partes de abajo se les dan sus etiquetas convencionales de la teoría de la información cuántica: Alice para quien envía, Bob para quien recibe.',
+    circuitTitle: 'El Protocolo',
+    svgAlt: 'Diagrama de circuito: el qubit de Alice y el qubit de Bob. Una Hadamard y una CNOT crean un par entrelazado. Alice aplica condicionalmente X y/o Z solo a su propio qubit, codificando dos bits clásicos. Luego envía físicamente ese qubit a Bob por un canal cuántico. Bob, ya con ambos qubits, aplica una CNOT y una Hadamard para decodificar, y luego mide ambos para recuperar los dos bits exactos de Alice.',
+    channelLabel: 'canal cuántico',
+    finalLabelA: 'd₀',
+    finalLabelB: 'd₁',
+    sendBtn: 'Enviar',
+    messageTitle: 'Mensaje a Enviar',
+    messageBody: 'Elige cualquier mensaje de 2 bits — esto es lo que Alice codifica en su único qubit antes de enviárselo a Bob.',
+    sentLabel: 'Alice envió',
+    receivedLabel: 'Bob decodificó',
+    resultRunning: 'en curso…',
+    resultMatch: 'Decodificado exactamente bien',
+    resultMismatch: 'Discrepancia — revisa la consola, esto nunca debería pasar',
+    stepPair: 'Alice y Bob comparten un par entrelazado, preparado de antemano.',
+    stepEncode: 'Alice codifica su mensaje únicamente en su propio qubit — la mitad del par de Bob nunca se toca.',
+    stepSend: 'Alice envía físicamente ese único qubit a Bob por un canal cuántico real — el único paso sin sustituto clásico.',
+    stepDecode: 'Bob, ya con ambos qubits, ejecuta el mismo circuito de base de Bell que usó la Alice de Teleportar — una CNOT y luego una Hadamard — para distinguir los cuatro mensajes posibles.',
+    stepMeasure: 'Bob mide ambos qubits y lee los dos bits exactos de Alice.',
+    stepDone: 'Bob decodificó {received} — exactamente lo que Alice envió, {sent}. Nada de esto fue aleatorio: los cuatro mensajes posibles caen en cuatro estados mutuamente ortogonales, así que la medición de Bob no tiene ninguna incertidumbre restante una vez que el qubit llega.',
+    explainerDefault: 'Elige un mensaje de 2 bits arriba y luego pulsa Enviar. Observa cómo Alice lo codifica solo en su propio qubit, le entrega físicamente ese qubit a Bob, y Bob decodifica ambos bits exactamente — nada de esto es aleatorio.',
+    tally: '{sent} enviados · {match}/{sent} decodificados correctamente',
+    whyChannelTitle: 'Por Qué Esto Aún Necesita un Canal Cuántico',
+    whyChannelBody: 'La teleportación movió el equivalente a un qubit de información usando solo bits clásicos, por lo que no puede superar la velocidad de la luz. La codificación superdensa va en la dirección opuesta — mueve 2 bits clásicos usando solo 1 qubit de comunicación, lo que suena como si superara el límite clásico, pero no es una trampa: un qubit físico real todavía tiene que viajar de Alice a Bob para que esto funcione. El "ahorro" es real (1 qubit en vez de 2 bits clásicos de señal por separado), pero sigue limitado por la velocidad a la que ese qubit puede viajar.',
+    compareTitle: 'Teleportación vs. Codificación Superdensa',
+    compareBody: 'El mismo recurso — un par entrelazado compartido de antemano — gastado en direcciones opuestas. La teleportación envía 1 qubit de información cuántica usando 2 bits clásicos; la codificación superdensa envía 2 bits clásicos de información usando 1 qubit. Ambas necesitan ese par entrelazado preparado de antemano, y ambas terminan ejecutando esencialmente el mismo circuito de base de Bell (una CNOT y luego una Hadamard) — la teleportación lo ejecuta del lado de quien envía para leer un estado, la codificación superdensa lo ejecuta del lado de quien recibe para leer un mensaje.'
+  },
+  noise: {
+    title: 'Ruido y Decoherencia',
+    subtitle: 'La pérdida de coherencia cuántica por interacción no deseada con el entorno — el obstáculo práctico dominante para construir computadoras cuánticas fiables y a gran escala',
+    definitionTitle: '¿Qué Es la Decoherencia Cuántica?',
+    definitionBody1: 'La decoherencia cuántica es la pérdida de coherencia cuántica: el proceso por el cual la información de fase de un sistema se filtra hacia su entorno mediante una interacción no deseada, de modo que un estado genuinamente en superposición pasa a comportarse, a todos los efectos prácticos, como una mezcla clásica definida. Un sistema perfectamente aislado permanece en un estado puro — uno descrito exactamente por un único vector de estado |ψ⟩ — indefinidamente. Una vez que interactúa con un entorno incontrolado, esa garantía deja de cumplirse: el sistema se entrelaza con los muchos grados de libertad propios del entorno, y trazar todo excepto el sistema mismo deja un estado mixto, descrito por una matriz de densidad ρ en vez de un único vector. Todas las demás pestañas de esta aplicación tratan las puertas y los qubits como perfectamente aislados exactamente en ese primer sentido; esta modela lo que ocurre cuando dejan de estarlo.',
+    definitionBody2: 'En la esfera de Bloch ya usada en toda esta aplicación, esa pérdida de pureza aparece como un vector que se encoge — la misma firma ya vista para un qubit entrelazado con otro (ver las esferas de Bloch reducidas de las pestañas Entrelazar y Circuitos), solo que causada aquí por un entorno incontrolado en vez de un segundo qubit deliberado. La decoherencia es el obstáculo práctico dominante para construir computadoras cuánticas fiables y a gran escala: cada puerta de un circuito real tiene que completarse antes de que la coherencia de la que depende se haya filtrado. La simulación de abajo modela dos de sus canales fenomenológicos estándar, T₁ (relajación) y T₂ (desfase), evolucionando en tiempo real el vector de Bloch de un único qubit.',
+    qubitBadge: 'Qubit decoherente',
+    statsTitle: 'Lectura en Vivo',
+    elapsed: 'Tiempo transcurrido',
+    vectorLength: 'Longitud del vector de Bloch',
+    purity: 'Pureza Tr(ρ²)',
+    densityMatrix: 'Matriz de Densidad ρ',
+    initialStateTitle: 'Estado Inicial',
+    decayTimesTitle: 'Tiempos de Decaimiento',
+    t2CapNote: 'T₂ limitado a {eff} μs (2×T₁) — la desfase no puede ser más lenta que la relajación.',
+    pauseBtn: '⏸ Pausar',
+    playBtn: '▶ Reproducir',
+    restartBtn: '↻ Reiniciar',
+    explainerDefault: 'Observa cómo el vector de Bloch se encoge y deriva hacia el polo norte — ese encogimiento es pérdida real de información, no solo un efecto visual. Un vector más corto significa que el estado del qubit es genuinamente más incierto, exactamente la misma idea de "estado mixto" ya usada para qubits entrelazados en otras partes de esta aplicación.',
+    explainerSettled: 'Se ha asentado en |0⟩ — y la pureza en realidad ha vuelto a subir cerca del 100%, no ha tocado fondo. Eso no es un rescate: la relajación T₁ atrae al qubit hacia su estado fundamental, así que con suficiente tiempo siempre termina puro de nuevo, solo que puro e inútil. Un qubit en |0⟩ se ve idéntico sin importar si empezó como |+⟩, |−⟩ o cualquier otra cosa — la información de fase que T₂ borró por el camino nunca vuelve, haya pureza o no.',
+    t1t2Title: 'T₁ vs. T₂ — Dos Formas Distintas de Olvidar',
+    t1t2Body: 'T₁ (relajación) es cuánto tarda el qubit en filtrar energía hacia su entorno y asentarse hacia |0⟩ — por eso la componente z del vector de Bloch deriva hacia el polo norte. T₂ (desfase) es cuánto tiempo el qubit mantiene la fase relativa entre |0⟩ y |1⟩ — por eso las componentes x/y, la parte que realmente lleva la información de superposición, se desvanecen. Perder T₂ suele ser el problema práctico mayor: un qubit puede seguir siendo "mayormente" |0⟩ o |1⟩ mucho después de haber perdido todo rastro de estar en una superposición genuina.',
+    t1t2Formula: 'T₂ ≤ 2×T₁ &nbsp;&nbsp;&nbsp; (la desfase nunca puede ser más lenta de lo que permite la relajación)',
+    whyMattersTitle: 'Por Qué Esta Lucha Nunca Termina en el Hardware Real',
+    whyMattersBody: 'Todas las demás simulaciones de esta aplicación ejecutan puertas y mediciones como operaciones matemáticamente perfectas, porque esa es la forma correcta de aprender las ideas primero. Los procesadores cuánticos reales — incluidos los dispositivos superconductores y de iones atrapados con los que experimenta la propia Iniciativa de Tecnología Cuántica de CERN para simulación de física de partículas — solo se mantienen coherentes durante una ventana limitada, medida exactamente en estos números de T₁/T₂, típicamente entre decenas y cientos de microsegundos. Cada puerta de un circuito real tiene que terminar bien dentro de esa ventana, que es la razón completa por la que la corrección de errores cuánticos y el diseño de circuitos consciente del hardware son problemas de ingeniería activos, no resueltos.'
   },
   // Refleja ROADMAP_LESSONS en js/roadmap.js exactamente (mismos ids,
   // mismo contenido de title/body) — ese archivo mantiene sus propias
@@ -664,6 +778,18 @@ registerLocale('es', {
     sterngerlach: {
       title: 'Experimento de Stern–Gerlach',
       body: 'Un haz de átomos de plata que atraviesa un campo magnético no homogéneo se divide en exactamente dos puntos discretos, nunca una mancha continua — evidencia directa de que el espín está cuantizado, con solo dos resultados posibles a lo largo de cualquier eje de medición, exactamente igual que los propios resultados de medición |0⟩/|1⟩ de un qubit.'
+    },
+    teleport: {
+      title: 'Teleportación Cuántica',
+      body: 'Alice puede enviarle a Bob el estado exacto de un qubit sin enviar jamás el qubit en sí — usando un par entrelazado compartido de antemano y dos bits clásicos. Su propio qubit queda destruido por la medición que esto requiere, así que nunca existe una copia en ambos extremos a la vez, tal como exige el teorema de no-clonación.'
+    },
+    superdense: {
+      title: 'Codificación Superdensa',
+      body: 'La imagen especular de la teleportación: Alice le envía a Bob dos bits clásicos usando solo un qubit, codificando su mensaje en su mitad de un par entrelazado compartido de antemano y enviándole físicamente a Bob ese único qubit. Bob decodifica ambos bits exactamente, siempre — nada en este protocolo es probabilístico.'
+    },
+    noise: {
+      title: 'Ruido y Decoherencia',
+      body: 'Los qubits reales no están perfectamente aislados: la relajación T₁ les permite filtrar energía hacia |0⟩, y el desfase T₂ borra la fase relativa que hace significativa una superposición. Ambos encogen el vector de Bloch hacia el centro — la misma firma de "estado mixto" que ya se ve al trazar un qubit entrelazado, solo que causada por un entorno incontrolado en vez de una medición deliberada.'
     }
   },
   // Refleja ROADMAP_QUIZ en js/roadmap.js exactamente — mismos lessonIds
@@ -749,6 +875,21 @@ registerLocale('es', {
       q: 'Un haz de átomos de plata pasa a través de un imán de Stern–Gerlach. ¿Qué muestra realmente el experimento en la pantalla del detector?',
       options: ['Una mancha continua de un extremo a otro', 'Exactamente dos puntos discretos, nunca nada intermedio', 'Un único punto en el centro exacto', 'Ningún patrón en absoluto — los átomos son absorbidos'],
       explanation: 'Clásicamente, un dipolo magnético orientado al azar debería desviarse en cualquier cantidad, produciendo una mancha continua. Stern y Gerlach solo encontraron dos puntos discretos — evidencia directa de que el espín, como los propios resultados de medición de un qubit, está cuantizado en solo dos posibilidades a lo largo de cualquier eje.'
+    },
+    teleport: {
+      q: 'Después de que Bob aplica sus puertas de corrección, ¿cómo se compara su qubit con el mensaje original de Alice?',
+      options: ['Es una buena aproximación, cercana pero no exacta', 'Coincide exactamente — mismas amplitudes, mismo estado', 'Es una copia clásica, no un estado cuántico real', 'Solo coincide la mitad de las veces'],
+      explanation: 'Una vez aplicada la corrección Z/X correcta, el qubit de Bob es exactamente igual al original de Alice, no una aproximación — ese es justamente el propósito del paso de corrección controlado clásicamente.'
+    },
+    superdense: {
+      q: 'En la codificación superdensa, ¿qué es lo que realmente tiene que viajar físicamente de Alice a Bob?',
+      options: ['Dos bits clásicos, enviados por radio o teléfono', 'Un único qubit', 'Nada — el par entrelazado por sí solo basta', 'Cuatro qubits, uno por cada mensaje posible'],
+      explanation: 'Solo viaja el único qubit de Alice. El par entrelazado se compartió de antemano, y su mensaje se codifica en ese único qubit antes de enviarlo — eso es lo que lo hace "superdenso": 2 bits de información a partir de solo 1 qubit de comunicación.'
+    },
+    noise: {
+      q: 'Un qubit empieza en una superposición genuina. Después de decoherer por completo (T₂ ha pasado muchas veces), ¿qué le ocurre a su vector de Bloch?',
+      options: ['Nada — la decoherencia solo afecta a la medición, no al estado', 'Se encoge hacia el centro, la misma firma que un estado mixto/entrelazado', 'Se hace más largo que 1', 'Salta instantáneamente al polo sur'],
+      explanation: 'Perder coherencia frente al entorno es matemáticamente idéntico a entrelazarse con algo que no puedes rastrear — ambos dejan el vector de Bloch propio del qubit más corto que 1, un estado genuinamente mixto, no solo un estado puro aleatorizado.'
     }
   }
 });

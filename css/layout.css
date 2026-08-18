@@ -1,7 +1,9 @@
-/* page chrome - fixed header, floating tab-dock sidebar, the generic
-   .tab-content wrapper every sim tab sits inside, and the footer.
-   needs base.css for --header-h/--dock-clear/--tab-strip-h */
+/* Page chrome: the fixed header, the floating tab-dock sidebar, the
+   generic .tab-content wrapper every simulation tab sits inside, and the
+   page footer.
+   Depends on: base.css (theme variables, --header-h/--dock-clear/--tab-strip-h). */
 
+/* ─── HEADER ─────────────────────────────────────────── */
 header {
   position: fixed;
   top: 0; left: 0; right: 0;
@@ -23,10 +25,11 @@ header {
   align-items: center;
 }
 .logo a { display: block; }
-/* the CERN badge svg is a solid-color square, not a transparent glyph -
-   rounding the corners makes it read as an app icon instead of a stray
-   square. .logo-psi is just an absolutely-positioned overlay on top,
-   not part of the image */
+/* The CERN badge (icons/LogoBadge_Logo Badge.svg) is a solid-color square
+   graphic, not a transparent glyph — round its corners slightly so it
+   reads as an app-icon-style badge rather than a stray square in the
+   header. .logo-psi is a plain absolutely-positioned overlay on top of
+   it, not part of the image itself. */
 .logo-badge {
   position: relative;
   display: block;
@@ -54,10 +57,11 @@ header {
   pointer-events: none;
 }
 
-/* sits at the bottom of whichever page is visible (sibling of
-   #roadmap-view/.tab-content, not inside either) - mirrors the header's
-   branding (.logo-badge/.logo-psi, JetBrains Mono labels) at a smaller
-   scale rather than being plain text */
+/* ─── FOOTER ─────────────────────────────────────────── */
+/* Sits at the bottom of whichever page is currently visible (a sibling of
+   #roadmap-view/.tab-content, not inside either) — mirrors the header's
+   own branding language (.logo-badge/.logo-psi, JetBrains Mono small-caps
+   labels) at a smaller scale, rather than being unstyled plain text. */
 .app-footer {
   border-top: 1px solid var(--border);
   margin-top: 40px;
@@ -77,8 +81,8 @@ header {
   align-items: center;
   gap: 12px;
 }
-/* smaller version of the header's logo-badge/logo-psi pair - same
-   overlay trick, just 32px instead of 40px */
+/* Smaller restatement of the header's own .logo-badge/.logo-psi pairing —
+   same overlay technique, scaled down (32px vs. the header's 40px). */
 .app-footer-badge {
   width: 32px;
   height: 32px;
@@ -124,24 +128,30 @@ header {
   color: var(--text4);
 }
 
-/* floating column of pill buttons pinned to the left edge while the page
-   scrolls - replaces the old horizontal header nav. each pill pairs a
-   letter badge (Qubit, Gates, Circuit, Measure, Statevec, Entangle,
-   Tunnel, Interference all start with distinct letters) with its full
-   spelled-out label. thin rail behind the badges reads as a route, ties
-   into the "circuits are a path" language in the Roadmap lessons. only
-   shown in Concepts mode - toggled by setAppMode() in roadmap.js */
+/* ─── SIMULATION TAB DOCK ────────────────────────────── */
+/* A floating column of pill buttons, vertically centered on the left
+   edge and pinned there while the page (not this element) scrolls —
+   replaces the old horizontal header <nav>. Deliberately not a panel:
+   each pill pairs a mnemonic letter badge (Qubit, Gates, Circuit,
+   Measure, Statevec, Entangle, Tunnel, Interference are all distinct on
+   first letter) with its full label, always spelled out — never
+   abbreviated down to just the badge. A thin rail behind the badges reads
+   as a path/route, echoing the "circuits are a route" language used in
+   the Roadmap lesson text. Only shown in Concepts app-mode (display
+   toggled by setAppMode() in roadmap.js, same convention the old nav
+   used). */
 #tab-sidebar {
   position: fixed;
   left: 18px;
-  /* pinned to the top, not vertically centered, so Introduction (the
-     first pill) stays at a fixed spot no matter how many subnav groups
-     below are expanded. tried centering + max-height first but the
-     centering math re-derives position from post-cap height on every
-     layout change, which kept leaving the top pill scrolled out of view
-     with no scrollbar to explain why. top+bottom gives an implicit
-     height (viewport minus offsets) that bounds it and keeps the top
-     edge anchored */
+  /* Pinned to the top (not vertically centered) precisely so Introduction
+     — the first pill — sits at a fixed, predictable spot no matter how
+     many subnav groups below it are expanded. Centering + a max-height
+     cap was tried first, but centering math re-derives the box's
+     position from its own (post-cap) height on every layout change,
+     which in practice still left the top pill scrolled out of view with
+     no visible scrollbar to hint at why. top+bottom instead gives the
+     box a height implicitly (viewport minus these two offsets), which
+     both bounds it AND keeps its top edge anchored. */
   top: calc(var(--header-h) + 20px);
   bottom: 20px;
   display: flex;
@@ -151,10 +161,23 @@ header {
   z-index: 90;
   overflow-y: auto;
   overflow-x: hidden;
-  scrollbar-width: none;
+  /* Visible (not auto-hiding) on purpose — with 15 tabs plus expandable
+     subnavs, the dock can run taller than the viewport, and a hidden
+     scrollbar left no visible cue that there was more to scroll to (see
+     the top-anchoring comment above, which worked around the symptom
+     without fixing the actual cause). Thin and theme-colored rather than
+     the browser's bare default, so it still reads as designed. */
+  scrollbar-width: thin;
+  scrollbar-color: var(--border2) transparent;
   padding: 4px 6px 4px 2px;
 }
-#tab-sidebar::-webkit-scrollbar { display: none; }
+#tab-sidebar::-webkit-scrollbar { width: 7px; }
+#tab-sidebar::-webkit-scrollbar-track { background: transparent; }
+#tab-sidebar::-webkit-scrollbar-thumb {
+  background: var(--border2);
+  border-radius: 4px;
+}
+#tab-sidebar::-webkit-scrollbar-thumb:hover { background: var(--text3); }
 #tab-sidebar::before {
   content: '';
   position: absolute;
@@ -214,11 +237,13 @@ header {
   letter-spacing: 0.02em;
 }
 
-/* .tab-group wraps a top-level pill that has real sub-destinations
+/* ─── SIDEBAR SUBNAV ─────────────────────────────────── */
+/* A .tab-group wraps a top-level pill that has real sub-destinations
    (Bits & Qubits, Maths Concept, Gates) plus its .tab-subnav list.
-   collapsed by default, chevron toggles .open without navigating, while
-   clicking the pill itself navigates AND opens its group - same split
-   as the mind-map's toggle-vs-node handling in roadmap.js */
+   Collapsed by default; the chevron toggles .open without navigating,
+   while clicking the pill itself still navigates AND opens its own
+   group — same split as the mind-map's toggle-vs-node click handling in
+   roadmap.js (goToLessonSimulation vs the [data-mindmap-toggle] check). */
 #tab-sidebar .tab-group {
   display: flex;
   flex-direction: column;
@@ -237,7 +262,9 @@ header {
   display: none;
   flex-direction: column;
   gap: 5px;
-  margin-left: 22px;
+  margin-left: 20px;
+  padding-left: 12px;
+  border-left: 1px solid var(--border2);
 }
 #tab-sidebar .tab-group.open .tab-subnav { display: flex; }
 
@@ -312,15 +339,16 @@ header {
 }
 .lang-select:hover { border-color: var(--text2); color: var(--text); background: var(--surface2); }
 
-/* Concepts/Roadmap switch in the header - sits between the logo and
-   .header-right so it stays visible regardless of active mode */
+/* Header Concepts/Roadmap switch — sits between the logo and
+   .header-right, so it stays visible regardless of which mode is active. */
 .app-mode-grid { max-width: 260px; white-space: nowrap; flex-shrink: 0; }
 
+/* ─── TAB CONTENT ────────────────────────────────────── */
 .tab-content {
   display: none;
-  /* left padding clears the #tab-sidebar dock (both are Concepts-mode
-     only, always visible together) instead of the usual 24px side
-     padding everywhere else */
+  /* Left padding clears the #tab-sidebar dock (only ever visible together
+     with this element — both are Concepts-mode-only) rather than the
+     ordinary 24px side padding used everywhere else. */
   padding: calc(var(--header-h) + 28px) 24px 40px var(--dock-clear);
   min-height: 100vh;
 }
@@ -334,10 +362,10 @@ header {
   .tab-content.active { animation: none; }
 }
 
-/* lesson + quick-check appended at the bottom of each concept's sim tab
-   (see #lesson-embed-<tab> in index.html, renderEmbeddedLessons() in
-   roadmap.js) - a visual break from the sim above rather than another
-   card in the same flow */
+/* Lesson + quick-check, appended at the bottom of each concept's own
+   simulation tab (see #lesson-embed-<tab> in index.html and
+   renderEmbeddedLessons() in roadmap.js) — a visual break from the
+   simulation above it, rather than another .card in the same flow. */
 .lesson-embed {
   max-width: 720px;
   margin: 40px auto 0;

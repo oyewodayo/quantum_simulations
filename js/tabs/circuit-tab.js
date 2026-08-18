@@ -3,10 +3,13 @@
 // core/dom-utils.js (copyShareLink, buildGatePalette),
 // app.js state (circuitGates, SLOT_COUNT, qubitCircuit, rendererCircuit).
 
-// three presets: a superposition (H), a plain bit flip (X), and a
-// Z-then-H sandwich that makes Z's otherwise-invisible phase flip show up
-// as an actual state change - matches Z's own "hand it to a Hadamard"
-// explain text in gates.js
+// ═══════════════════════════════════════════════════════════════════
+// CIRCUIT TAB
+// ═══════════════════════════════════════════════════════════════════
+/** Superposition (H's signature move), a blunt bit flip (X), and a
+ *  Z-then-H sandwich that reveals Z's otherwise-invisible phase flip as
+ *  an actual state change — echoes the Z gate's own "hand it to a
+ *  Hadamard afterward" explain text in core/gates.js. */
 const CIRCUIT_PRESETS = [
   { name: 'Superposition', gates: ['H'] },
   { name: 'Bit Flip',      gates: ['X'] },
@@ -30,14 +33,16 @@ function initCircuitTab() {
   renderTryMe('circuit-try-me', CIRCUIT_PRESETS, loadCircuitPreset);
 }
 
-// top-level Classical/Quantum switch, sits above the quantum builder's own
-// 1Q/2Q/3Q sub-toggle (setCircuitMode in circuit-multiqubit-tab.js) - same
-// two-tier pattern as Concept Map/My Progress on the home page
+/** Top-level Classical/Quantum switch for the Circuits tab — sits above
+ *  the quantum builder's own 1Q/2Q/3Q sub-toggle (see setCircuitMode() in
+ *  circuit-multiqubit-tab.js), the same two-tier pattern the home page
+ *  uses for Concept Map/My Progress. */
 function setCircuitDomain(domain) {
   document.querySelectorAll('.mode-btn[data-circuit-domain]').forEach(btn =>
     btn.classList.toggle('active', btn.dataset.circuitDomain === domain));
   document.getElementById('circuit-classical-panel').style.display = domain === 'classical' ? '' : 'none';
   document.getElementById('circuit-quantum-panel').style.display   = domain === 'quantum'   ? '' : 'none';
+  document.getElementById('circuit-compare-panel').style.display   = domain === 'compare'   ? '' : 'none';
 }
 
 function buildCircuitPalette() {
@@ -116,12 +121,13 @@ function renderCircuitSlots() {
   });
 }
 
-// Run History (circuit-builder rollback) - snapshots the qubit's exact
-// (theta, phi) after each step of the latest Run, shown as clickable chips
-// (reuses .hist-tag like everything else). rebuilt fresh each Run rather
-// than accumulated, same as the Try Me history strips. circuitRunning
-// guards against a rollback click or second Run racing an animation in
-// progress.
+// Run History (item: circuit-builder rollback) — a snapshot of the
+// qubit's exact (theta, phi) after each step of the most recent Run,
+// rendered as clickable numbered chips (reuses .hist-tag, same as every
+// other rollback trail in the app). Rebuilt fresh at the start of each
+// Run rather than accumulated across runs, same convention as the Try Me
+// history strips. circuitRunning guards against a rollback click (or a
+// second Run) racing the animation while one is already in progress.
 let circuitRunHistory   = [];
 let circuitHistoryCursor = -1;
 let circuitRunning       = false;
@@ -193,9 +199,11 @@ function renderCircuitHistory() {
   });
 }
 
-// jumps straight to step i's recorded (theta, phi) instead of replaying
-// gates from |0⟩, and puts the explainer back to the full gate.explain
-// writeup it showed at that step, not the terse "Checkpoint N of M" line
+/** Rollback — jumps straight to step `i`'s recorded (theta, phi)
+ *  snapshot rather than replaying gates from |0⟩, and restores the
+ *  "What's going on" explainer to exactly what it said at that step
+ *  (not just the state/formula) — same detailed, gate.explain-based
+ *  writeup Run itself shows, not the terse "Checkpoint N of M" line. */
 function restoreCircuitHistoryStep(i) {
   const entry = circuitRunHistory[i];
   if (!entry) return;

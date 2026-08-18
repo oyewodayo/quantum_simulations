@@ -4,37 +4,11 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Quantum Explorer · CERN</title>
-  <meta name="description" content="Learn quantum computing and quantum mechanics interactively — 16+ browser-based simulations, guided lessons, and a 70+ term glossary. Free, no install required.">
-  <meta name="keywords" content="quantum computing, quantum mechanics, qubit, Bloch sphere, quantum gates, quantum circuit, quantum entanglement, Bell states, Stern-Gerlach, beam splitter, CERN, interactive simulation, quantum education">
-  <meta name="author" content="Temidayo Solomon Oyewo, CERN">
-  <meta name="robots" content="index, follow">
-  <meta name="theme-color" content="#0033A0">
-  <link rel="canonical" href="https://quantumexplorer.web.cern.ch/">
-
-  <!-- Open Graph / Facebook, LinkedIn, Slack, etc. link previews -->
-  <meta property="og:type" content="website">
-  <meta property="og:site_name" content="Quantum Explorer · CERN">
-  <meta property="og:title" content="Quantum Explorer · CERN">
-  <meta property="og:description" content="Learn quantum computing and quantum mechanics interactively — 16+ browser-based simulations, guided lessons, and a 70+ term glossary. Free, no install required.">
-  <meta property="og:url" content="https://quantumexplorer.web.cern.ch/">
-  <meta property="og:image" content="https://quantumexplorer.web.cern.ch/entaglement.png">
-  <meta property="og:image:width" content="1408">
-  <meta property="og:image:height" content="768">
-  <meta property="og:image:alt" content="Illustration of quantum entanglement using a coin-flip analogy">
-  <meta property="og:locale" content="en_US">
-  <meta property="og:locale:alternate" content="fr_FR">
-  <meta property="og:locale:alternate" content="es_ES">
-
-  <!-- Twitter/X card -->
-  <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="Quantum Explorer · CERN">
-  <meta name="twitter:description" content="Learn quantum computing and quantum mechanics interactively — 16+ browser-based simulations, guided lessons, and a 70+ term glossary. Free, no install required.">
-  <meta name="twitter:image" content="https://quantumexplorer.web.cern.ch/entaglement.png">
-  <meta name="twitter:image:alt" content="Illustration of quantum entanglement using a coin-flip analogy">
-
-  <!-- same badge as the header logo, see .logo-badge in layout.css.
-       SVG first for crisp scaling, PNG fallback for browsers that don't
-       do SVG favicons, apple-touch-icon for iOS home screen -->
+  <!-- Same CERN badge used as the header logo (icons/LogoBadge_Logo Badge.svg,
+       see .logo-badge in css/layout.css) — SVG first for crisp scaling in
+       the browser tab, with a pre-sized PNG as the fallback/alternate for
+       browsers without SVG favicon support, plus an apple-touch-icon for
+       iOS home-screen bookmarks. -->
   <link rel="icon" type="image/svg+xml" href="icons/LogoBadge_Logo%20Badge.svg">
   <link rel="alternate icon" type="image/png" href="icons/LogoBadge_Small_Logo%20Badge.png">
   <link rel="apple-touch-icon" href="icons/LogoBadge_Small_Logo%20Badge.png">
@@ -50,9 +24,12 @@
   </script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
-  <!-- split per concern instead of one giant stylesheet, mirrors js/core + js/tabs.
-       order matters here: base.css first (theme vars), responsive.css last
-       since it overrides selectors from everything above it -->
+  <!-- Split into one file per concern (mirrors js/core + js/tabs) rather
+       than one monolithic stylesheet — see each file's own header comment
+       for what it covers and what it depends on. Order matters: base.css
+       must load first (theme variables), responsive.css must load last
+       (its overrides target selectors defined across several of the
+       files above it). -->
   <link rel="stylesheet" href="css/base.css">
   <link rel="stylesheet" href="css/layout.css">
   <link rel="stylesheet" href="css/roadmap.css">
@@ -72,14 +49,20 @@
   <link rel="stylesheet" href="css/tabs/beam-splitter.css">
   <link rel="stylesheet" href="css/tabs/interference.css">
   <link rel="stylesheet" href="css/tabs/stern-gerlach.css">
+  <link rel="stylesheet" href="css/tabs/teleport.css">
+  <link rel="stylesheet" href="css/tabs/superdense.css">
+  <link rel="stylesheet" href="css/tabs/noise.css">
   <link rel="stylesheet" href="css/responsive.css">
 </head>
 <body>
 
   <header>
     <div class="logo">
-        <!-- real CERN badge with ⟨ψ| overlaid on top (just an absolutely
-             positioned span, didn't want to touch the actual logo file) -->
+        <!-- The real CERN logo badge (icons/LogoBadge_Logo Badge.svg),
+             with ⟨ψ| (Dirac notation for a quantum state, used throughout
+             this app) overlaid inside the ring underneath the "CERN" text
+             — a plain absolutely-positioned span on top of the badge
+             image, not a redrawn/edited logo. -->
         <a href="index.html" aria-label="Quantum Explorer home" style="color: inherit;text-decoration: none;">
           <span class="logo-badge">
             <img class="logo-badge-img" src="icons/LogoBadge_Logo%20Badge.svg" alt="CERN">
@@ -103,15 +86,22 @@
     </div>
   </header>
 
-  <!-- floating dock on desktop, collapses to a horizontal strip on mobile,
-       see #tab-sidebar in layout.css. Only visible in Concepts app-mode,
-       toggled from setAppMode() in roadmap.js -->
+  <!-- Simulation-tab nav — a floating vertical dock of pill buttons,
+       centered on the left edge (desktop/tablet), collapsing to a
+       horizontal pill strip under the header on mobile (see #tab-sidebar
+       in css/layout.css). Each pill pairs a mnemonic letter badge with its
+       full label, always spelled out. Only shown in Concepts app-mode;
+       toggled by setAppMode() in roadmap.js exactly like the header nav
+       it replaced. -->
   <aside id="tab-sidebar" style="display:none;" aria-label="Simulation tabs">
     <button class="tab" data-tab="introduction"><span class="tab-badge">1</span><span class="tab-label" data-i18n="nav.introduction">Introduction</span></button>
     <button class="tab" data-tab="important-concepts"><span class="tab-badge">✦</span><span class="tab-label" data-i18n="nav.importantConcepts">Important Concepts</span></button>
 
-    <!-- clicking the chevron just expands/collapses the sub-list, clicking
-         the pill itself still navigates (see .tab-sub handler in app.js) -->
+    <!-- Groups with a chevron carry a flat list of real destinations on
+         that tab (see the generic .tab-sub handler in app.js) — clicking
+         the chevron only expands/collapses, clicking the pill itself
+         still navigates, same split as the mind-map's own toggle-vs-node
+         pattern in roadmap.js. -->
     <div class="tab-group open">
       <button class="tab active" data-tab="qubit">
         <span class="tab-badge">Q</span><span class="tab-label" data-i18n="nav.bitsQubits">Bits & Qubits</span>
@@ -153,18 +143,24 @@
     </div>
 
     <button class="tab" data-tab="circuit"><span class="tab-badge">C</span><span class="tab-label" data-i18n="nav.circuits">Circuits</span></button>
-    <button class="tab" data-tab="bellstates"><span class="tab-badge">β</span><span class="tab-label" data-i18n="nav.bellStates">Bell States</span></button>
     <button class="tab" data-tab="measure"><span class="tab-badge">M</span><span class="tab-label" data-i18n="nav.measure">Measure</span></button>
     <button class="tab" data-tab="entangle"><span class="tab-badge">E</span><span class="tab-label" data-i18n="nav.entangle">Entangle</span></button>
+    <button class="tab" data-tab="bellstates"><span class="tab-badge">β</span><span class="tab-label" data-i18n="nav.bellStates">Bell States</span></button>
     <button class="tab" data-tab="tunnel"><span class="tab-badge">T</span><span class="tab-label" data-i18n="nav.tunnel">Tunnel</span></button>
     <button class="tab" data-tab="interference"><span class="tab-badge">I</span><span class="tab-label" data-i18n="nav.interference">Interference</span></button>
     <button class="tab" data-tab="beamsplitter"><span class="tab-badge">B</span><span class="tab-label" data-i18n="nav.beamSplitter">Beam Splitter</span></button>
     <button class="tab" data-tab="sterngerlach"><span class="tab-badge">S</span><span class="tab-label" data-i18n="nav.sternGerlach">Stern–Gerlach</span></button>
+    <button class="tab" data-tab="teleport"><span class="tab-badge">τ</span><span class="tab-label" data-i18n="nav.teleport">Teleport</span></button>
+    <button class="tab" data-tab="superdense"><span class="tab-badge">D</span><span class="tab-label" data-i18n="nav.superdense">Superdense Coding</span></button>
+    <button class="tab" data-tab="noise"><span class="tab-badge">N</span><span class="tab-label" data-i18n="nav.noise">Noise</span></button>
   </aside>
 
-  <!-- introduction tab -->
-  <!-- no ROADMAP_LESSONS entry for this one yet, so no embedded quiz and
-       it doesn't count toward the progress total on Home -->
+  <!-- ═══════════════════ INTRODUCTION TAB ═══════════════════ -->
+  <!-- Deliberately blank for now — a placeholder page the "1. Introduction"
+       mind-map node links to (see MINDMAP_TREE in roadmap.js), reserved
+       for the "Maths" track (state vectors, unitary matrices) discussed
+       separately. No ROADMAP_LESSONS entry yet, so it doesn't get an
+       embedded lesson+quiz or count toward the Home progress total. -->
   <section id="tab-introduction" class="tab-content">
 
     <div class="compare-header">
@@ -206,9 +202,15 @@
         </div>
         <div class="card">
           <div class="card-title"><b data-i18n="intro.whyMattersTitle">Why Quantum Computing Matters</b></div>
-          <!-- has to be a div not a p, a p auto-closes before the ul and then
-               data-i18n-html only replaces the truncated p, leaving the old
-               ul behind as a duplicate. same fix as the VQE/QAOA card below -->
+          <!-- A <div>, not a <p> — a <p> can't legally contain the <ul>
+               below; browsers auto-close it right before the list, and
+               data-i18n-html's el.innerHTML = value then only overwrites
+               that now-truncated <p>, leaving the original static <ul>
+               stranded as an uncleared sibling that never gets replaced —
+               so the list rendered twice (see the same bug found and
+               fixed on the Important Concepts VQE/QAOA card). A <div> can
+               contain block content, so applyTranslations() fully
+               replaces the one element instead. -->
           <div class="bit-explainer" data-i18n="intro.whyMattersBody" data-i18n-html>Quantum computers are not designed to replace laptops or smartphones.
             They are built to solve complex problems, such as:
             <ul class="quantum-list">
@@ -237,9 +239,14 @@
 
   </section>
 
-  <!-- important concepts / glossary tab, just static definitions, no sim.
-       reachable from the sidebar or the button on Home — [data-goto-tab]
-       handler in roadmap.js -->
+  <!-- ═══════════════════ IMPORTANT CONCEPTS TAB (glossary) ═══════════════════ -->
+  <!-- A static reference page — no simulation, no ROADMAP_LESSONS entry, no
+       quick check, just concise definitions of the core vocabulary used
+       throughout the app, grouped into quantum-mechanics fundamentals and
+       quantum-computing-specific concepts. Reachable both from the sidebar
+       dock (right after Introduction) and from its own button on the Home
+       page next to Concept Map/My Progress — see the [data-goto-tab]
+       handler in roadmap.js's initRoadmap(). -->
   <section id="tab-important-concepts" class="tab-content">
 
     <div class="compare-header">
@@ -247,9 +254,10 @@
       <p class="compare-subtitle" data-i18n="concepts.subtitle">A glossary of the essential ideas behind quantum mechanics and quantum computing — the vocabulary the rest of this app builds on.</p>
     </div>
 
-    <!-- search just re-reads each card's live textContent (initImportantConceptsSearch
-         in important-concepts.js) instead of building a search index, so it
-         keeps working after a language switch for free -->
+    <!-- Filters the glossary grids below purely by re-reading each card's
+         live (already-translated) textContent — see initImportantConceptsSearch()
+         in js/tabs/important-concepts.js — so it needs no locale-specific
+         search index and stays correct across a language switch. -->
     <div class="concept-search-wrap">
       <svg class="concept-search-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
       <input type="search" id="concept-search" class="concept-search-input" autocomplete="off" spellcheck="false" data-i18n="concepts.searchPlaceholder" data-i18n-attr="placeholder" placeholder="Search concepts…">
@@ -377,7 +385,9 @@
         </div>
         <div class="card">
           <div class="card-title"><b data-i18n="concepts.sternGerlachExpTitle">Stern–Gerlach Experiment</b></div>
-          <!-- div not p, same ul-duplication issue as VQE/QAOA card below -->
+          <!-- A <div>, not a <p> — embeds a <ul>, which needs the same
+               fix as the VQE/QAOA and Bell States cards above (see their
+               comments) to avoid a duplicate-render bug. -->
           <div class="bit-explainer" data-i18n="concepts.sternGerlachExpBody" data-i18n-html>The Stern–Gerlach experiment (1922), performed by Otto Stern and Walther Gerlach, demonstrated that angular momentum is quantized — showing that particles such as electrons possess an intrinsic property called spin that can only take discrete values when measured along a chosen axis. It's one of the foundational experiments of quantum mechanics.
             <ul class="quantum-list">
               <li><b>Objective:</b> to determine whether an atom's magnetic moment could point in any direction, as classical physics predicted, or only in specific, quantized orientations.</li>
@@ -426,7 +436,10 @@
         </div>
         <div class="card">
           <div class="card-title"><b data-i18n="concepts.bellGhzTitle">Bell States & GHZ States</b></div>
-          <!-- div not p, same reason as the VQE/QAOA card -->
+          <!-- A <div>, not a <p> — this body embeds a <ul>, which a <p>
+               can't legally contain without the same duplicate-render bug
+               found and fixed on the VQE/QAOA card (see the comment on
+               that card, above). -->
           <div class="bit-explainer" data-i18n="concepts.bellGhzBody" data-i18n-html>Bell states are the four specific, maximally entangled two-qubit states — Φ⁺, Φ⁻, Ψ⁺, and Ψ⁻ — forming a foundational orthonormal basis in quantum information and the core resource behind protocols like quantum teleportation and superdense coding. All four are produced by the same two-gate recipe (a Hadamard on one qubit, then a CNOT controlled by it), just starting from a different one of the four two-qubit basis states.
             <br><br>The four Bell states are:
             <ul class="quantum-list">
@@ -548,11 +561,15 @@
       <div class="intro-glossary-grid">
         <div class="card">
           <div class="card-title"><b data-i18n="concepts.vqeQaoaTitle">Variational Quantum Algorithms (VQE & QAOA)</b></div>
-          <!-- had this as a <p> originally and the list rendered twice.
-               turns out a <p> can't contain a <ul> so the browser auto-closes
-               it before the list, and then data-i18n-html only replaces the
-               truncated <p>, leaving the original ul/text as orphaned
-               siblings. div fixes it since it can hold block content. -->
+          <!-- A <div>, not a <p> — this body embeds a <ul>, which a <p>
+               can't legally contain: browsers auto-close the <p> right
+               before the list, and data-i18n-html's el.innerHTML = value
+               only overwrites that now-truncated <p>, leaving the
+               original static <ul>/trailing text stranded as siblings
+               that never get cleared, so the list+closing paragraph render
+               twice (once inside the freshly-set <p>, once as leftover
+               siblings). A <div> can contain block content, so this
+               applyTranslations() pass fully replaces the one element. -->
           <div class="bit-explainer" data-i18n="concepts.vqeQaoaBody" data-i18n-html>Variational quantum algorithms are hybrid quantum–classical algorithms in which a quantum computer prepares parameterized quantum states while a classical computer repeatedly adjusts those parameters to optimize a desired objective. This iterative feedback loop makes them well suited to today's noisy quantum hardware (NISQ devices).
             <br><br>The two best-known examples are:
             <ul class="quantum-list">
@@ -604,7 +621,7 @@
 
   </section>
 
-  <!-- bits & qubits tab: classical bit / 1q / 2q / 3q -->
+  <!-- ═══════════════════ BITS TAB (classical bit / one qubit / two qubits) ═══════════════════ -->
   <section id="tab-qubit" class="tab-content active" style="display:none;">
 
     <div class="compare-header">
@@ -617,7 +634,7 @@
       <button class="preset-btn mode-btn active" data-qubit-mode="quantum" data-i18n="common.quantum">Quantum</button>
     </div>
 
-    <!-- classical panel - used to be side by side with quantum, now its own page -->
+    <!-- ── CLASSICAL PANEL (its own page now, not a side-by-side "vs") ── -->
     <div id="qubit-classical-panel" style="display:none;">
       <div class="compare-layout" style="grid-template-columns:1fr;justify-items:center;">
         <div class="compare-col classical-col">
@@ -669,10 +686,10 @@
       </div>
     </div>
 
-    <!-- wraps the 1q/2q/3q sub-tabs -->
+    <!-- ── QUANTUM PANEL (wraps One Qubit / Two Qubits sub-tabs) ── -->
     <div id="qubit-quantum-panel">
 
-    <!-- shown until a sub-mode is picked -->
+    <!-- ── QUBIT EXPLAINER (shown until One Qubit / Two Qubit is picked) ── -->
     <div id="qubit-quantum-intro">
       <div class="compare-layout" style="grid-template-columns:1fr;justify-items:center;">
         <div class="compare-col quantum-col">
@@ -700,9 +717,11 @@
       <button class="preset-btn mode-btn" data-qubit-submode="3q" data-i18n="qubitTab.threeQubit">Three Qubit</button>
     </div>
 
+    <!-- ── ONE QUBIT PANEL ── -->
     <div id="qubit-1q-panel" style="display:none;">
     <div class="compare-layout" style="grid-template-columns:1fr;justify-items:center;">
 
+      <!-- ── QUANTUM COLUMN ── -->
       <div class="compare-col quantum-col">
 
         <div class="col-label">
@@ -711,7 +730,7 @@
         </div>
 
         <div class="layout-two">
-          <div class="bloch-wrap">
+          <div class="bloch-wrap bloch-wrap--drag">
             <canvas id="bloch-main" width="260" height="260" tabindex="0" role="img" aria-label="Bloch sphere. State: |ψ⟩ = |0⟩. Draggable, or focus and use arrow keys, to set the qubit's state."></canvas>
             <div class="state-label" id="label-main">|0⟩</div>
           </div>
@@ -815,9 +834,13 @@
     </div>
     </div>
 
-    <!-- two independent Qubit instances, deliberately not entangled (no CNOT,
-         no shared state) - the joint table is just P(ab) = P(a)*P(b). that's
-         the whole point, it sets up the contrast with the Entangle tab -->
+    <!-- ─── TWO QUBITS ─── -->
+    <!-- Two independent Qubit instances, each with its own Bloch sphere —
+         deliberately NOT entangled (no CNOT, no shared state class): the
+         joint 4-outcome table below is just the product of each qubit's
+         own odds, P(ab) = P(a)×P(b), setting up the contrast with the
+         Entangle tab, which is entirely about what changes once a
+         correlation is introduced. -->
     <div id="qubit-2q-panel" style="display:none;">
       <div class="compare-layout" style="grid-template-columns:1fr 40px 1fr;">
 
@@ -826,7 +849,7 @@
             <span class="col-badge quantum-badge" data-i18n="qubitTab.qubitABadge">Qubit A</span>
             <span class="col-desc" data-i18n="qubitTab.qubitADesc">Independent — not entangled with B</span>
           </div>
-          <div class="bloch-wrap">
+          <div class="bloch-wrap bloch-wrap--drag">
             <canvas id="bloch-2q-a" width="220" height="220" tabindex="0" role="img" aria-label="Bloch sphere for Qubit A. State: |ψ⟩ = |0⟩. Draggable, or focus and use arrow keys, to set the qubit's state."></canvas>
             <div class="state-label" id="label-2q-a">|0⟩</div>
           </div>
@@ -850,7 +873,7 @@
             <span class="col-badge quantum-badge" data-i18n="qubitTab.qubitBBadge">Qubit B</span>
             <span class="col-desc" data-i18n="qubitTab.qubitBDesc">Independent — not entangled with A</span>
           </div>
-          <div class="bloch-wrap">
+          <div class="bloch-wrap bloch-wrap--drag">
             <canvas id="bloch-2q-b" width="220" height="220" tabindex="0" role="img" aria-label="Bloch sphere for Qubit B. State: |ψ⟩ = |0⟩. Draggable, or focus and use arrow keys, to set the qubit's state."></canvas>
             <div class="state-label" id="label-2q-b">|0⟩</div>
           </div>
@@ -910,9 +933,13 @@
       </div>
     </div>
 
-    <!-- same unentangled-instances pattern as Two Qubits above, just x3.
-         not ThreeQubitState (that's for the Circuit tab's entangled builder).
-         table generated in updateQubit3UI() rather than hand-written -->
+    <!-- ─── THREE QUBITS ─── -->
+    <!-- Same "three independent, unentangled Qubit instances" pattern as
+         Two Qubits above (item 7) — not ThreeQubitState, which is for the
+         entangled Circuit-tab builder. The joint 8-outcome table is just
+         P(abc) = P(a)×P(b)×P(c), generated fresh in updateQubit3UI()
+         rather than hand-written (same approach as circuit-multiqubit-tab.js's
+         circuit-3q-probs). -->
     <div id="qubit-3q-panel" style="display:none;">
       <div class="qubit3-layout">
 
@@ -921,7 +948,7 @@
             <span class="col-badge quantum-badge" data-i18n="qubitTab.qubitABadge">Qubit A</span>
             <span class="col-desc" data-i18n="qubitTab.qubitA3Desc">Independent — not entangled with B or C</span>
           </div>
-          <div class="bloch-wrap">
+          <div class="bloch-wrap bloch-wrap--drag">
             <canvas id="bloch-3q-a" width="190" height="190" tabindex="0" role="img" aria-label="Bloch sphere for Qubit A. State: |ψ⟩ = |0⟩. Draggable, or focus and use arrow keys, to set the qubit's state."></canvas>
             <div class="state-label" id="label-3q-a">|0⟩</div>
           </div>
@@ -939,7 +966,7 @@
             <span class="col-badge quantum-badge" data-i18n="qubitTab.qubitBBadge">Qubit B</span>
             <span class="col-desc" data-i18n="qubitTab.qubitB3Desc">Independent — not entangled with A or C</span>
           </div>
-          <div class="bloch-wrap">
+          <div class="bloch-wrap bloch-wrap--drag">
             <canvas id="bloch-3q-b" width="190" height="190" tabindex="0" role="img" aria-label="Bloch sphere for Qubit B. State: |ψ⟩ = |0⟩. Draggable, or focus and use arrow keys, to set the qubit's state."></canvas>
             <div class="state-label" id="label-3q-b">|0⟩</div>
           </div>
@@ -957,7 +984,7 @@
             <span class="col-badge quantum-badge" data-i18n="qubitTab.qubitCBadge">Qubit C</span>
             <span class="col-desc" data-i18n="qubitTab.qubitC3Desc">Independent — not entangled with A or B</span>
           </div>
-          <div class="bloch-wrap">
+          <div class="bloch-wrap bloch-wrap--drag">
             <canvas id="bloch-3q-c" width="190" height="190" tabindex="0" role="img" aria-label="Bloch sphere for Qubit C. State: |ψ⟩ = |0⟩. Draggable, or focus and use arrow keys, to set the qubit's state."></canvas>
             <div class="state-label" id="label-3q-c">|0⟩</div>
           </div>
@@ -1002,9 +1029,12 @@
     <div class="lesson-embed" id="lesson-embed-qubit"></div>
   </section>
 
-  <!-- maths concept tab - reference page, no interactivity beyond switching
-       panels. navigated from the sidebar sub-links, see setMathsSection()
-       in mathsconcept-tab.js. one .maths-panel visible at a time -->
+  <!-- ═══════════════════ MATHS CONCEPT TAB ═══════════════════ -->
+  <!-- Reference page, not a simulation — text + formulas only, no new
+       interactive widgets. Navigated exclusively via the sidebar's
+       Maths Concept sub-links (see .tab-sub handling in app.js and
+       setMathsSection() in tabs/mathsconcept-tab.js); only one
+       .maths-panel is visible at a time, Complex Numbers by default. -->
   <section id="tab-mathsconcept" class="tab-content">
 
     <div class="compare-header">
@@ -1014,7 +1044,7 @@
 
     <div class="intro-layout">
 
-      <!-- complex numbers -->
+      <!-- ── COMPLEX NUMBERS ── -->
       <div class="maths-panel" id="maths-complex">
         <div class="card">
           <div class="card-title" data-i18n="mathsTab.complexNumbers">Complex Numbers</div>
@@ -1031,7 +1061,7 @@
         <div class="lesson-embed" id="lesson-embed-maths-complex"></div>
       </div>
 
-      <!-- vectors -->
+      <!-- ── VECTORS ── -->
       <div class="maths-panel" id="maths-vectors" style="display:none;">
         <div class="card">
           <div class="card-title" data-i18n="mathsTab.vectors">Vectors</div>
@@ -1049,7 +1079,7 @@
         <div class="lesson-embed" id="lesson-embed-maths-vectors"></div>
       </div>
 
-      <!-- matrices -->
+      <!-- ── MATRICES ── -->
       <div class="maths-panel" id="maths-matrices" style="display:none;">
         <div class="card">
           <div class="card-title" data-i18n="mathsTab.matrices">Matrices</div>
@@ -1066,7 +1096,7 @@
         <div class="lesson-embed" id="lesson-embed-maths-matrices"></div>
       </div>
 
-      <!-- state vector -->
+      <!-- ── STATE VECTOR ── -->
       <div class="maths-panel" id="maths-statevector" style="display:none;">
         <div class="card">
           <div class="card-title" data-i18n="mathsTab.stateVector">State Vector</div>
@@ -1081,8 +1111,11 @@
           </p>
         </div>
 
-        <!-- used to be its own top-level "Statevec" tab, folded in here since
-             it's the same concept just drawn instead of written as a formula -->
+        <!-- Formerly its own top-level "Statevec" tab — folded in here
+             since it's the same state-vector concept this whole section
+             already covers, just shown as a picture instead of a formula:
+             a classical bit is a point on a line, a qubit is a vector tip
+             on a unit arc. -->
         <div class="card mt-14">
           <div class="card-title" data-i18n="maths.compareStateSpaces">Compare the State Spaces</div>
           <p class="bit-explainer" data-i18n="maths.compareStateSpacesBody">
@@ -1094,6 +1127,7 @@
             <button class="preset-btn mode-btn active" data-statevec-mode="quantum" data-i18n="common.quantum">Quantum</button>
           </div>
 
+          <!-- ── CLASSICAL PANEL ── -->
           <div id="statevec-classical-panel" style="display:none;">
             <div class="compare-layout" style="grid-template-columns:1fr;justify-items:center;">
               <div class="compare-col classical-col">
@@ -1123,6 +1157,7 @@
             </div>
           </div>
 
+          <!-- ── QUANTUM PANEL ── -->
           <div id="statevec-quantum-panel">
             <div class="compare-layout" style="grid-template-columns:1fr;justify-items:center;">
               <div class="compare-col quantum-col">
@@ -1172,7 +1207,7 @@
         <div class="lesson-embed" id="lesson-embed-maths-statevector"></div>
       </div>
 
-      <!-- dirac notation -->
+      <!-- ── DIRAC NOTATION ── -->
       <div class="maths-panel" id="maths-dirac" style="display:none;">
         <div class="card">
           <div class="card-title" data-i18n="mathsTab.diracNotation">Dirac Notation</div>
@@ -1191,7 +1226,7 @@
         <div class="lesson-embed" id="lesson-embed-maths-dirac"></div>
       </div>
 
-      <!-- tensor products -->
+      <!-- ── TENSOR PRODUCTS ── -->
       <div class="maths-panel" id="maths-tensor" style="display:none;">
         <div class="card">
           <div class="card-title" data-i18n="mathsTab.tensorProducts">Tensor Products</div>
@@ -1213,7 +1248,7 @@
     </div>
   </section>
 
-  <!-- gates tab -->
+  <!-- ═══════════════════ GATES TAB ═══════════════════ -->
   <section id="tab-gates" class="tab-content">
 
     <div class="compare-header">
@@ -1227,9 +1262,12 @@
       <button class="preset-btn mode-btn" data-gates-domain="compare" data-i18n="gates.compareGates">Compare</button>
     </div>
 
-    <!-- same pick-one-gate-see-the-effect idea as Quantum Gates below
-         (Circuits is the build-a-sequence version). reuses CLASSICAL_GATES
-         from classical-circuit-tab.js instead of redefining it here -->
+    <!-- ─── CLASSICAL GATES ─── -->
+    <!-- Same single-gate-then-see-the-effect paradigm as Quantum Gates
+         below (as opposed to Circuits' build-a-sequence paradigm): pick
+         one gate, toggle its input(s), read the output and the truth
+         table immediately. Reuses CLASSICAL_GATES from
+         classical-circuit-tab.js rather than redefining it. -->
     <div id="gates-classical-panel" style="display:none;">
       <div class="layout-two gates-layout">
 
@@ -1278,6 +1316,7 @@
       </div>
     </div>
 
+    <!-- ─── QUANTUM GATES ─── -->
     <div id="gates-quantum-panel">
     <div class="layout-two gates-layout">
 
@@ -1344,10 +1383,16 @@
     </div>
     </div>
 
-    <!-- compare panel: reuses the same .compare-layout/.compare-col/.compare-divider
-         from the old Bits/Statevec "vs" pages rather than a new layout.
-         tables built in buildGateButtons() (gates-tab.js), using
-         buildAllClassicalGatesTruthTables() and buildQuantumGateTruthTable() -->
+    <!-- ─── COMPARE (item 14) ─── -->
+    <!-- Classical and quantum truth tables side by side, reusing the
+         same .compare-layout/.compare-col/.compare-divider used
+         throughout the app (e.g. the old Bits/Statevec "vs" pages)
+         rather than a bespoke layout. Both tables are built once, in
+         buildGateButtons() (gates-tab.js) — buildAllClassicalGatesTruthTables()
+         (classical-gates-tab.js, an all-gates-at-once variant of the
+         single-gate renderClassicalGatesTruthTable() the Classical Gates
+         panel already uses) and buildQuantumGateTruthTable() (item 13,
+         reused verbatim here). -->
     <div id="gates-compare-panel" style="display:none;">
       <div class="compare-layout" style="grid-template-columns:1fr 40px 1fr;max-width:1080px;">
         <div class="compare-col classical-col">
@@ -1384,7 +1429,7 @@
     <div class="lesson-embed" id="lesson-embed-gates"></div>
   </section>
 
-  <!-- circuit tab -->
+  <!-- ═══════════════════ CIRCUIT TAB ═══════════════════ -->
   <section id="tab-circuit" class="tab-content">
 
     <div class="compare-header">
@@ -1394,85 +1439,88 @@
 
     <div class="circuit-layout">
 
-      <div class="mode-grid" style="grid-template-columns:1fr 1fr;max-width:340px;margin:0 auto 18px;">
+      <div class="mode-grid" style="grid-template-columns:1fr 1fr 1fr;max-width:480px;margin:0 auto 18px;">
         <button class="preset-btn mode-btn" data-circuit-domain="classical" data-i18n="circuits.classicalCircuit">Classical Circuit</button>
         <button class="preset-btn mode-btn active" data-circuit-domain="quantum" data-i18n="circuits.quantumCircuit">Quantum Circuit</button>
+        <button class="preset-btn mode-btn" data-circuit-domain="compare" data-i18n="circuits.compareHalfAdder">Compare</button>
       </div>
 
-      <!-- reuses the same palette+wire+Run/Clear widgets as the 1-qubit
-           circuit below, just walking a bit instead of a qubit. AND/OR/XOR
-           gates grab whatever the Companion bit toggle is set to at the
-           moment they're added (shown right in the slot, e.g. "AND 1") -->
+      <!-- ─── CLASSICAL CIRCUIT BUILDER ─── -->
+      <!-- Same palette + wire + Run/Clear interaction as the 1-qubit
+           quantum circuit (reuses .circuit-palette/.wire-wrap/.gate-slots
+           directly) — a start bit walks left to right through a sequence
+           of classical gates instead of a qubit walking through quantum
+           gates. AND/OR/XOR-family gates need a second input, so each one
+           binds the current "Companion bit" toggle's value at the moment
+           it's added (shown in its slot, e.g. "AND 1") — NOT needs none. -->
       <div id="circuit-classical-panel" style="display:none;">
+
+        <!-- ─── HALF ADDER (drag-and-drop, real schematic) ─── -->
+        <!-- Replaces the old single-wire sequential builder — a half
+             adder needs two simultaneous outputs (Sum = A⊕B, Carry =
+             A·B) from the same two inputs, which a "walk one bit down
+             one wire of checkpoints" model can't represent. Drag gates
+             from the palette onto the circuit (or click one to arm it,
+             then click the circuit) and each becomes its own row, wired
+             to A and B by real branching bus lines — not fixed to
+             exactly two slots, add as many as you want (see
+             renderCircuitDiagram() in classical-circuit-tab.js). Every
+             row's output recomputes live; XOR is auto-labeled "Sum" and
+             AND "Carry" (any other gate just shows its own name), so
+             building a genuine half adder is one recognizable case among
+             whatever else you've dropped in, checked against the target
+             truth table on the right. -->
         <div class="circuit-top">
 
           <div class="circuit-left">
-            <div class="section-label" data-i18n="circuits.gatePalette">Gate Palette — click to add</div>
+            <div class="section-label" data-i18n="circuits.gatePaletteDrag">Gate Palette — drag onto the circuit (or click, then click the circuit)</div>
             <div class="circuit-palette" id="classical-gate-palette"></div>
 
-            <div class="try-me-wrap" id="classical-try-me" style="margin-top:10px;"></div>
-
             <div class="switch-area mt-14">
-              <span class="bit-label" id="cc-companion-lbl0">0</span>
+              <span class="bit-label" id="ha-lbl-a0">0</span>
               <label class="toggle-switch">
-                <input type="checkbox" id="cc-companion-bit" checked>
+                <input type="checkbox" id="ha-input-a">
                 <span class="toggle-track"><span class="toggle-thumb"></span></span>
               </label>
-              <span class="bit-label active" id="cc-companion-lbl1">1</span>
-              <span class="muted-text" style="margin-left:10px;" data-i18n="circuits.companionBit">Companion bit — used by AND/OR/XOR-family gates when added</span>
+              <span class="bit-label" id="ha-lbl-a1">1</span>
+              <span class="muted-text" style="margin-left:10px;" data-i18n="gates.inputA">Input A</span>
             </div>
-
-            <div class="section-label" style="margin-top:18px;" data-i18n="circuits.startBit">Start Bit</div>
             <div class="switch-area">
-              <span class="bit-label" id="cc-start-lbl0">0</span>
+              <span class="bit-label" id="ha-lbl-b0">0</span>
               <label class="toggle-switch">
-                <input type="checkbox" id="cc-start-bit" checked>
+                <input type="checkbox" id="ha-input-b">
                 <span class="toggle-track"><span class="toggle-thumb"></span></span>
               </label>
-              <span class="bit-label active" id="cc-start-lbl1">1</span>
-            </div>
-
-            <div class="section-label" style="margin-top:18px;" data-i18n="circuits.circuitWire">Circuit Wire</div>
-            <div class="wire-wrap">
-              <div class="wire-ket" id="cc-wire-start">1</div>
-              <div class="wire-track">
-                <div class="wire-line"></div>
-                <div class="gate-slots" id="classical-gate-slots"></div>
-              </div>
+              <span class="bit-label" id="ha-lbl-b1">1</span>
+              <span class="muted-text" style="margin-left:10px;" data-i18n="gates.inputB">Input B</span>
             </div>
 
             <div class="circuit-actions">
-              <button class="btn-run" id="btn-run-classical-circuit" data-i18n="common.run">▶ Run</button>
-              <button class="btn-secondary" id="btn-clear-classical-circuit" data-i18n="common.clear">Clear</button>
-              <span class="muted-text" id="classical-circuit-status"></span>
+              <button class="btn-secondary" id="btn-clear-halfadder" data-i18n="common.clear">Clear</button>
+              <span class="muted-text" id="halfadder-status"></span>
             </div>
 
-            <div class="card explainer-card" style="margin-top:4px;">
+            <div class="card explainer-card mt-14">
               <div class="card-title" data-i18n="circuits.whatsGoingOn">What's going on</div>
-              <p class="bit-explainer" id="classical-circuit-explainer">Lay down a path by clicking gates above — each one claims the next checkpoint on the wire. Press Run and the start bit walks it end to end, one stop at a time.</p>
-            </div>
-            <div class="card" style="margin-top:4px;">
-              <div class="card-title" data-i18n="circuits.runHistory">Run History — click a step to revisit it</div>
-              <div class="history-row" id="classical-circuit-history"><span class="muted-text">—</span></div>
+              <p class="bit-explainer" id="halfadder-explainer"></p>
             </div>
           </div>
 
           <div class="circuit-right">
-            <div class="section-label" data-i18n="common.output">Output</div>
-            <div class="circuit-output-card">
-              <div class="classical-display-wrap">
-                <div class="classical-display" id="cc-output-display">—</div>
-                <div class="classical-label" data-i18n="circuits.afterRunning">After running</div>
-              </div>
+            <div class="section-label" data-i18n="circuits.halfAdderCircuit">Circuit — drag gates here, A and B wire into every one</div>
+            <div class="halfadder-circuit-wrap" id="halfadder-circuit-drop" tabindex="0" role="button" aria-label="Circuit board — drag a gate here, or click a gate then click here, to add it wired to A and B">
+              <svg id="halfadder-circuit-svg" viewBox="0 0 260 70" role="img" aria-label="Half adder circuit diagram, currently empty."></svg>
             </div>
 
-            <div class="section-label" style="margin-top:18px;" data-i18n="circuits.truthTableStartOutput">Truth Table — start bit → output</div>
-            <table class="truth-table" id="cc-truth-table"></table>
+            <div class="section-label" style="margin-top:18px;" data-i18n="circuits.truthTableHalfAdder">Target Truth Table — A, B → Sum, Carry</div>
+            <table class="truth-table" id="ha-truth-table"></table>
           </div>
 
         </div>
+
       </div>
 
+      <!-- ─── QUANTUM CIRCUIT BUILDER ─── -->
       <div id="circuit-quantum-panel">
 
       <div class="mode-grid" style="grid-template-columns:1fr 1fr 1fr;max-width:380px;margin:0 auto 18px;">
@@ -1594,8 +1642,10 @@
               </div>
             </div>
             <div class="formula" id="circuit-2q-formula" style="text-align:center;">|ψ⟩ = |00⟩</div>
-            <!-- filled by updateUI() in circuit-multiqubit-tab.js, generated
-                 from KETS so 2q and 3q panels share the same render path -->
+            <!-- Filled by updateUI() in circuit-multiqubit-tab.js, same
+                 as circuit-3q-probs below — generated from KETS rather
+                 than hand-written so both panel sizes share one render
+                 path. -->
             <div class="prob-rows" id="circuit-2q-probs" style="width:100%;margin-top:8px;"></div>
           </div>
         </div>
@@ -1623,6 +1673,21 @@
             <span class="cnot3-arrow">→</span>
             <select class="cnot3-select" id="cnot3-target"></select>
             <button class="circuit-gate-btn" id="btn-add-cnot3" style="font-size:0.72rem;padding:7px 10px;" data-i18n="common.add">Add</button>
+          </div>
+
+          <!-- Toffoli (CCNOT) — the reversible stand-in for a classical
+               AND gate: two controls, one target, needed for the Half
+               Adder preset's Carry output (see CIRCUIT3_PRESETS in
+               circuit-multiqubit-tab.js). 3Q-only — needs 3 distinct
+               qubits, which only this panel has. -->
+          <div class="section-label mt-14" data-i18n="circuits.addToffoli">Add Toffoli (2 controls → 1 target)</div>
+          <div class="cnot3-picker">
+            <select class="cnot3-select" id="toffoli3-control1"></select>
+            <span class="cnot3-arrow">+</span>
+            <select class="cnot3-select" id="toffoli3-control2"></select>
+            <span class="cnot3-arrow">→</span>
+            <select class="cnot3-select" id="toffoli3-target"></select>
+            <button class="circuit-gate-btn" id="btn-add-toffoli3" style="font-size:0.72rem;padding:7px 10px;" data-i18n="common.add">Add</button>
           </div>
 
           <div class="try-me-wrap" id="circuit-3q-try-me" style="margin-top:10px;"></div>
@@ -1676,12 +1741,61 @@
 
       </div>
 
+      <!-- ─── COMPARE PANEL (third domain, half adder classical vs quantum) ─── -->
+      <!-- Same three-way tab pattern as the Gates tab's Classical/Quantum/
+           Compare (see #gates-compare-panel above) — a dedicated domain,
+           not a card stuck below the other two panels. Leads with the
+           actual circuit diagrams (not just a numbers table) — a fixed
+           reference schematic each, not the live editable builders above
+           — then the shared truth table underneath. Both diagrams are
+           built once, statically, by renderHalfAdderCompareDiagrams() in
+           classical-circuit-tab.js: the classical side reuses
+           classicalGateInnerSVG() (same gate symbols as the drag-and-drop
+           builder), the quantum side reuses the .circuit2-* grid-diagram
+           classes from circuit.css (same visual language as the 2Q/3Q
+           circuit builders) plus a couple of new ones (.ha-meter,
+           .ha-meter-drop, .ha-classical-wire) for the measurement step
+           those builders don't have. -->
+      <div id="circuit-compare-panel" style="display:none;">
+        <div class="compare-layout" style="grid-template-columns:1fr 40px 1fr;max-width:900px;">
+          <div class="compare-col classical-col">
+            <div class="col-label">
+              <span class="col-badge" data-i18n="common.classical">Classical</span>
+              <span class="col-desc" data-i18n="circuits.compareClassicalDesc">XOR and AND gates, wired straight to A and B</span>
+            </div>
+            <div class="circuit2-diagram-wrap">
+              <svg id="ha-compare-classical-svg" viewBox="0 0 230 140" role="img" aria-label="Classical half adder: A and B feed an XOR gate producing Sum, and an AND gate producing Carry."></svg>
+            </div>
+          </div>
+          <div class="compare-divider">
+            <div class="divider-line"></div>
+            <div class="divider-vs">vs</div>
+            <div class="divider-line"></div>
+          </div>
+          <div class="compare-col quantum-col">
+            <div class="col-label">
+              <span class="col-badge quantum-badge" data-i18n="common.quantum">Quantum</span>
+              <span class="col-desc" data-i18n="circuits.compareQuantumDesc">X, CNOT and Toffoli — reversible gates reaching the same answer</span>
+            </div>
+            <div class="circuit2-diagram-wrap">
+              <div class="ha-quantum-diagram" id="ha-compare-quantum-diagram"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card mt-14" style="max-width:640px;margin-left:auto;margin-right:auto;">
+          <div class="section-label" data-i18n="circuits.halfAdderCompareTitle">Classical vs Quantum — Same Half Adder</div>
+          <table class="truth-table" id="ha-compare-table"></table>
+          <p class="bit-explainer mt-14" data-i18n="circuits.halfAdderCompareBody">The classical circuit reaches Sum/Carry with AND/XOR gates. The quantum circuit above (shown for A=1, B=1) reaches the exact same two numbers using only reversible gates: X gates set q0=A and q1=B, two CNOTs copy their XOR into ancilla q2 for Sum = A⊕B, and a Toffoli copies their AND into ancilla q3 for Carry = A·B — then q2 and q3 are measured out. You can build a related reversible half adder yourself, gate by gate, under Quantum Circuit → 3 Qubits → Try me → Half Adder.</p>
+        </div>
+      </div>
+
     </div>
 
     <div class="lesson-embed" id="lesson-embed-circuit"></div>
   </section>
 
-  <!-- bell states tab -->
+  <!-- ═══════════════════ BELL STATES TAB ═══════════════════ -->
   <section id="tab-bellstates" class="tab-content">
 
     <div class="compare-header">
@@ -1702,14 +1816,30 @@
         <div class="formula" id="bellstate-formula">|Φ⁺⟩ = (|00⟩ + |11⟩) / √2</div>
         <p class="bit-explainer" style="margin-top:10px;" id="bellstate-recipe">Start at |00⟩, apply H to qubit A, then CNOT (A → B).</p>
 
-        <!-- same recipe as above, just drawn as an actual circuit. the two X
-             boxes fade in/out per state (bellstate-tab.js toggles
-             .circuit-gate-off), H+CNOT stay put since they're common to all
-             four. .circuit-gate-pulse is just a decorative glow, no button
-             needed - the interactive measure-both demo already lives on
-             the Entangle tab so this is illustration only -->
+        <!-- Circuit diagram — the same recipe above, drawn as an actual
+             circuit rather than only described in prose. The two X boxes
+             fade in/out per state (bellstate-tab.js toggles
+             .circuit-gate-off); the H + CNOT are common to all four and
+             stay put. .circuit-gate-pulse (bell-states.css) staggers a
+             looping glow left-to-right across whichever gates are on, a
+             purely decorative "signal flow" cue — no button needed since
+             this replaces the old interactive measure-both demo (already
+             covered on the Entangle tab) with an illustration instead. -->
         <div class="card-title" style="margin-top:18px;" data-i18n="bellstates.circuitTitle">Circuit Diagram</div>
         <svg id="bellstate-circuit" viewBox="0 0 460 150" role="img" aria-label="Circuit diagram: an X gate optionally on qubit A and/or B, then a Hadamard on qubit A, then a CNOT controlled by A targeting B." style="width:100%;max-width:460px;display:block;margin:8px auto 0;">
+          <defs>
+            <!-- Same "lit from above" overlay as the Stern-Gerlach/Beam
+                 Splitter apparatus (sg-metal-sheen/bs-glass-sheen) — same
+                 stops, reused here so these gate boxes read as the same
+                 material rather than flat color, and reused again by the
+                 CNOT target ring below. -->
+            <linearGradient id="bellstate-metal-sheen" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%"  stop-color="#fff" stop-opacity="0.38"/>
+              <stop offset="14%" stop-color="#fff" stop-opacity="0.1"/>
+              <stop offset="55%" stop-color="#000" stop-opacity="0"/>
+              <stop offset="100%" stop-color="#000" stop-opacity="0.22"/>
+            </linearGradient>
+          </defs>
           <line x1="50" y1="45" x2="430" y2="45" stroke="var(--border2)" stroke-width="2"/>
           <line x1="50" y1="105" x2="430" y2="105" stroke="var(--border2)" stroke-width="2"/>
           <text x="26" y="51" font-size="15" font-weight="700" fill="var(--zero)" text-anchor="middle">A</text>
@@ -1717,26 +1847,59 @@
 
           <g id="bellstate-gate-xa" class="circuit-gate">
             <rect x="90" y="25" width="40" height="40" rx="6" fill="var(--surface2)" stroke="var(--zero)" stroke-width="1.5"/>
+            <rect x="90" y="25" width="40" height="40" rx="6" fill="url(#bellstate-metal-sheen)" pointer-events="none"/>
             <text x="110" y="51" font-size="16" font-weight="700" fill="var(--zero)" text-anchor="middle">X</text>
           </g>
           <g id="bellstate-gate-xb" class="circuit-gate">
             <rect x="90" y="85" width="40" height="40" rx="6" fill="var(--surface2)" stroke="var(--one)" stroke-width="1.5"/>
+            <rect x="90" y="85" width="40" height="40" rx="6" fill="url(#bellstate-metal-sheen)" pointer-events="none"/>
             <text x="110" y="111" font-size="16" font-weight="700" fill="var(--one)" text-anchor="middle">X</text>
           </g>
 
           <g id="bellstate-gate-h" class="circuit-gate">
             <rect x="200" y="25" width="40" height="40" rx="6" fill="var(--surface2)" stroke="var(--zero)" stroke-width="1.5"/>
+            <rect x="200" y="25" width="40" height="40" rx="6" fill="url(#bellstate-metal-sheen)" pointer-events="none"/>
             <text x="220" y="51" font-size="16" font-weight="700" fill="var(--zero)" text-anchor="middle">H</text>
           </g>
 
           <g id="bellstate-gate-cnot" class="circuit-gate">
             <line x1="320" y1="45" x2="320" y2="105" stroke="var(--text2)" stroke-width="2"/>
             <circle cx="320" cy="45" r="7" fill="var(--text2)"/>
-            <circle cx="320" cy="105" r="15" fill="none" stroke="var(--text2)" stroke-width="2"/>
+            <circle cx="320" cy="45" r="7" fill="url(#bellstate-metal-sheen)" pointer-events="none"/>
+            <circle cx="320" cy="105" r="15" fill="var(--surface)" stroke="var(--text2)" stroke-width="2"/>
+            <circle cx="320" cy="105" r="15" fill="url(#bellstate-metal-sheen)" pointer-events="none"/>
             <line x1="320" y1="92" x2="320" y2="118" stroke="var(--text2)" stroke-width="2"/>
             <line x1="307" y1="105" x2="333" y2="105" stroke="var(--text2)" stroke-width="2"/>
           </g>
+
+          <!-- Entangling link — a dashed arc that fades in once the CNOT
+               step correlates the two tokens below with each other,
+               driven by runBellStateCircuit() in bell-states-tab.js. -->
+          <path id="bellstate-entangle-link" class="bellstate-entangle-link" d="M 420,45 Q 452,75 420,105"/>
+
+          <!-- The two moving "value" tokens — start at |0⟩, glide through
+               each gate in step with the wire it's on, and pick up that
+               gate's real effect: a flip's label change (X), a dashed
+               "superposed" look instead of a definite digit (H), and a
+               shared color plus the arc above once CNOT correlates them
+               (Run button below). Hidden until a run starts; base
+               position cx/x=70 is what style.transform's translateX is
+               measured from. -->
+          <g id="bellstate-token-a" class="bellstate-token token-hidden">
+            <circle class="token-dot" cx="70" cy="45" r="12" fill="var(--zero)"/>
+            <text class="token-label" x="70" y="49">0</text>
+          </g>
+          <g id="bellstate-token-b" class="bellstate-token token-hidden">
+            <circle class="token-dot" cx="70" cy="105" r="12" fill="var(--one)"/>
+            <text class="token-label" x="70" y="109">0</text>
+          </g>
         </svg>
+
+        <div class="circuit-actions" style="margin-top:10px;justify-content:center;">
+          <button class="btn-run" id="btn-run-bellstate" data-i18n="common.run">▶ Run</button>
+          <span class="muted-text" id="bellstate-anim-status"></span>
+        </div>
+        <p class="bit-explainer mt-14" id="bellstate-anim-explainer"></p>
       </div>
 
       <div class="card mt-14">
@@ -1787,7 +1950,9 @@
 
       <div class="card mt-14">
         <div class="card-title" data-i18n="bellstates.definitionsTitle">The Four Bell States</div>
-        <!-- div not p, same duplicate-render fix as the VQE/QAOA card -->
+        <!-- A <div>, not a <p> — embeds a <ul>, which needs the same fix
+             as the VQE/QAOA and Bell States (Important Concepts) cards
+             to avoid the duplicate-render bug documented there. -->
         <div class="bit-explainer" data-i18n="bellstates.definitionsBody" data-i18n-html>All four are built from the same |00⟩ starting point with the same two-gate recipe — a Hadamard on qubit A, then a CNOT controlled by it — just preceded by an X gate on whichever qubit(s) need flipping first:
           <ul class="quantum-list">
             <li><b>Φ⁺ = (|00⟩ + |11⟩)/√2</b> — no X gates. Outcomes always match.</li>
@@ -1809,7 +1974,7 @@
     <div class="lesson-embed" id="lesson-embed-bellstates"></div>
   </section>
 
-  <!-- measure tab -->
+  <!-- ═══════════════════ MEASURE TAB ═══════════════════ -->
   <section id="tab-measure" class="tab-content">
 
     <div class="compare-header">
@@ -1842,6 +2007,10 @@
         </div>
 
         <div class="measure-action-col">
+          <div class="coin-wrap">
+            <canvas id="coin-measure" width="130" height="130" role="img" aria-label="The qubit: unmeasured, in superposition."></canvas>
+            <div class="coin-label-bottom" id="coin-measure-label" data-i18n="measure.unmeasured">Unmeasured</div>
+          </div>
           <button class="btn-measure" id="btn-measure" data-i18n="measure.measureButton">MEASURE</button>
           <div class="measure-result" id="measure-result"></div>
           <div class="preset-grid preset-grid--2col mt-14">
@@ -1905,7 +2074,7 @@
     <div class="lesson-embed" id="lesson-embed-measure"></div>
   </section>
 
-  <!-- entangle tab -->
+  <!-- ═══════════════════ ENTANGLE TAB ═══════════════════ -->
   <section id="tab-entangle" class="tab-content">
 
     <div class="compare-header">
@@ -1924,12 +2093,15 @@
           <span class="muted-text" style="margin-left:14px;font-size:0.72rem;" data-i18n="entangle.jointStateLabel">joint state of both qubits</span>
         </div>
 
-        <!-- plain-language explainer ahead of the coin demo below. the
-             tensor-product proof and the "doesn't break relativity" bit
-             live in their own cards further down, not repeated here.
-             this used to double-render the quiz via renderEntangleQuizEmbed()
-             in roadmap.js, duplicating #lesson-embed-entangle at the bottom -
-             dropped, one quiz per tab is plenty -->
+        <!-- A comprehensive plain-language explanation of entanglement
+             itself, ahead of the interactive coin demo below — the deeper
+             "why" (the tensor-product proof, and why it doesn't break
+             relativity) is deliberately left to the two dedicated cards
+             further down this tab rather than repeated here. Used to be a
+             second render of the tab's quick-check quiz
+             (renderEntangleQuizEmbed() in roadmap.js) duplicating the one
+             already at the bottom of this tab (#lesson-embed-entangle) —
+             replaced since one quiz per tab is enough. -->
         <div class="card-title" data-i18n="entangle.explainerTitle">What Is Quantum Entanglement?</div>
         <p class="bit-explainer" data-i18n="entangle.explainerBody1">
           Quantum entanglement is a phenomenon in which two or more particles become linked so that their quantum states can no longer be described independently of one another — even when the particles are separated by enormous distances. Instead of two separate qubits each carrying their own state, the pair shares a single joint state, like the Bell state (|00⟩ + |11⟩)/√2 shown above: a 50/50 mix of "both measured 0" and "both measured 1," with no way to break it down into what qubit A or qubit B is doing on its own.
@@ -1941,11 +2113,15 @@
           The two cards below work out the details behind that intuition: why a state like this genuinely can't be described as two separate qubits, and why the instant correlation still can't be used to send a signal faster than light.
         </p>
 
-        <!-- stylized map behind .coins-row, purely decorative/static (no JS)
-             so the coins read as two pinned, distant locations connected by
-             a dashed arc instead of just sitting side by side. viewBox is
-             in percentage space with preserveAspectRatio="none" so it
-             stretches to match .coins-row at any viewport width -->
+        <!-- Map (item: "demonstrate each coin is in a different location")
+             — a stylized world map sitting behind .coins-row, purely
+             static/decorative markup (no JS), so the two gold coins read
+             as sitting at two distant, pinned locations connected by a
+             dashed correlation arc, not just two icons side by side.
+             Percentage-space viewBox (0 0 100 32) + preserveAspectRatio
+             ="none" so it always stretches to match .coins-row's own
+             width, keeping the pins roughly under wherever the coins
+             actually land at any viewport size. */-->
         <div class="entangle-map">
           <svg class="entangle-map-bg" viewBox="0 0 100 32" preserveAspectRatio="none" aria-hidden="true">
             <rect x="0" y="0" width="100" height="32" fill="var(--zero-dim)"/>
@@ -2071,12 +2247,29 @@
         </p>
       </div>
 
+      <!-- Grounds this tab's math in CERN's own physics program, rather
+           than leaving "CERN Quantum Explorer" as a badge on otherwise
+           generic quantum-computing 101 content. Deliberately stays at
+           the level of well-established, publicly known facts (the QTI
+           program exists; entanglement has been measured directly in
+           LHC collision products) rather than citing specific papers,
+           dates, or figures this app isn't positioned to keep current. -->
+      <div class="card mt-14">
+        <div class="card-title" data-i18n="entangle.cernTitle">Why CERN Cares About Entanglement</div>
+        <p class="bit-explainer" data-i18n="entangle.cernBody1">
+          This isn't only a teaching example. Physicists at the LHC have measured genuine quantum entanglement directly in the particles produced by proton-proton collisions — most notably between a top quark and its antiquark, created and decaying within a fraction of a trillionth of a trillionth of a second. The same Bell-state math on this page, (|00⟩ + |11⟩)/√2, describes a real, measured correlation in the highest-energy environment humans have ever built.
+        </p>
+        <p class="bit-explainer" style="margin-top:10px;" data-i18n="entangle.cernBody2">
+          CERN's Quantum Technology Initiative treats entanglement and superposition as engineering resources, not just curiosities: quantum computers for simulating the quantum field theories behind particle physics itself — a problem classical computers scale badly on — and quantum sensors built from entangled or squeezed states, aimed at the kind of extreme-precision measurements that searches for dark matter and other new physics depend on.
+        </p>
+      </div>
+
     </div>
 
     <div class="lesson-embed" id="lesson-embed-entangle"></div>
   </section>
 
-  <!-- tunnel tab -->
+  <!-- ═══════════════════ TUNNEL TAB ═══════════════════ -->
   <section id="tab-tunnel" class="tab-content">
 
     <div class="compare-header">
@@ -2100,6 +2293,36 @@
             <span class="stat-val" id="tunnel-trans">—</span>
           </div>
         </div>
+
+        <!-- Each completed run (the packet fully settled, not a slider
+             drag interrupted mid-flight) logs one stacked bar here —
+             reflected % on top, transmitted % on bottom, most recent on
+             the right. Since this solver is deterministic (the same V₀/
+             width always gives the same split, unlike Stern-Gerlach's
+             genuinely random per-atom outcome), the point isn't building
+             up a probability distribution — it's a running record of
+             your own exploration, so raising V₀ and watching the
+             transmitted segment visibly shrink across the strip is
+             itself the evidence for "tunneling odds fall as the barrier
+             grows," not just a claim in the explainer text. -->
+        <div class="tunnel-history-row">
+          <div class="tunnel-history-head">
+            <span class="tunnel-history-title">
+              <span data-i18n="tunnel.runHistory">Run history</span>
+              <span class="muted-text" id="tunnel-history-count"></span>
+            </span>
+            <button class="btn-secondary tunnel-history-clear" id="btn-clear-tunnel-history" data-i18n="tunnel.clearHistory">Clear</button>
+          </div>
+          <div class="tunnel-history" id="tunnel-history" role="img" aria-label="Bar chart of reflected versus transmitted percentage for each completed run, most recent on the right."></div>
+        </div>
+
+        <!-- Not a decorative badge — tests/run.js asserts both of these
+             numbers on every run (`node tests/run.js`), against the real
+             solver code loaded into that test file, not a reimplementation. -->
+        <div class="tunnel-validation-badge">
+          <span class="tunnel-validation-check" aria-hidden="true">✓</span>
+          <span data-i18n="tunnel.validationNote">Solver validated automatically: probability conserved to &lt;0.3% over a full run; transmission correctly falls from &gt;10% at V&#8320;=E to &lt;2% at V&#8320;=2.5E.</span>
+        </div>
       </div>
 
       <div class="tunnel-controls-grid">
@@ -2122,9 +2345,10 @@
         <div class="card">
           <div class="card-title" data-i18n="common.controls">Controls</div>
           <div class="tunnel-btn-row">
-            <!-- no data-i18n here, text flips Pause/Play at runtime
-                 (tunneling-tab.js) so a static translation would only
-                 survive until the first click -->
+            <!-- Not tagged: toggles between "Pause"/"Play" text at
+                 runtime (see tunneling-tab.js), so a static translation
+                 here would only last until the first click — out of
+                 scope along with the rest of the dynamic narration text. -->
             <button class="btn-run" id="tunnel-play-btn">⏸ Pause</button>
             <button class="btn-secondary" id="btn-fire-tunnel" data-i18n="tunnel.fireAgain">↻ Fire again</button>
           </div>
@@ -2141,7 +2365,7 @@
     <div class="lesson-embed" id="lesson-embed-tunnel"></div>
   </section>
 
-  <!-- interference tab -->
+  <!-- ═══════════════════ INTERFERENCE TAB ═══════════════════ -->
   <section id="tab-interference" class="tab-content">
 
     <div class="compare-header">
@@ -2230,7 +2454,7 @@
     <div class="lesson-embed" id="lesson-embed-interference"></div>
   </section>
 
-  <!-- beam splitter tab -->
+  <!-- ═══════════════════ BEAM SPLITTER TAB ═══════════════════ -->
   <section id="tab-beamsplitter" class="tab-content">
 
     <div class="compare-header">
@@ -2259,49 +2483,88 @@
             <filter id="bs-soft-blur" x="-60%" y="-60%" width="220%" height="220%">
               <feGaussianBlur stdDeviation="5"/>
             </filter>
+            <!-- Glass sheen for the photon source housing and both
+                 detector housings — same white-to-black overlay idea as
+                 Stern-Gerlach's --sg-metal-sheen/--sg-glass-sheen, so
+                 these solid parts read as material rather than flat UI
+                 chips, matching the beam splitter plate's own glass
+                 gradient (bs-glass, above) instead of leaving it as the
+                 only "real material" in the diagram. -->
+            <linearGradient id="bs-glass-sheen" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%"  stop-color="#fff" stop-opacity="0.4"/>
+              <stop offset="25%" stop-color="#fff" stop-opacity="0.08"/>
+              <stop offset="100%" stop-color="#000" stop-opacity="0.1"/>
+            </linearGradient>
+            <radialGradient id="bs-emit-glow" cx="50%" cy="50%" r="50%">
+              <stop offset="0%" stop-color="#F5A623" stop-opacity="0.5"/>
+              <stop offset="100%" stop-color="#F5A623" stop-opacity="0"/>
+            </radialGradient>
+            <!-- Keeps #bs-marks-a/#bs-marks-b's accumulated dots from
+                 poking past their housing's rounded corners. -->
+            <clipPath id="bs-clip-a"><rect x="345" y="55" width="70" height="55" rx="16"/></clipPath>
+            <clipPath id="bs-clip-b"><rect x="555" y="253" width="65" height="55" rx="16"/></clipPath>
           </defs>
 
+          <circle class="bs-emit-glow" cx="115" cy="280" r="60" fill="url(#bs-emit-glow)" pointer-events="none"/>
           <rect x="40" y="255" width="150" height="50" rx="8" fill="var(--surface2)" stroke="var(--border2)" stroke-width="1"/>
+          <rect x="40" y="255" width="150" height="50" rx="8" fill="url(#bs-glass-sheen)" pointer-events="none"/>
           <text x="115" y="280" text-anchor="middle" dominant-baseline="central" font-size="14" font-weight="500" fill="var(--text)" data-i18n="beamsplitter.photonSource">Photon source</text>
 
-          <!-- incoming beam, glowing pulsing tube instead of a plain line -->
+          <!-- Incoming laser beam — a glowing, gently pulsing tube rather
+               than a bare arrow line, with a few small particles drifting
+               along it so it reads as a stream of individual photons. -->
           <line class="bs-beam" x1="190" y1="280" x2="352" y2="280" stroke="#F5A623" stroke-width="3" stroke-linecap="round" marker-end="url(#bs-arr)" opacity="0.7"/>
+          <g class="bs-particle-stream">
+            <circle class="bs-particle" cx="190" cy="280" r="1.6" fill="#F5A623" style="--dx:162px; animation-delay:0s"/>
+            <circle class="bs-particle" cx="190" cy="280" r="1.6" fill="#F5A623" style="--dx:162px; animation-delay:-0.5s"/>
+            <circle class="bs-particle" cx="190" cy="280" r="1.6" fill="#F5A623" style="--dx:162px; animation-delay:-1s"/>
+          </g>
 
-          <!-- faint ghost paths, always visible so both outcomes read as
-               possible even before a photon fires -->
+          <!-- Ghost "possibility" paths — always faintly present and slowly
+               marching, so the diagram itself shows both outcomes exist
+               as possibilities even before a photon is fired. -->
           <line class="bs-path-ghost" x1="380" y1="272" x2="380" y2="118" stroke="var(--zero)" stroke-width="2" stroke-dasharray="6 6" opacity="0.4" marker-end="url(#bs-arr)"/>
           <text x="300" y="195" text-anchor="middle" font-size="12" fill="var(--text2)" data-i18n="beamsplitter.reflected">reflected</text>
 
           <line class="bs-path-ghost" x1="388" y1="280" x2="552" y2="280" stroke="var(--one)" stroke-width="2" stroke-dasharray="6 6" opacity="0.4" marker-end="url(#bs-arr)"/>
           <text x="470" y="265" text-anchor="middle" font-size="12" fill="var(--text2)" data-i18n="beamsplitter.transmitted">transmitted</text>
 
-          <!-- half-silvered glass plate, blurred glow behind a gradient sheen -->
+          <!-- Beam splitter — a half-silvered glass plate (soft blurred glow behind a crisp gradient sheen) rather than a plain thick line -->
           <rect x="358" y="271" width="60" height="18" rx="4" fill="url(#bs-glass)" transform="rotate(45 380 280)" filter="url(#bs-soft-blur)" opacity="0.8"/>
           <rect x="358" y="271" width="60" height="18" rx="4" fill="url(#bs-glass)" stroke="var(--border2)" stroke-width="1.2" transform="rotate(45 380 280)"/>
           <text x="380" y="325" text-anchor="middle" font-size="12" fill="var(--text2)" data-i18n="beamsplitter.beamSplitterLabel">Beam splitter</text>
 
-          <!-- detector A -->
+          <!-- Detector A — a small glass-fronted photographic plate:
+               #bs-marks-a accumulates one jittered dot per fired photon
+               that lands here (bsAddScreenMark() in
+               beam-splitter-tab.js), so repeated firing visibly builds
+               toward the 50/50 split instead of only ever showing the
+               latest hit. -->
+          <rect x="345" y="55" width="70" height="55" rx="16" fill="var(--zero-dim)" stroke="var(--zero)" stroke-width="1"/>
+          <rect x="345" y="55" width="70" height="55" rx="16" fill="url(#bs-glass-sheen)" pointer-events="none"/>
+          <g id="bs-marks-a" clip-path="url(#bs-clip-a)"></g>
           <circle id="bs-ping-a" class="bs-ping" cx="380" cy="82" r="26" fill="none" stroke="var(--zero)" stroke-width="2" opacity="0"/>
           <rect id="bs-flashA" x="345" y="55" width="70" height="55" rx="16" fill="var(--zero)" opacity="0"/>
-          <rect x="345" y="55" width="70" height="55" rx="16" fill="var(--zero-dim)" stroke="var(--zero)" stroke-width="1"/>
           <text x="380" y="82" text-anchor="middle" dominant-baseline="central" font-size="14" font-weight="500" fill="var(--zero)">A</text>
           <text x="380" y="35" text-anchor="middle" font-size="12" fill="var(--text2)" data-i18n="beamsplitter.detectorA">Photon detector A</text>
 
-          <!-- detector B -->
+          <!-- Detector B — same accumulation plate as A. -->
+          <rect x="555" y="253" width="65" height="55" rx="16" fill="var(--one-dim)" stroke="var(--one)" stroke-width="1"/>
+          <rect x="555" y="253" width="65" height="55" rx="16" fill="url(#bs-glass-sheen)" pointer-events="none"/>
+          <g id="bs-marks-b" clip-path="url(#bs-clip-b)"></g>
           <circle id="bs-ping-b" class="bs-ping" cx="587" cy="280" r="26" fill="none" stroke="var(--one)" stroke-width="2" opacity="0"/>
           <rect id="bs-flashB" x="555" y="253" width="65" height="55" rx="16" fill="var(--one)" opacity="0"/>
-          <rect x="555" y="253" width="65" height="55" rx="16" fill="var(--one-dim)" stroke="var(--one)" stroke-width="1"/>
           <text x="587" y="280" text-anchor="middle" dominant-baseline="central" font-size="14" font-weight="500" fill="var(--one)">B</text>
           <text x="587" y="325" text-anchor="middle" font-size="12" fill="var(--text2)" data-i18n="beamsplitter.detectorB">Photon detector B</text>
 
-          <!-- ghost photon briefly travels the path not taken then fades -
-               visualizes the superposition collapsing -->
+          <!-- Ghost photon: briefly travels the path NOT taken and fades — a
+               snapshot of the superposition collapsing to one outcome -->
           <g id="bs-photon-ghost" opacity="0">
             <circle r="10" fill="url(#bs-photon-glow)"/>
             <circle r="3.5" fill="#F5A623"/>
           </g>
 
-          <!-- actual photon, moved as one group via transform -->
+          <!-- The actual photon — glow halo + bright core, moved as one group via transform -->
           <g id="bs-photon" opacity="0">
             <circle r="14" fill="url(#bs-photon-glow)"/>
             <circle r="5.5" fill="#F5A623"/>
@@ -2350,20 +2613,22 @@
     <div class="lesson-embed" id="lesson-embed-beamsplitter"></div>
   </section>
 
-  <!-- stern-gerlach tab: two demos, same fire/animate/tally setup as Beam
-       Splitter (stern-gerlach-tab.js reuses bsAnimateMove-style tweening
-       plus dom-utils's setExplainer()/pulseElement()).
-
-       demo 1 is a single magnet with an adjustable input angle theta,
-       using the same Bloch-sphere theta convention as Bits & Qubits, so
-       firing atoms converges on the same cos²(θ/2)/sin²(θ/2) split already
-       taught on the Measure tab - just a physical stand-in (silver atom
-       spin) for the abstract |ψ⟩.
-
-       demo 2 sends atoms already prepared spin-up along Z (standard
-       textbook setup, the other half is just blocked, not simulated)
-       through a second magnet whose axis toggles Z/X, to show that
-       measuring an incompatible axis re-randomizes a definite spin. -->
+  <!-- ═══════════════════ STERN–GERLACH TAB ═══════════════════ -->
+  <!-- Two demos, same fire/animate/tally architecture as Beam Splitter
+       (js/tabs/stern-gerlach-tab.js reuses bsAnimateMove-style tweening
+       and core/dom-utils.js's setExplainer()/pulseElement()):
+       1) a single magnet with an adjustable input angle θ — reusing the
+          exact Bloch-sphere θ convention from the Bits & Qubits/State
+          Vector tabs — so firing atoms converges on the same
+          cos²(θ/2)/sin²(θ/2) Born-rule split already taught on the
+          Measure tab, just with a physical stand-in for "the qubit" (a
+          silver atom's spin) instead of an abstract |ψ⟩.
+       2) a sequential two-magnet demo: atoms enter already prepared with
+          spin up along Z (the surviving half of a first magnet, with the
+          other half blocked — a standard textbook setup, not simulated
+          here), then pass through a second magnet whose axis toggles
+          Z/X, to show that measuring an incompatible axis re-randomizes
+          a previously-definite spin. -->
   <section id="tab-sterngerlach" class="tab-content">
 
     <div class="compare-header">
@@ -2373,9 +2638,27 @@
 
     <div class="sterngerlach-layout">
 
-      <!-- demo 1: single magnet, adjustable input angle -->
+      <!-- Formal definition of spin and its quantization, ahead of the
+           interactive apparatus — establishes the terminology (intrinsic
+           angular momentum, quantized, Born-rule outcome probabilities)
+           before the "fire an atom and watch" framing relies on it. -->
+      <div class="card">
+        <div class="card-title" data-i18n="sterngerlach.definitionTitle">What Is Spin?</div>
+        <p class="bit-explainer" data-i18n="sterngerlach.definitionBody1">Spin is an intrinsic form of angular momentum carried by every elementary particle and atom — not a literal physical rotation, but a genuine, permanent property present even for a particle with no internal structure to spin. It is quantized: a measurement of spin along any chosen axis can return only one of a small, fixed set of discrete values, never a continuously variable one. For a spin-½ particle, such as the unpaired electron responsible for a silver atom's magnetic moment, that measurement has exactly two possible outcomes — conventionally labeled "up" and "down" along the measured axis — with the probability of each fixed by the atom's quantum state via the Born rule, the same rule that governs every measurement outcome elsewhere in this app.</p>
+        <p class="bit-explainer" style="margin-top:10px;" data-i18n="sterngerlach.definitionBody2">The Stern–Gerlach experiment (1922) was the first direct observation of this quantization: a beam of silver atoms sent through a magnetic field with a strong spatial gradient split into exactly two discrete spots on a detector screen, rather than the continuous smear a classical, arbitrarily-oriented magnetic moment would have produced. The interactive apparatus below reproduces that same measurement, one atom at a time.</p>
+      </div>
+
+      <!-- One apparatus, one simulation, one magnet — ever. "2 magnets"
+           below doesn't add a second magnet to the diagram; it swaps what
+           feeds into this same magnet: #sg-intake-group (oven + slits)
+           hides and #sg-prepared-group (a static "already measured up,
+           down blocked" box, standing in for the first magnet the way the
+           textbook sequential-SG setup usually does) takes its place. The
+           magnet, the ghost paths and both detectors never move — only
+           their captions/labels change — so firing, the tally, and the
+           explainer all stay the same elements regardless of mode. -->
       <div class="sterngerlach-canvas-card">
-        <svg id="sg-svg" viewBox="0 0 860 340" role="img" aria-label="Diagram of an oven emitting silver atoms through collimating slits into a Stern-Gerlach magnet with a sharp knife-edge south pole above and a broad curved north pole below, splitting the beam toward an Up detector or a Down detector depending on the atom's spin." data-i18n="sterngerlach.svgAlt" data-i18n-attr="aria-label">
+        <svg id="sg-svg" viewBox="0 0 860 340" role="img" aria-label="Diagram of silver atoms entering a Stern-Gerlach magnet with a sharp knife-edge south pole above and a broad curved north pole below, splitting the beam toward an Up or Down outcome. The atoms can come straight from an oven with adjustable input spin, or already pre-measured with the axis of this magnet selectable, to test whether a second measurement disturbs a spin that was already definite." data-i18n="sterngerlach.svgAlt" data-i18n-attr="aria-label">
           <defs>
             <marker id="sg-arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
               <path d="M2 1L8 5L2 9" fill="none" stroke="var(--text3)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
@@ -2387,51 +2670,146 @@
               <stop offset="0%" stop-color="#C7D2DB" stop-opacity="0.9"/>
               <stop offset="100%" stop-color="#C7D2DB" stop-opacity="0"/>
             </radialGradient>
-            <!-- hatch pattern needs a solid fill under it or it has no
-                 background and just reads as a plain rect -->
+            <!-- Diagonal hatch texture for the oven block, laid over a
+                 solid base fill (a pattern alone has no background, so it
+                 reads as a plain rect without one). -->
             <pattern id="sg-hatch" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
               <line x1="0" y1="0" x2="0" y2="6" stroke="var(--text3)" stroke-width="1.2" opacity="0.55"/>
             </pattern>
+            <!-- Brushed-metal sheen — a white-to-black overlay (rather
+                 than baking in a fixed color) layered on top of each
+                 apparatus part's normal --surface2 fill, so it reads as
+                 "lit from above" in both light and dark theme without
+                 needing its own light/dark variants. -->
+            <linearGradient id="sg-metal-sheen" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%"  stop-color="#fff" stop-opacity="0.38"/>
+              <stop offset="14%" stop-color="#fff" stop-opacity="0.1"/>
+              <stop offset="55%" stop-color="#000" stop-opacity="0"/>
+              <stop offset="100%" stop-color="#000" stop-opacity="0.22"/>
+            </linearGradient>
+            <!-- Same idea, low-contrast, for a glass-like sheen on the
+                 detector housings' tinted glass panels. -->
+            <linearGradient id="sg-glass-sheen" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%"  stop-color="#fff" stop-opacity="0.45"/>
+              <stop offset="30%" stop-color="#fff" stop-opacity="0.05"/>
+              <stop offset="100%" stop-color="#000" stop-opacity="0.08"/>
+            </linearGradient>
+            <radialGradient id="sg-heat-glow" cx="50%" cy="50%" r="50%">
+              <stop offset="0%" stop-color="#ff8a3d" stop-opacity="0.55"/>
+              <stop offset="100%" stop-color="#ff8a3d" stop-opacity="0"/>
+            </radialGradient>
+            <radialGradient id="sg-vignette" cx="42%" cy="48%" r="75%">
+              <stop offset="0%" stop-color="var(--surface2)" stop-opacity="0.55"/>
+              <stop offset="100%" stop-color="var(--surface2)" stop-opacity="0"/>
+            </radialGradient>
+            <!-- Keeps #sg-marks-up/#sg-marks-down's accumulated dots from
+                 poking past their housing's rounded corners. -->
+            <clipPath id="sg-clip-up"><rect x="735" y="55" width="70" height="50" rx="16"/></clipPath>
+            <clipPath id="sg-clip-down"><rect x="735" y="235" width="70" height="50" rx="16"/></clipPath>
           </defs>
 
-          <!-- oven - drawn with the hatch texture instead of a plain box
-               like my first attempt at this -->
-          <rect x="16" y="140" width="80" height="60" rx="4" fill="var(--surface2)" stroke="var(--border2)" stroke-width="1.2"/>
-          <rect x="16" y="140" width="80" height="60" rx="4" fill="url(#sg-hatch)"/>
-          <text x="56" y="218" text-anchor="middle" font-size="12" font-weight="500" fill="var(--text)" data-i18n="sterngerlach.atomSource">Oven</text>
+          <!-- Faint workbench vignette behind the whole apparatus, purely
+               for depth — low-contrast enough to stay unobtrusive in both
+               themes since it's built from --surface2 at partial opacity
+               rather than a fixed color. -->
+          <rect x="0" y="0" width="860" height="340" fill="url(#sg-vignette)" pointer-events="none"/>
 
-          <line class="sg-beam" x1="98" y1="170" x2="162" y2="170" stroke="#C7D2DB" stroke-width="3" stroke-linecap="round" marker-end="url(#sg-arr)" opacity="0.7"/>
-          <text x="130" y="155" text-anchor="middle" font-size="11" fill="var(--text2)" data-i18n="sterngerlach.silverAtomsArrow">Silver atoms</text>
+          <!-- 1-magnet mode: oven — the real apparatus heats silver until
+               it vaporizes; drawn with a hatch texture (heat/solid-block
+               shorthand) over a soft warm glow, plus a metal sheen shared
+               with every other part of the apparatus — then two offset
+               collimating-slit baffles, each with a narrower gap than the
+               last, so the diagram itself shows the beam being narrowed
+               into a thin line before it ever reaches the magnet (a real
+               requirement: only atoms already traveling in one direction
+               can show a clean deflection). A few small particles
+               animate along each beam segment (.sg-particle-stream) on
+               top of the existing pulsing beam line, so the "beam" reads
+               as a flow of individual atoms rather than a static ray. -->
+          <g id="sg-intake-group">
+            <circle class="sg-heat-glow" cx="56" cy="170" r="55" fill="url(#sg-heat-glow)" pointer-events="none"/>
+            <rect x="16" y="140" width="80" height="60" rx="4" fill="var(--surface2)" stroke="var(--border2)" stroke-width="1.2"/>
+            <rect x="16" y="140" width="80" height="60" rx="4" fill="url(#sg-hatch)"/>
+            <rect x="16" y="140" width="80" height="60" rx="4" fill="url(#sg-metal-sheen)" pointer-events="none"/>
+            <text x="56" y="218" text-anchor="middle" font-size="12" font-weight="500" fill="var(--text)" data-i18n="sterngerlach.atomSource">Oven</text>
 
-          <!-- collimating slits, each gap narrower than the last so the beam
-               visibly narrows before the magnet - only atoms already going
-               one direction give a clean deflection, so this matters -->
-          <g fill="var(--surface2)" stroke="var(--border2)" stroke-width="1.2">
-            <rect x="176" y="90" width="10" height="64"/>
-            <rect x="176" y="186" width="10" height="64"/>
-            <rect x="202" y="90" width="10" height="72"/>
-            <rect x="202" y="178" width="10" height="72"/>
+            <line class="sg-beam" x1="98" y1="170" x2="162" y2="170" stroke="#C7D2DB" stroke-width="3" stroke-linecap="round" marker-end="url(#sg-arr)" opacity="0.7"/>
+            <g class="sg-particle-stream">
+              <circle class="sg-particle" cx="98" cy="170" r="1.6" fill="#C7D2DB" style="--dx:64px; animation-delay:0s"/>
+              <circle class="sg-particle" cx="98" cy="170" r="1.6" fill="#C7D2DB" style="--dx:64px; animation-delay:-0.5s"/>
+              <circle class="sg-particle" cx="98" cy="170" r="1.6" fill="#C7D2DB" style="--dx:64px; animation-delay:-1s"/>
+            </g>
+            <text x="130" y="155" text-anchor="middle" font-size="11" fill="var(--text2)" data-i18n="sterngerlach.silverAtomsArrow">Silver atoms</text>
+
+            <g fill="var(--surface2)" stroke="var(--border2)" stroke-width="1.2">
+              <rect x="176" y="90" width="10" height="64"/>
+              <rect x="176" y="186" width="10" height="64"/>
+              <rect x="202" y="90" width="10" height="72"/>
+              <rect x="202" y="178" width="10" height="72"/>
+            </g>
+            <g fill="url(#sg-metal-sheen)" pointer-events="none">
+              <rect x="176" y="90" width="10" height="64"/>
+              <rect x="176" y="186" width="10" height="64"/>
+              <rect x="202" y="90" width="10" height="72"/>
+              <rect x="202" y="178" width="10" height="72"/>
+            </g>
+            <text x="196" y="76" text-anchor="middle" font-size="11" fill="var(--text2)" data-i18n="sterngerlach.collimatingSlits">Collimating slits</text>
+
+            <line class="sg-beam" x1="220" y1="170" x2="296" y2="170" stroke="#C7D2DB" stroke-width="3" stroke-linecap="round" marker-end="url(#sg-arr)" opacity="0.7"/>
+            <g class="sg-particle-stream">
+              <circle class="sg-particle" cx="220" cy="170" r="1.6" fill="#C7D2DB" style="--dx:76px; animation-delay:-0.2s"/>
+              <circle class="sg-particle" cx="220" cy="170" r="1.6" fill="#C7D2DB" style="--dx:76px; animation-delay:-0.7s"/>
+              <circle class="sg-particle" cx="220" cy="170" r="1.6" fill="#C7D2DB" style="--dx:76px; animation-delay:-1.2s"/>
+            </g>
           </g>
-          <text x="196" y="76" text-anchor="middle" font-size="11" fill="var(--text2)" data-i18n="sterngerlach.collimatingSlits">Collimating slits</text>
 
-          <line class="sg-beam" x1="220" y1="170" x2="296" y2="170" stroke="#C7D2DB" stroke-width="3" stroke-linecap="round" marker-end="url(#sg-arr)" opacity="0.7"/>
+          <!-- 2-magnet mode: a static "already measured" box standing in
+               for a first magnet's output (the textbook sequential-SG
+               setup asserts this rather than simulating it) — the "up"
+               half survives, the "down" half is physically blocked. -->
+          <g id="sg-prepared-group" style="display:none">
+            <rect x="16" y="140" width="180" height="60" rx="6" fill="var(--surface2)" stroke="var(--border2)" stroke-width="1"/>
+            <rect x="16" y="140" width="180" height="60" rx="6" fill="url(#sg-metal-sheen)" pointer-events="none"/>
+            <text x="106" y="164" text-anchor="middle" dominant-baseline="central" font-size="12" font-weight="500" fill="var(--text)" data-i18n="sterngerlach.preparedLabel">prepared: spin ↑ (Z)</text>
+            <text x="106" y="184" text-anchor="middle" font-size="10" fill="var(--text2)" data-i18n="sterngerlach.blockedLabel">("down" half blocked)</text>
+            <line class="sg-beam" x1="196" y1="170" x2="296" y2="170" stroke="#C7D2DB" stroke-width="3" stroke-linecap="round" marker-end="url(#sg-arr)" opacity="0.7"/>
+            <g class="sg-particle-stream">
+              <circle class="sg-particle" cx="196" cy="170" r="1.6" fill="#C7D2DB" style="--dx:100px; animation-delay:0s"/>
+              <circle class="sg-particle" cx="196" cy="170" r="1.6" fill="#C7D2DB" style="--dx:100px; animation-delay:-0.6s"/>
+              <circle class="sg-particle" cx="196" cy="170" r="1.6" fill="#C7D2DB" style="--dx:100px; animation-delay:-1.1s"/>
+            </g>
+          </g>
 
-          <!-- the S pole is a sharp knife edge, N is a broad trough - that
-               asymmetry is the whole point, a symmetric gap gives zero net
-               force. it's what makes the field inhomogeneous across the
-               beam so the magnetic moment gets pulled one way or the other
-               instead of feeling a uniform field. field-line fans below
-               show it curving from N across to S at a few points -->
+          <!-- The magnet — a real Stern-Gerlach pole pair, not a plain
+               block: the S pole comes to a sharp knife-edge ridge and the
+               N pole is a broad concave trough. That deliberate asymmetry
+               is the whole point (a symmetric gap would average out to
+               zero net force) — it's what makes the field genuinely
+               inhomogeneous across the beam's width, so a magnetic moment
+               is pulled toward the knife edge or pushed toward the trough
+               depending on which way it points, rather than feeling the
+               same field everywhere. A thin bright stroke traces the
+               knife edge itself — a cheap specular-highlight cue that
+               reads as "this edge is sharp metal", reinforcing the same
+               point the field-fan lines make physically. -->
           <path d="M300,90 L600,90 L600,128 L575,152 L325,152 L300,128 Z" fill="var(--surface2)" stroke="var(--border2)" stroke-width="1.2"/>
+          <path d="M300,90 L600,90 L600,128 L575,152 L325,152 L300,128 Z" fill="url(#sg-metal-sheen)" pointer-events="none"/>
+          <path d="M600,128 L575,152 L325,152 L300,128" fill="none" stroke="#fff" stroke-opacity="0.55" stroke-width="1" pointer-events="none"/>
           <text x="450" y="112" text-anchor="middle" dominant-baseline="central" font-size="15" font-weight="700" fill="var(--zero)">S</text>
           <path d="M300,250 L600,250 L600,212 L575,188 Q462,222 325,188 L300,212 Z" fill="var(--surface2)" stroke="var(--border2)" stroke-width="1.2"/>
+          <path d="M300,250 L600,250 L600,212 L575,188 Q462,222 325,188 L300,212 Z" fill="url(#sg-metal-sheen)" pointer-events="none"/>
           <text x="450" y="234" text-anchor="middle" dominant-baseline="central" font-size="15" font-weight="700" fill="var(--one)">N</text>
 
-          <!-- field lines go N to S by convention, so each path starts near
-               the broad N trough and arrows into the sharp S edge. converging
-               tight at S / spreading wide at N also matches reality - that
-               spread difference is literally the gradient that deflects
-               the atom -->
+          <!-- Field lines run from N to S (the standard convention: they
+               exit the north pole and enter the south pole) — so each
+               path here starts down near the broad N trough and ends
+               (arrowhead) up near the sharp S edge, not the other way
+               round. Converging tightly at the S tip while fanning out
+               wide down at the N trough also visually matches the real
+               field: concentrated (strong, rapidly-varying) at the sharp
+               pole, spread out (weaker, slowly-varying) at the broad one
+               — that difference in spread IS the gradient that deflects
+               the atom, not either pole "acting" alone. -->
           <g class="sg-field-fan" stroke="var(--zero)" stroke-width="1.3" opacity="0.55" fill="none" marker-end="url(#sg-field-arr)">
             <path d="M357,182 Q365,172 375,159"/>
             <path d="M375,185 Q375,172 375,159"/>
@@ -2444,25 +2822,39 @@
             <path d="M568,182 Q560,172 550,159"/>
           </g>
 
-          <text x="450" y="272" text-anchor="middle" font-size="11" fill="var(--text2)" data-i18n="sterngerlach.magnetLabel">Inhomogeneous field</text>
+          <!-- Caption switches between "Inhomogeneous field" (1-magnet)
+               and "Magnet 2 — Z/X axis" (2-magnet) via sgUpdateCaptions()
+               in stern-gerlach-tab.js. -->
+          <text id="sg-magnet-caption" x="450" y="272" text-anchor="middle" font-size="11" fill="var(--text2)" data-i18n="sterngerlach.magnetLabel">Inhomogeneous field</text>
 
-          <!-- same ghost-path convention as the Beam Splitter tab -->
+          <!-- Ghost "possibility" paths + both detectors — fixed in
+               place regardless of mode, since there's only ever one
+               magnet producing the split. Each housing is a small glass-
+               fronted photographic plate: #sg-marks-up/#sg-marks-down
+               accumulate one jittered dot per fired atom
+               (sgAddScreenMark() in stern-gerlach-tab.js), so repeated
+               firing visibly builds up the same two banana-shaped
+               smudges the real 1922 plate showed — never a single dot,
+               never a continuous smear — rather than only ever showing
+               the latest hit. -->
           <line class="sg-path-ghost" x1="600" y1="162" x2="732" y2="86" stroke="var(--zero)" stroke-width="2" stroke-dasharray="6 6" opacity="0.4" marker-end="url(#sg-arr)"/>
           <line class="sg-path-ghost" x1="600" y1="178" x2="732" y2="254" stroke="var(--one)" stroke-width="2" stroke-dasharray="6 6" opacity="0.4" marker-end="url(#sg-arr)"/>
 
-          <!-- up detector -->
+          <rect x="735" y="55" width="70" height="50" rx="16" fill="var(--zero-dim)" stroke="var(--zero)" stroke-width="1"/>
+          <rect x="735" y="55" width="70" height="50" rx="16" fill="url(#sg-glass-sheen)" pointer-events="none"/>
+          <g id="sg-marks-up" clip-path="url(#sg-clip-up)"></g>
           <circle id="sg-ping-up" class="sg-ping" cx="770" cy="80" r="26" fill="none" stroke="var(--zero)" stroke-width="2" opacity="0"/>
           <rect id="sg-flash-up" x="735" y="55" width="70" height="50" rx="16" fill="var(--zero)" opacity="0"/>
-          <rect x="735" y="55" width="70" height="50" rx="16" fill="var(--zero-dim)" stroke="var(--zero)" stroke-width="1"/>
-          <text x="770" y="80" text-anchor="middle" dominant-baseline="central" font-size="16" font-weight="700" fill="var(--zero)">↑</text>
-          <text x="770" y="33" text-anchor="middle" font-size="12" fill="var(--text2)" data-i18n="sterngerlach.detectorUp">Up detector</text>
+          <text id="sg-det-up-symbol" x="770" y="80" text-anchor="middle" dominant-baseline="central" font-size="16" font-weight="700" fill="var(--zero)">↑</text>
+          <text id="sg-det-up-caption" x="770" y="33" text-anchor="middle" font-size="12" fill="var(--text2)" data-i18n="sterngerlach.detectorUp">Up detector</text>
 
-          <!-- down detector -->
+          <rect x="735" y="235" width="70" height="50" rx="16" fill="var(--one-dim)" stroke="var(--one)" stroke-width="1"/>
+          <rect x="735" y="235" width="70" height="50" rx="16" fill="url(#sg-glass-sheen)" pointer-events="none"/>
+          <g id="sg-marks-down" clip-path="url(#sg-clip-down)"></g>
           <circle id="sg-ping-down" class="sg-ping" cx="770" cy="260" r="26" fill="none" stroke="var(--one)" stroke-width="2" opacity="0"/>
           <rect id="sg-flash-down" x="735" y="235" width="70" height="50" rx="16" fill="var(--one)" opacity="0"/>
-          <rect x="735" y="235" width="70" height="50" rx="16" fill="var(--one-dim)" stroke="var(--one)" stroke-width="1"/>
-          <text x="770" y="260" text-anchor="middle" dominant-baseline="central" font-size="16" font-weight="700" fill="var(--one)">↓</text>
-          <text x="770" y="308" text-anchor="middle" font-size="12" fill="var(--text2)" data-i18n="sterngerlach.detectorDown">Down detector</text>
+          <text id="sg-det-down-symbol" x="770" y="260" text-anchor="middle" dominant-baseline="central" font-size="16" font-weight="700" fill="var(--one)">↓</text>
+          <text id="sg-det-down-caption" x="770" y="308" text-anchor="middle" font-size="12" fill="var(--text2)" data-i18n="sterngerlach.detectorDown">Down detector</text>
 
           <g id="sg-atom-ghost" opacity="0">
             <circle r="10" fill="url(#sg-atom-glow)"/>
@@ -2482,25 +2874,42 @@
 
       <div class="sterngerlach-controls-grid">
         <div class="card">
-          <div class="card-title" data-i18n="sterngerlach.inputSpinTitle">Input Spin Angle</div>
-          <div class="slider-group" style="margin:6px 0 10px;">
-            <div class="slider-row">
-              <span class="slider-sym">θ</span>
-              <input type="range" id="sg-theta-slider" min="0" max="3141" value="0">
-              <span class="slider-val" id="sg-theta-val">0°</span>
+          <div class="card-title" data-i18n="sterngerlach.magnetCountTitle">Number of Magnets</div>
+          <div class="mode-grid" style="grid-template-columns:1fr 1fr;margin:6px 0 12px;">
+            <button class="preset-btn mode-btn active" data-sg-magnets="1" data-i18n="sterngerlach.oneMagnet">1 magnet</button>
+            <button class="preset-btn mode-btn" data-sg-magnets="2" data-i18n="sterngerlach.twoMagnets">2 magnets (sequential)</button>
+          </div>
+
+          <div id="sg-theta-block">
+            <div class="muted-text" data-i18n="sterngerlach.inputSpinTitle">Input Spin Angle</div>
+            <div class="slider-group" style="margin:6px 0 10px;">
+              <div class="slider-row">
+                <span class="slider-sym">θ</span>
+                <input type="range" id="sg-theta-slider" min="0" max="3141" value="0">
+                <span class="slider-val" id="sg-theta-val">0°</span>
+              </div>
+            </div>
+            <p class="bit-explainer" data-i18n="sterngerlach.inputSpinBody">Same θ as the Bloch sphere — θ = 0° prepares spin certainly up, θ = 180° certainly down, and anything in between is a genuine superposition of the two.</p>
+            <div class="prob-rows" style="margin-top:8px;">
+              <div class="prob-row">
+                <span class="ket zero-color">↑</span>
+                <div class="track"><div class="fill zero-fill" id="sg-fill-up" style="width:100%"></div></div>
+                <span class="pct" id="sg-pct-up-live">100%</span>
+              </div>
+              <div class="prob-row">
+                <span class="ket one-color">↓</span>
+                <div class="track"><div class="fill one-fill" id="sg-fill-down" style="width:0%"></div></div>
+                <span class="pct" id="sg-pct-down-live">0%</span>
+              </div>
             </div>
           </div>
-          <p class="bit-explainer" data-i18n="sterngerlach.inputSpinBody">Same θ as the Bloch sphere — θ = 0° prepares spin certainly up, θ = 180° certainly down, and anything in between is a genuine superposition of the two.</p>
-          <div class="prob-rows" style="margin-top:8px;">
-            <div class="prob-row">
-              <span class="ket zero-color">↑</span>
-              <div class="track"><div class="fill zero-fill" id="sg-fill-up" style="width:100%"></div></div>
-              <span class="pct" id="sg-pct-up-live">100%</span>
-            </div>
-            <div class="prob-row">
-              <span class="ket one-color">↓</span>
-              <div class="track"><div class="fill one-fill" id="sg-fill-down" style="width:0%"></div></div>
-              <span class="pct" id="sg-pct-down-live">0%</span>
+
+          <div id="sg-axis-block" style="display:none;">
+            <div class="muted-text" data-i18n="sterngerlach.sequentialTitle">Measuring Twice: Why Order Matters</div>
+            <p class="bit-explainer" style="margin-top:4px;" data-i18n="sterngerlach.sequentialIntro">The atom above already has a definite spin — it's the "up" output of a first magnet (not shown), with the "down" half physically blocked. Choose this magnet's axis to see whether measuring it again disturbs that spin.</p>
+            <div class="mode-grid" style="grid-template-columns:1fr 1fr;margin:10px 0 4px;">
+              <button class="preset-btn mode-btn active" data-sg-axis="z" data-i18n="sterngerlach.sameAxis">Same axis (Z)</button>
+              <button class="preset-btn mode-btn" data-sg-axis="x" data-i18n="sterngerlach.differentAxis">Different axis (X)</button>
             </div>
           </div>
         </div>
@@ -2513,12 +2922,12 @@
           <div class="histogram">
             <div class="hist-col">
               <div class="hist-track"><div class="hist-bar zero-fill" id="sg-hist-up"></div></div>
-              <span class="ket zero-color">↑</span>
+              <span class="ket zero-color" id="sg-tally-sym-up">↑</span>
               <span class="pct" id="sg-pct-up">—</span>
             </div>
             <div class="hist-col">
               <div class="hist-track"><div class="hist-bar one-fill" id="sg-hist-down"></div></div>
-              <span class="ket one-color">↓</span>
+              <span class="ket one-color" id="sg-tally-sym-down">↓</span>
               <span class="pct" id="sg-pct-down">—</span>
             </div>
           </div>
@@ -2538,110 +2947,574 @@
         <p class="bit-explainer" style="margin-top:10px;" data-i18n="sterngerlach.whyTwoSpotsBody2" data-i18n-html>Classically, μ<sub>z</sub> could point in any direction, so a beam of randomly-oriented atoms should smear continuously across the screen, from fully deflected up to fully deflected down. When Stern and Gerlach actually ran this experiment in 1922, silver atoms landed in exactly two discrete spots — nothing in between, no matter how the magnet was tilted. That's the same quantization already built into every qubit in this app: a measurement returns one of exactly two outcomes, never a partial result.</p>
       </div>
 
-      <!-- demo 2: sequential magnets, incompatible axes -->
-      <div class="card mt-14">
-        <div class="card-title" data-i18n="sterngerlach.sequentialTitle">Measuring Twice: Why Order Matters</div>
-        <p class="bit-explainer" data-i18n="sterngerlach.sequentialIntro">Every atom below already has a definite spin — it's the "up" output of a first magnet, with the "down" half physically blocked. Now send it through a second magnet:</p>
-
-        <div class="mode-grid" style="grid-template-columns:1fr 1fr;max-width:360px;margin:14px auto 18px;">
-          <button class="preset-btn mode-btn active" data-sg-axis="z" data-i18n="sterngerlach.sameAxis">Same axis (Z)</button>
-          <button class="preset-btn mode-btn" data-sg-axis="x" data-i18n="sterngerlach.differentAxis">Different axis (X)</button>
-        </div>
-
-        <div class="sterngerlach-canvas-card">
-          <svg id="sg2-svg" viewBox="0 0 780 300" role="img" aria-label="Diagram of an atom prepared with spin up along Z entering a second Stern-Gerlach magnet with a knife-edge south pole and a curved north pole, splitting toward a plus detector or a minus detector depending on the second magnet's axis." data-i18n="sterngerlach.svg2Alt" data-i18n-attr="aria-label">
-            <rect x="24" y="95" width="170" height="60" rx="8" fill="var(--surface2)" stroke="var(--border2)" stroke-width="1"/>
-            <text x="109" y="119" text-anchor="middle" dominant-baseline="central" font-size="12" font-weight="500" fill="var(--text)" data-i18n="sterngerlach.preparedLabel">prepared: spin ↑ (Z)</text>
-            <text x="109" y="139" text-anchor="middle" font-size="10" fill="var(--text2)" data-i18n="sterngerlach.blockedLabel">("down" half blocked)</text>
-
-            <line class="sg-beam" x1="194" y1="125" x2="298" y2="125" stroke="#C7D2DB" stroke-width="3" stroke-linecap="round" marker-end="url(#sg-arr)" opacity="0.7"/>
-
-            <!-- same knife-edge/trough pole shapes as the first magnet,
-                 just relabeled "Magnet 2" with a selectable axis -->
-            <path d="M300,58 L570,58 L570,92 L545,112 L325,112 L300,92 Z" fill="var(--surface2)" stroke="var(--border2)" stroke-width="1.2"/>
-            <text x="435" y="80" text-anchor="middle" dominant-baseline="central" font-size="15" font-weight="700" fill="var(--zero)">S</text>
-            <path d="M300,205 L570,205 L570,171 L545,151 Q435,182 325,151 L300,171 Z" fill="var(--surface2)" stroke="var(--border2)" stroke-width="1.2"/>
-            <text x="435" y="183" text-anchor="middle" dominant-baseline="central" font-size="15" font-weight="700" fill="var(--one)">N</text>
-
-            <!-- N to S again, see the first magnet's comment above -->
-            <g class="sg-field-fan" stroke="var(--zero)" stroke-width="1.3" opacity="0.55" fill="none" marker-end="url(#sg-field-arr)">
-              <path d="M372,140 Q380,130 390,117"/>
-              <path d="M390,145 Q390,130 390,117"/>
-              <path d="M408,140 Q400,130 390,117"/>
-              <path d="M462,140 Q470,130 480,117"/>
-              <path d="M480,145 Q480,130 480,117"/>
-              <path d="M498,140 Q490,130 480,117"/>
-            </g>
-
-            <text x="435" y="225" text-anchor="middle" font-size="12" fill="var(--text2)" id="sg2-axis-caption" data-i18n="sterngerlach.magnet2AxisZ">Magnet 2 — Z axis</text>
-
-            <line class="sg-path-ghost" x1="570" y1="116" x2="672" y2="46" stroke="var(--zero)" stroke-width="2" stroke-dasharray="6 6" opacity="0.4" marker-end="url(#sg-arr)"/>
-            <line class="sg-path-ghost" x1="570" y1="134" x2="672" y2="214" stroke="var(--one)" stroke-width="2" stroke-dasharray="6 6" opacity="0.4" marker-end="url(#sg-arr)"/>
-
-            <circle id="sg2-ping-plus" class="sg-ping" cx="708" cy="40" r="26" fill="none" stroke="var(--zero)" stroke-width="2" opacity="0"/>
-            <rect id="sg2-flash-plus" x="673" y="15" width="70" height="50" rx="16" fill="var(--zero)" opacity="0"/>
-            <rect x="673" y="15" width="70" height="50" rx="16" fill="var(--zero-dim)" stroke="var(--zero)" stroke-width="1"/>
-            <text x="708" y="40" text-anchor="middle" dominant-baseline="central" font-size="16" font-weight="700" fill="var(--zero)">+</text>
-
-            <circle id="sg2-ping-minus" class="sg-ping" cx="708" cy="220" r="26" fill="none" stroke="var(--one)" stroke-width="2" opacity="0"/>
-            <rect id="sg2-flash-minus" x="673" y="195" width="70" height="50" rx="16" fill="var(--one)" opacity="0"/>
-            <rect x="673" y="195" width="70" height="50" rx="16" fill="var(--one-dim)" stroke="var(--one)" stroke-width="1"/>
-            <text x="708" y="220" text-anchor="middle" dominant-baseline="central" font-size="16" font-weight="700" fill="var(--one)">−</text>
-
-            <g id="sg2-atom-ghost" opacity="0">
-              <circle r="10" fill="url(#sg-atom-glow)"/>
-              <circle r="3.5" fill="#C7D2DB"/>
-            </g>
-            <g id="sg2-atom" opacity="0">
-              <circle r="14" fill="url(#sg-atom-glow)"/>
-              <circle r="5.5" fill="#C7D2DB"/>
-            </g>
-          </svg>
-
-          <div class="sterngerlach-actions">
-            <button class="btn-run" id="btn-fire-atom-2" data-i18n="sterngerlach.fireAtom">Fire atom</button>
-            <span class="muted-text" id="sg2-result">—</span>
-          </div>
-        </div>
-
-        <div class="sterngerlach-controls-grid" style="grid-template-columns:1fr 1.6fr;margin-top:14px;">
-          <div class="card">
-            <div class="card-title">
-              <span data-i18n="sterngerlach.detectorTally">Detector Tally</span>
-              <span class="muted-text" id="sg2-trial-count"></span>
-            </div>
-            <div class="histogram">
-              <div class="hist-col">
-                <div class="hist-track"><div class="hist-bar zero-fill" id="sg2-hist-plus"></div></div>
-                <span class="ket zero-color">+</span>
-                <span class="pct" id="sg2-pct-plus">—</span>
-              </div>
-              <div class="hist-col">
-                <div class="hist-track"><div class="hist-bar one-fill" id="sg2-hist-minus"></div></div>
-                <span class="ket one-color">−</span>
-                <span class="pct" id="sg2-pct-minus">—</span>
-              </div>
-            </div>
-            <button class="btn-secondary" id="btn-reset-sterngerlach2" data-i18n="common.reset">Reset</button>
-          </div>
-
-          <div class="card explainer-card">
-            <div class="card-title" data-i18n="common.whatJustHappened">What just happened</div>
-            <p class="bit-explainer" id="sg2-explainer" data-i18n="sterngerlach.sequentialExplainerZ">Same axis as before — fire an atom to confirm it always lands the same way.</p>
-          </div>
-        </div>
-      </div>
-
     </div>
 
     <div class="lesson-embed" id="lesson-embed-sterngerlach"></div>
   </section>
 
-  <!-- home / mind-map view. Concept Map is the default - each node jumps
-       straight into that concept's tab (goToLessonSimulation() in roadmap.js),
-       where the lesson + quiz live at the bottom (.lesson-embed). My Progress
-       is just a read-only summary of the same completedLessons/quizAnswers
-       state, no separate quiz here -->
+  <!-- ═══════════════════ TELEPORT TAB ═══════════════════ -->
+  <!-- Builds entirely on core/three-qubit.js's real 8-amplitude
+       ThreeQubitState (already shared with Circuits' 3-qubit mode) plus
+       one addition, ThreeQubitState.measureQubit() — a genuine partial-
+       measurement collapse, not a scripted animation. The protocol
+       itself (H+CNOT to entangle Alice's/Bob's qubits, CNOT+H to put
+       Alice's message qubit into the Bell basis, measure both of
+       Alice's qubits, then classically-controlled Z/X to fix up Bob's)
+       was verified against 500+ random states before this UI was built
+       — see teleport-tab.js's header comment for the exact correction
+       convention (m0 → Z, m1 → X, applied Z-then-X). -->
+  <section id="tab-teleport" class="tab-content">
+
+    <div class="compare-header">
+      <h1 class="compare-title" data-i18n="teleport.title">Quantum Teleportation</h1>
+      <p class="compare-subtitle" data-i18n="teleport.subtitle">Transferring a qubit's exact state onto a second, physically separate qubit — using a shared entangled pair and two classical bits, without ever transporting the qubit itself</p>
+    </div>
+
+    <div class="teleport-layout">
+
+      <!-- Formal protocol definition ahead of the walkthrough — states
+           what is and isn't transmitted, the no-cloning consequence, and
+           the no-FTL argument, before introducing Alice/Bob as the
+           conventional sender/receiver labels used throughout the
+           quantum-information-theory literature (not just a narrative
+           device invented for this app). -->
+      <div class="card">
+        <div class="card-title" data-i18n="teleport.definitionTitle">What Is Quantum Teleportation?</div>
+        <p class="bit-explainer" data-i18n="teleport.definitionBody1">Quantum teleportation is a protocol for transferring the exact state of one qubit onto a second, physically separate qubit, using a previously shared pair of entangled qubits together with two bits of classical communication — without the original qubit ever being physically transported or directly measured. It moves quantum information, not matter or energy, and it cannot be used to send a signal faster than light: recovering the transferred state at the receiving end requires those two classical bits to actually arrive, and they travel no faster than any ordinary signal.</p>
+        <p class="bit-explainer" style="margin-top:10px;" data-i18n="teleport.definitionBody2">Nor does it create a copy. The source qubit's own state is necessarily destroyed by the measurement the protocol requires, consistent with the no-cloning theorem, which forbids any procedure from duplicating an unknown quantum state while leaving the original intact. In the walkthrough below, the two parties exchanging the qubit are given the conventional labels used throughout quantum information theory — Alice for the sender, Bob for the receiver.</p>
+      </div>
+
+      <div class="card teleport-circuit-card">
+        <div class="card-title" data-i18n="teleport.circuitTitle">The Protocol</div>
+        <svg id="teleport-svg" viewBox="0 0 640 230" role="img" aria-label="Circuit diagram: Alice's message qubit and two halves of an entangled pair. A Hadamard and CNOT create the entangled pair between Alice's second qubit and Bob's qubit. A CNOT and Hadamard put Alice's message qubit and her half of the pair into the Bell basis. Both are measured, and the two classical results travel down double lines to conditionally-applied Z and X correction gates on Bob's qubit." data-i18n="teleport.svgAlt" data-i18n-attr="aria-label">
+          <defs>
+            <marker id="tp-cbit-arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse">
+              <path d="M2 1L8 5L2 9" fill="none" stroke="var(--text3)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            </marker>
+          </defs>
+
+          <!-- Wires — ψ (Alice's message) and A (Alice's half of the pair)
+               share the zero color, B (Bob's half) the one color, so
+               color alone tells you who owns which wire throughout the
+               diagram. -->
+          <line x1="60" y1="40"  x2="580" y2="40"  stroke="var(--zero)" stroke-width="2" opacity="0.55"/>
+          <line x1="60" y1="115" x2="580" y2="115" stroke="var(--zero)" stroke-width="2" opacity="0.55"/>
+          <line x1="60" y1="190" x2="580" y2="190" stroke="var(--one)"  stroke-width="2" opacity="0.55"/>
+          <text x="30" y="45"  text-anchor="middle" font-size="15" font-weight="700" fill="var(--zero)">ψ</text>
+          <text x="30" y="120" text-anchor="middle" font-size="15" font-weight="700" fill="var(--zero)">A</text>
+          <text x="30" y="195" text-anchor="middle" font-size="15" font-weight="700" fill="var(--one)">B</text>
+
+          <!-- Stage 1: entangle Alice's second qubit with Bob's, in
+               advance, before any message ever exists. -->
+          <g id="teleport-stage-pair" class="teleport-stage">
+            <rect x="90" y="95" width="40" height="40" rx="6" fill="var(--surface2)" stroke="var(--zero)" stroke-width="1.5"/>
+            <text x="110" y="120" text-anchor="middle" dominant-baseline="central" font-size="16" font-weight="700" fill="var(--zero)">H</text>
+            <line x1="170" y1="115" x2="170" y2="190" stroke="var(--text2)" stroke-width="2"/>
+            <circle cx="170" cy="115" r="7" fill="var(--text2)"/>
+            <circle cx="170" cy="190" r="15" fill="none" stroke="var(--text2)" stroke-width="2"/>
+            <line x1="170" y1="177" x2="170" y2="203" stroke="var(--text2)" stroke-width="2"/>
+            <line x1="157" y1="190" x2="183" y2="190" stroke="var(--text2)" stroke-width="2"/>
+          </g>
+
+          <!-- Stage 2: Alice puts her message qubit and her half of the
+               pair into the Bell basis — this is what "reads out" ψ
+               against the entanglement, not a direct copy of it. -->
+          <g id="teleport-stage-bellmeas" class="teleport-stage">
+            <line x1="250" y1="40" x2="250" y2="115" stroke="var(--text2)" stroke-width="2"/>
+            <circle cx="250" cy="40" r="7" fill="var(--text2)"/>
+            <circle cx="250" cy="115" r="15" fill="none" stroke="var(--text2)" stroke-width="2"/>
+            <line x1="250" y1="102" x2="250" y2="128" stroke="var(--text2)" stroke-width="2"/>
+            <line x1="237" y1="115" x2="263" y2="115" stroke="var(--text2)" stroke-width="2"/>
+            <rect x="290" y="20" width="40" height="40" rx="6" fill="var(--surface2)" stroke="var(--zero)" stroke-width="1.5"/>
+            <text x="310" y="45" text-anchor="middle" dominant-baseline="central" font-size="16" font-weight="700" fill="var(--zero)">H</text>
+          </g>
+
+          <!-- Stage 3: measure both of Alice's qubits — the standard
+               "meter" glyph, a dial with a needle. -->
+          <g id="teleport-stage-measure" class="teleport-stage">
+            <rect x="370" y="20" width="40" height="40" rx="6" fill="var(--surface2)" stroke="var(--zero)" stroke-width="1.5"/>
+            <path d="M382,48 A10,10 0 0 1 398,48" fill="none" stroke="var(--zero)" stroke-width="1.6"/>
+            <line x1="390" y1="49" x2="397" y2="35" stroke="var(--zero)" stroke-width="1.6" stroke-linecap="round"/>
+            <rect x="430" y="95" width="40" height="40" rx="6" fill="var(--surface2)" stroke="var(--zero)" stroke-width="1.5"/>
+            <path d="M442,123 A10,10 0 0 1 458,123" fill="none" stroke="var(--zero)" stroke-width="1.6"/>
+            <line x1="450" y1="124" x2="457" y2="110" stroke="var(--zero)" stroke-width="1.6" stroke-linecap="round"/>
+          </g>
+
+          <!-- Stage 4: the two classical results travel (double line —
+               the standard notation for "classical", not "quantum") down
+               to Bob's qubit, each conditionally firing its own
+               correction gate. Both boxes stay dashed
+               (.circuit-gate-off) until a run actually determines which
+               one(s) fire this time. -->
+          <g id="teleport-stage-correct">
+            <g id="teleport-cwire-0" class="teleport-cwire">
+              <line x1="388" y1="60" x2="388" y2="170" stroke="var(--text3)" stroke-width="1.5" marker-end="url(#tp-cbit-arr)"/>
+              <line x1="392" y1="60" x2="392" y2="170" stroke="var(--text3)" stroke-width="1.5"/>
+            </g>
+            <g id="teleport-cwire-1" class="teleport-cwire">
+              <line x1="448" y1="135" x2="448" y2="170" stroke="var(--text3)" stroke-width="1.5"/>
+              <line x1="452" y1="135" x2="452" y2="170" stroke="var(--text3)" stroke-width="1.5" marker-end="url(#tp-cbit-arr)"/>
+            </g>
+
+            <g id="teleport-gate-z" class="circuit-gate circuit-gate-off">
+              <rect x="370" y="170" width="40" height="40" rx="6" fill="var(--surface2)" stroke="var(--one)" stroke-width="1.5"/>
+              <text x="390" y="195" text-anchor="middle" dominant-baseline="central" font-size="16" font-weight="700" fill="var(--one)">Z</text>
+            </g>
+            <g id="teleport-gate-x" class="circuit-gate circuit-gate-off">
+              <rect x="430" y="170" width="40" height="40" rx="6" fill="var(--surface2)" stroke="var(--one)" stroke-width="1.5"/>
+              <text x="450" y="195" text-anchor="middle" dominant-baseline="central" font-size="16" font-weight="700" fill="var(--one)">X</text>
+            </g>
+          </g>
+
+          <text id="teleport-final-label" x="545" y="207" text-anchor="middle" font-size="11" fill="var(--text2)" data-i18n="teleport.finalLabel">Bob's qubit ≡ ψ</text>
+        </svg>
+
+        <div class="teleport-actions">
+          <button class="btn-run" id="btn-teleport" data-i18n="teleport.teleportBtn">Teleport</button>
+          <span class="muted-text" id="teleport-result">—</span>
+        </div>
+      </div>
+
+      <div class="compare-layout teleport-compare">
+        <div class="compare-col">
+          <div class="col-label">
+            <span class="col-badge quantum-badge" data-i18n="teleport.aliceBadge">Alice's message</span>
+            <span class="col-desc" data-i18n="teleport.aliceDesc">Set any state — this is what gets teleported</span>
+          </div>
+          <div class="bloch-wrap bloch-wrap--drag">
+            <canvas id="bloch-teleport-alice" width="200" height="200" tabindex="0" role="img" aria-label="Bloch sphere for Alice's message qubit. Draggable, or focus and use arrow keys, to set its state."></canvas>
+            <div class="state-label" id="label-teleport-alice">|0⟩</div>
+          </div>
+          <div class="preset-grid preset-grid--2col" style="margin-top:10px;">
+            <button class="preset-btn" data-teleport-preset data-theta-mult="0"   data-phi-mult="0">|0⟩</button>
+            <button class="preset-btn" data-teleport-preset data-theta-mult="1"   data-phi-mult="0">|1⟩</button>
+            <button class="preset-btn" data-teleport-preset data-theta-mult="0.5" data-phi-mult="0">|+⟩</button>
+            <button class="preset-btn" data-teleport-preset data-theta-mult="0.5" data-phi-mult="1">|-⟩</button>
+          </div>
+          <div class="slider-group" style="margin-top:10px;">
+            <div class="slider-row">
+              <span class="slider-sym">θ</span>
+              <input type="range" id="sl-teleport-theta" min="0" max="3141" value="0">
+              <span class="slider-val" id="val-teleport-theta">0°</span>
+            </div>
+            <div class="slider-row">
+              <span class="slider-sym">φ</span>
+              <input type="range" id="sl-teleport-phi" min="0" max="6283" value="0">
+              <span class="slider-val" id="val-teleport-phi">0°</span>
+            </div>
+          </div>
+          <div class="formula" id="formula-teleport-alice" style="margin-top:10px;text-align:center;">|ψ⟩ = |0⟩</div>
+        </div>
+
+        <div class="compare-divider">
+          <div class="divider-line"></div>
+          <div class="divider-vs" aria-hidden="true">→</div>
+          <div class="divider-line"></div>
+        </div>
+
+        <div class="compare-col">
+          <div class="col-label">
+            <span class="col-badge teleport-bob-badge" data-i18n="teleport.bobBadge">Bob's qubit</span>
+            <span class="col-desc" id="teleport-bob-desc" data-i18n="teleport.bobDescWaiting">Not entangled yet — press Teleport</span>
+          </div>
+          <div class="bloch-wrap">
+            <canvas id="bloch-teleport-bob" width="200" height="200" role="img" aria-label="Bloch sphere for Bob's qubit. Starts undetermined; ends up matching Alice's message exactly once teleportation completes."></canvas>
+            <div class="state-label" id="label-teleport-bob">?</div>
+          </div>
+          <div class="formula" id="formula-teleport-bob" style="margin-top:10px;text-align:center;">|ψ⟩ = ?</div>
+        </div>
+      </div>
+
+      <div class="teleport-controls-grid">
+        <div class="card">
+          <div class="card-title" data-i18n="teleport.classicalBitsTitle">Classical Bits</div>
+          <p class="bit-explainer" data-i18n="teleport.classicalBitsBody">Alice must physically send these two bits to Bob — by phone, radio, the postal service, anything classical. Without them, Bob's qubit is useless to him even though it's already sitting right there.</p>
+          <div class="teleport-bits-row">
+            <div class="teleport-bit-chip">
+              <span class="teleport-bit-label">m₀</span>
+              <span class="teleport-bit-val" id="teleport-m0">?</span>
+            </div>
+            <div class="teleport-bit-chip">
+              <span class="teleport-bit-label">m₁</span>
+              <span class="teleport-bit-val" id="teleport-m1">?</span>
+            </div>
+          </div>
+
+          <div class="card-title" style="margin-top:16px;">
+            <span data-i18n="teleport.outcomeTally">Outcome Tally</span>
+            <span class="muted-text" id="teleport-trial-count"></span>
+          </div>
+          <div class="histogram teleport-histogram">
+            <div class="hist-col">
+              <div class="hist-track"><div class="hist-bar zero-fill" id="teleport-hist-00"></div></div>
+              <span class="ket zero-color">00</span>
+              <span class="pct" id="teleport-pct-00">—</span>
+            </div>
+            <div class="hist-col">
+              <div class="hist-track"><div class="hist-bar" style="background:var(--text2)" id="teleport-hist-01"></div></div>
+              <span class="ket mid-color">01</span>
+              <span class="pct" id="teleport-pct-01">—</span>
+            </div>
+            <div class="hist-col">
+              <div class="hist-track"><div class="hist-bar" style="background:var(--text2)" id="teleport-hist-10"></div></div>
+              <span class="ket mid-color">10</span>
+              <span class="pct" id="teleport-pct-10">—</span>
+            </div>
+            <div class="hist-col">
+              <div class="hist-track"><div class="hist-bar one-fill" id="teleport-hist-11"></div></div>
+              <span class="ket one-color">11</span>
+              <span class="pct" id="teleport-pct-11">—</span>
+            </div>
+          </div>
+          <button class="btn-secondary" id="btn-reset-teleport" data-i18n="common.reset">Reset</button>
+        </div>
+
+        <div class="card explainer-card">
+          <div class="card-title" data-i18n="common.whatJustHappened">What just happened</div>
+          <p class="bit-explainer" id="teleport-explainer" data-i18n="teleport.explainerDefault">Set Alice's message state above, then press Teleport. Watch Bob's sphere: it starts undetermined, jumps to some definite but wrong point the instant Alice measures, then snaps to match Alice's exactly once her classical bits arrive and Bob corrects for them.</p>
+        </div>
+      </div>
+
+      <div class="card mt-14">
+        <div class="card-title" data-i18n="teleport.whyNotFtlTitle">Why This Isn't Faster-Than-Light</div>
+        <p class="bit-explainer" data-i18n="teleport.whyNotFtlBody">The instant Alice measures her two qubits, Bob's qubit does become a definite state — but which one is anyone's guess without Alice's two classical bits, and those can only travel at the speed of light or slower, same as a phone call. Until they arrive, Bob's qubit reads as pure noise: measuring it himself early would just give a random 50/50 result, no matter what ψ was. The entanglement makes teleportation possible; it doesn't make it instant.</p>
+      </div>
+
+      <div class="card mt-14">
+        <div class="card-title" data-i18n="teleport.noCloningTitle">Not a Copy — the No-Cloning Theorem</div>
+        <p class="bit-explainer" data-i18n="teleport.noCloningBody" data-i18n-html>Alice's original message qubit doesn't survive this: her Bell-basis measurement in Step 2 collapses it along with her half of the pair, permanently erasing whatever ψ used to be on her side. That's not a limitation of this particular protocol — the no-cloning theorem proves <em>no</em> quantum procedure can ever copy an unknown state while leaving the original intact. Teleportation moves a state; it never duplicates one.</p>
+      </div>
+
+    </div>
+
+    <div class="lesson-embed" id="lesson-embed-teleport"></div>
+  </section>
+
+  <!-- ═══════════════════ SUPERDENSE CODING TAB ═══════════════════ -->
+  <!-- Teleportation's mirror image: there, Alice sent Bob a qubit's worth
+       of quantum information using only 2 classical bits (plus a
+       pre-shared pair); here, Alice sends Bob 2 classical bits of
+       information using only 1 qubit (plus the same pre-shared pair).
+       Built on core/two-qubit.js's TwoQubitState — already used by Bell
+       States/Entangle — plus the same measureQubit() addition pattern
+       used for Teleport, added to TwoQubitState this time. Unlike
+       teleportation, nothing here is random: Bob's decode circuit lands
+       on an exact eigenstate every time, so the same message always
+       comes back byte-for-byte, verified computationally for all 4
+       messages before this UI was built. -->
+  <section id="tab-superdense" class="tab-content">
+
+    <div class="compare-header">
+      <h1 class="compare-title" data-i18n="superdense.title">Superdense Coding</h1>
+      <p class="compare-subtitle" data-i18n="superdense.subtitle">Transmitting two classical bits of information by physically sending only one qubit, given a shared entangled pair prepared in advance</p>
+    </div>
+
+    <div class="superdense-layout">
+
+      <!-- Formal protocol definition ahead of the walkthrough — states
+           what's actually transmitted (and that a real qubit still has
+           to travel, so this isn't a classical-limit loophole) before
+           introducing Alice/Bob as the conventional labels, same as the
+           Teleport tab. -->
+      <div class="card">
+        <div class="card-title" data-i18n="superdense.definitionTitle">What Is Superdense Coding?</div>
+        <p class="bit-explainer" data-i18n="superdense.definitionBody1">Superdense coding is a quantum communication protocol that transmits two classical bits of information by physically sending only a single qubit, provided the sender and receiver already share one half each of an entangled pair prepared in advance. It is the logical converse of quantum teleportation: teleportation spends two classical bits and a shared entangled pair to move one qubit of quantum information, while superdense coding spends one qubit and that same kind of shared pair to move two classical bits.</p>
+        <p class="bit-explainer" style="margin-top:10px;" data-i18n="superdense.definitionBody2">It is not a loophole in classical communication limits — an actual physical qubit still has to travel from sender to receiver for the protocol to work, so the transmission remains bounded by ordinary signal speed. As in the Teleportation tab, the two parties below are given their conventional quantum-information-theory labels: Alice for the sender, Bob for the receiver.</p>
+      </div>
+
+      <div class="card superdense-circuit-card">
+        <div class="card-title" data-i18n="superdense.circuitTitle">The Protocol</div>
+        <svg id="superdense-svg" viewBox="0 0 700 180" role="img" aria-label="Circuit diagram: Alice's qubit and Bob's qubit. A Hadamard and CNOT create an entangled pair. Alice conditionally applies X and/or Z to her own qubit only, encoding two classical bits. She then physically sends that qubit to Bob over a quantum channel. Bob, now holding both qubits, applies a CNOT and Hadamard to decode, then measures both to recover Alice's exact two bits." data-i18n="superdense.svgAlt" data-i18n-attr="aria-label">
+          <defs>
+            <marker id="sd-arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse">
+              <path d="M2 1L8 5L2 9" fill="none" stroke="var(--text3)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            </marker>
+          </defs>
+
+          <line x1="40" y1="50"  x2="660" y2="50"  stroke="var(--zero)" stroke-width="2" opacity="0.55"/>
+          <line x1="40" y1="130" x2="660" y2="130" stroke="var(--one)"  stroke-width="2" opacity="0.55"/>
+          <text x="20" y="55"  text-anchor="middle" font-size="15" font-weight="700" fill="var(--zero)">A</text>
+          <text x="20" y="135" text-anchor="middle" font-size="15" font-weight="700" fill="var(--one)">B</text>
+
+          <!-- Stage 1: entangle -->
+          <g id="superdense-stage-pair" class="teleport-stage">
+            <rect x="70" y="30" width="40" height="40" rx="6" fill="var(--surface2)" stroke="var(--zero)" stroke-width="1.5"/>
+            <text x="90" y="55" text-anchor="middle" dominant-baseline="central" font-size="16" font-weight="700" fill="var(--zero)">H</text>
+            <line x1="150" y1="50" x2="150" y2="130" stroke="var(--text2)" stroke-width="2"/>
+            <circle cx="150" cy="50" r="7" fill="var(--text2)"/>
+            <circle cx="150" cy="130" r="15" fill="none" stroke="var(--text2)" stroke-width="2"/>
+            <line x1="150" y1="117" x2="150" y2="143" stroke="var(--text2)" stroke-width="2"/>
+            <line x1="137" y1="130" x2="163" y2="130" stroke="var(--text2)" stroke-width="2"/>
+          </g>
+
+          <!-- Stage 2: Alice encodes 2 bits onto her own qubit only. Both
+               boxes are always drawn; superdense-tab.js toggles
+               .circuit-gate-off the moment a message is picked (a
+               preview, before Send is even pressed — unlike Teleport's
+               correction gates, which can't be known until after a
+               random measurement). -->
+          <g id="superdense-stage-encode">
+            <g id="superdense-gate-x" class="circuit-gate circuit-gate-off">
+              <rect x="200" y="30" width="40" height="40" rx="6" fill="var(--surface2)" stroke="var(--zero)" stroke-width="1.5"/>
+              <text x="220" y="55" text-anchor="middle" dominant-baseline="central" font-size="16" font-weight="700" fill="var(--zero)">X</text>
+            </g>
+            <g id="superdense-gate-z" class="circuit-gate circuit-gate-off">
+              <rect x="260" y="30" width="40" height="40" rx="6" fill="var(--surface2)" stroke="var(--zero)" stroke-width="1.5"/>
+              <text x="280" y="55" text-anchor="middle" dominant-baseline="central" font-size="16" font-weight="700" fill="var(--zero)">Z</text>
+            </g>
+          </g>
+
+          <!-- Stage 3: the ONE step that needs a real quantum channel —
+               Alice physically sends her qubit to Bob. Drawn as a
+               distinct highlighted wire segment with drifting particles
+               (superdense-tab.js's .sending), not a classical double
+               line like Teleport's classical bits — this is quantum
+               transmission, not classical. -->
+          <g id="superdense-channel">
+            <text x="360" y="20" text-anchor="middle" font-size="10.5" fill="var(--text2)" data-i18n="superdense.channelLabel">quantum channel</text>
+            <line class="superdense-channel-wire" x1="320" y1="50" x2="400" y2="50" stroke="var(--zero)" stroke-width="2" marker-end="url(#sd-arr)"/>
+            <g class="superdense-particle-stream">
+              <circle class="superdense-particle" cx="320" cy="50" r="1.6" fill="var(--zero)" style="--dx:80px; animation-delay:0s"/>
+              <circle class="superdense-particle" cx="320" cy="50" r="1.6" fill="var(--zero)" style="--dx:80px; animation-delay:-0.4s"/>
+              <circle class="superdense-particle" cx="320" cy="50" r="1.6" fill="var(--zero)" style="--dx:80px; animation-delay:-0.8s"/>
+            </g>
+          </g>
+
+          <!-- Stage 4: Bob, now holding both qubits, runs the exact same
+               Bell-basis decode circuit Teleport's Alice used on her
+               side (CNOT then H) — same shape, different owner, same
+               underlying idea: this circuit is what tells the four Bell
+               states apart. -->
+          <g id="superdense-stage-decode" class="teleport-stage">
+            <line x1="440" y1="50" x2="440" y2="130" stroke="var(--text2)" stroke-width="2"/>
+            <circle cx="440" cy="50" r="7" fill="var(--text2)"/>
+            <circle cx="440" cy="130" r="15" fill="none" stroke="var(--text2)" stroke-width="2"/>
+            <line x1="440" y1="117" x2="440" y2="143" stroke="var(--text2)" stroke-width="2"/>
+            <line x1="427" y1="130" x2="453" y2="130" stroke="var(--text2)" stroke-width="2"/>
+            <rect x="480" y="30" width="40" height="40" rx="6" fill="var(--surface2)" stroke="var(--zero)" stroke-width="1.5"/>
+            <text x="500" y="55" text-anchor="middle" dominant-baseline="central" font-size="16" font-weight="700" fill="var(--zero)">H</text>
+          </g>
+
+          <!-- Stage 5: measure both to read off Alice's exact bits. -->
+          <g id="superdense-stage-measure" class="teleport-stage">
+            <rect x="550" y="30" width="40" height="40" rx="6" fill="var(--surface2)" stroke="var(--zero)" stroke-width="1.5"/>
+            <path d="M562,58 A10,10 0 0 1 578,58" fill="none" stroke="var(--zero)" stroke-width="1.6"/>
+            <line x1="570" y1="59" x2="577" y2="45" stroke="var(--zero)" stroke-width="1.6" stroke-linecap="round"/>
+            <rect x="550" y="110" width="40" height="40" rx="6" fill="var(--surface2)" stroke="var(--one)" stroke-width="1.5"/>
+            <path d="M562,138 A10,10 0 0 1 578,138" fill="none" stroke="var(--one)" stroke-width="1.6"/>
+            <line x1="570" y1="139" x2="577" y2="125" stroke="var(--one)" stroke-width="1.6" stroke-linecap="round"/>
+          </g>
+
+          <text x="625" y="45" text-anchor="middle" font-size="11" fill="var(--text2)" data-i18n="superdense.finalLabelA">d₀</text>
+          <text x="625" y="125" text-anchor="middle" font-size="11" fill="var(--text2)" data-i18n="superdense.finalLabelB">d₁</text>
+        </svg>
+
+        <div class="superdense-actions">
+          <button class="btn-run" id="btn-superdense-send" data-i18n="superdense.sendBtn">Send</button>
+          <span class="muted-text" id="superdense-result">—</span>
+        </div>
+      </div>
+
+      <div class="superdense-controls-grid">
+        <div class="card">
+          <div class="card-title" data-i18n="superdense.messageTitle">Message to Send</div>
+          <p class="bit-explainer" data-i18n="superdense.messageBody">Pick any 2-bit message — this is what Alice encodes onto her single qubit before sending it to Bob.</p>
+          <div class="mode-grid" id="superdense-message-picker" style="grid-template-columns:repeat(4,1fr);max-width:340px;margin:12px auto 0;">
+            <button class="preset-btn mode-btn active" data-superdense-msg="00">00</button>
+            <button class="preset-btn mode-btn" data-superdense-msg="01">01</button>
+            <button class="preset-btn mode-btn" data-superdense-msg="10">10</button>
+            <button class="preset-btn mode-btn" data-superdense-msg="11">11</button>
+          </div>
+
+          <div class="teleport-bits-row" style="margin-top:16px;">
+            <div class="teleport-bit-chip">
+              <span class="teleport-bit-label" data-i18n="superdense.sentLabel">Alice sent</span>
+              <span class="teleport-bit-val" id="superdense-sent-val">00</span>
+            </div>
+            <div class="teleport-bit-chip">
+              <span class="teleport-bit-label" data-i18n="superdense.receivedLabel">Bob decoded</span>
+              <span class="teleport-bit-val" id="superdense-received-val">?</span>
+            </div>
+          </div>
+          <p class="muted-text" id="superdense-tally-text" style="margin-top:10px;text-align:center;"></p>
+          <button class="btn-secondary" id="btn-reset-superdense" data-i18n="common.reset" style="margin-top:6px;">Reset</button>
+        </div>
+
+        <div class="card explainer-card">
+          <div class="card-title" data-i18n="common.whatJustHappened">What just happened</div>
+          <p class="bit-explainer" id="superdense-explainer" data-i18n="superdense.explainerDefault">Pick a 2-bit message above, then press Send. Watch Alice encode it onto her own qubit alone, physically hand that one qubit to Bob, and Bob decode both bits back out exactly — nothing here is random.</p>
+        </div>
+      </div>
+
+      <div class="card mt-14">
+        <div class="card-title" data-i18n="superdense.whyChannelTitle">Why This Still Needs a Quantum Channel</div>
+        <p class="bit-explainer" data-i18n="superdense.whyChannelBody">Teleportation moved a qubit's worth of information using only classical bits, which is why it can't outrun the speed of light. Superdense coding runs the opposite direction — it moves 2 classical bits using only 1 qubit of communication, which sounds like it's beating the classical limit, but it isn't a loophole: an actual physical qubit still has to travel from Alice to Bob for this to work. The "savings" is real (1 qubit instead of 2 classical bits' worth of separate signal), but it's still bounded by however fast that qubit itself can travel.</p>
+      </div>
+
+      <div class="card mt-14">
+        <div class="card-title" data-i18n="superdense.compareTitle">Teleportation vs. Superdense Coding</div>
+        <p class="bit-explainer" data-i18n="superdense.compareBody">Same resource — one pre-shared entangled pair — spent in opposite directions. Teleportation sends 1 qubit of quantum information using 2 classical bits; superdense coding sends 2 classical bits of information using 1 qubit. Both need that entangled pair set up in advance, and both end by running essentially the same Bell-basis circuit (a CNOT then a Hadamard) — teleportation runs it on the sending side to read a state out, superdense coding runs it on the receiving side to read a message in.</p>
+      </div>
+
+    </div>
+
+    <div class="lesson-embed" id="lesson-embed-superdense"></div>
+  </section>
+
+  <!-- ═══════════════════ NOISE & DECOHERENCE TAB ═══════════════════ -->
+  <!-- Every other tab treats gates/measurement as perfectly unitary — the
+       one genuinely new physics model in the app, not another realism
+       pass over existing math. A single qubit's Bloch vector decays in
+       real time toward the ground state under the standard T1/T2
+       phenomenological model (the same equations behind real NMR/ESR and
+       superconducting-qubit coherence-time measurements):
+         x(t) = x0 e^(-t/T2),  y(t) = y0 e^(-t/T2),  z(t) = 1 + (z0-1) e^(-t/T1)
+       T2 is physically capped at 2×T1 (dephasing can never be slower than
+       what relaxation alone implies) — noise-tab.js enforces this rather
+       than just labeling the slider. A shrinking Bloch vector is already
+       this app's own convention for "mixed state" (see two-qubit.js/
+       three-qubit.js's getSingleQubitBloch() for entangled qubits), so
+       decoherence needed no new state representation, just this one new
+       time-evolution law layered on top of it. -->
+  <section id="tab-noise" class="tab-content">
+
+    <div class="compare-header">
+      <h1 class="compare-title" data-i18n="noise.title">Noise &amp; Decoherence</h1>
+      <p class="compare-subtitle" data-i18n="noise.subtitle">The loss of quantum coherence through unwanted interaction with the environment — the dominant practical obstacle to building reliable, large-scale quantum computers</p>
+    </div>
+
+    <div class="noise-layout">
+
+      <!-- Formal definition first, modeled on how the phenomenon is
+           actually defined in the literature (pure state -> environment
+           interaction -> entanglement with environment degrees of
+           freedom -> mixed state on tracing them out) rather than
+           opening on the live-demo framing. -->
+      <div class="card">
+        <div class="card-title" data-i18n="noise.definitionTitle">What Is Quantum Decoherence?</div>
+        <p class="bit-explainer" data-i18n="noise.definitionBody1">Quantum decoherence is the loss of quantum coherence: the process by which a system's phase information leaks into its surrounding environment through unwanted interaction, so that a state genuinely in superposition comes to behave, for all practical purposes, like a definite classical mixture. A system that is perfectly isolated stays in a pure state — one exactly described by a single state vector |ψ⟩ — indefinitely. Once it interacts with an uncontrolled environment, that guarantee no longer holds: the system becomes entangled with the environment's own many degrees of freedom, and tracing out everything except the system itself leaves a mixed state, described by a density matrix ρ rather than a single vector. Every other tab in this app treats gates and qubits as perfectly isolated in exactly that first sense; this one models what happens once they aren't.</p>
+        <p class="bit-explainer" style="margin-top:10px;" data-i18n="noise.definitionBody2">On the Bloch sphere already used throughout this app, that loss of purity shows up as a shrinking vector — the same signature already seen for a qubit entangled with another (see the Entangle and Circuits tabs' reduced Bloch spheres), just caused here by an uncontrolled environment instead of a deliberate second qubit. Decoherence is the dominant practical obstacle to building large-scale, reliable quantum computers: every gate in a real circuit has to complete before the coherence it depends on has leaked away. The simulation below models two of its standard phenomenological channels, T₁ (relaxation) and T₂ (dephasing), evolving a single qubit's Bloch vector in real time.</p>
+      </div>
+
+      <div class="compare-layout noise-compare">
+        <div class="compare-col">
+          <div class="col-label">
+            <span class="col-badge quantum-badge" data-i18n="noise.qubitBadge">Decohering qubit</span>
+            <span class="col-desc" id="noise-state-desc">|+⟩</span>
+          </div>
+          <div class="bloch-wrap">
+            <canvas id="bloch-noise" width="240" height="240" role="img" aria-label="Bloch sphere for a decohering qubit. Its vector shrinks and drifts toward the north pole over time as simulated noise accumulates."></canvas>
+            <div class="state-label" id="label-noise">|+⟩</div>
+          </div>
+        </div>
+
+        <div class="compare-divider">
+          <div class="divider-line"></div>
+          <div class="divider-vs" aria-hidden="true">⏱</div>
+          <div class="divider-line"></div>
+        </div>
+
+        <div class="compare-col">
+          <div class="card-title" data-i18n="noise.statsTitle">Live Readout</div>
+          <div class="noise-stats">
+            <div class="noise-stat">
+              <span class="noise-stat-label" data-i18n="noise.elapsed">Elapsed time</span>
+              <span class="noise-stat-val" id="noise-elapsed-val">0.0 μs</span>
+            </div>
+            <div class="noise-stat">
+              <span class="noise-stat-label" data-i18n="noise.vectorLength">Bloch vector length</span>
+              <span class="noise-stat-val" id="noise-r-val">1.00</span>
+            </div>
+            <div class="noise-stat">
+              <span class="noise-stat-label" data-i18n="noise.purity">Purity Tr(ρ²)</span>
+              <span class="noise-stat-val" id="noise-purity-val">100%</span>
+            </div>
+          </div>
+          <div class="track noise-purity-track"><div class="fill zero-fill" id="noise-purity-fill" style="width:100%"></div></div>
+
+          <div class="card-title" style="margin-top:16px;" data-i18n="noise.densityMatrix">Density Matrix ρ</div>
+          <div class="noise-matrix" id="noise-matrix" role="img" aria-label="2 by 2 density matrix of the qubit, updating live as it decoheres.">
+            <span id="noise-rho-00">0.50</span><span id="noise-rho-01">0.50</span>
+            <span id="noise-rho-10">0.50</span><span id="noise-rho-11">0.50</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="noise-controls-grid">
+        <div class="card">
+          <div class="card-title" data-i18n="noise.initialStateTitle">Initial State</div>
+          <div class="preset-grid preset-grid--2col">
+            <button class="preset-btn" data-noise-preset data-theta-mult="0"   data-phi-mult="0">|0⟩</button>
+            <button class="preset-btn" data-noise-preset data-theta-mult="1"   data-phi-mult="0">|1⟩</button>
+            <button class="preset-btn is-active" data-noise-preset data-theta-mult="0.5" data-phi-mult="0">|+⟩</button>
+            <button class="preset-btn" data-noise-preset data-theta-mult="0.5" data-phi-mult="1">|-⟩</button>
+          </div>
+          <div class="slider-group" style="margin-top:10px;">
+            <div class="slider-row">
+              <span class="slider-sym">θ</span>
+              <input type="range" id="sl-noise-theta" min="0" max="3141" value="1571">
+              <span class="slider-val" id="val-noise-theta">90°</span>
+            </div>
+            <div class="slider-row">
+              <span class="slider-sym">φ</span>
+              <input type="range" id="sl-noise-phi" min="0" max="6283" value="0">
+              <span class="slider-val" id="val-noise-phi">0°</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title" data-i18n="noise.decayTimesTitle">Decay Times</div>
+          <div class="slider-group">
+            <div class="slider-row">
+              <span class="slider-sym">T₁</span>
+              <input type="range" id="sl-noise-t1" min="5" max="200" value="80">
+              <span class="slider-val" id="val-noise-t1">80 μs</span>
+            </div>
+            <div class="slider-row">
+              <span class="slider-sym">T₂</span>
+              <input type="range" id="sl-noise-t2" min="5" max="200" value="60">
+              <span class="slider-val" id="val-noise-t2">60 μs</span>
+            </div>
+          </div>
+          <p class="muted-text" id="noise-t2-cap-note" style="margin-top:6px;"></p>
+          <div class="noise-btn-row">
+            <button class="btn-run" id="noise-play-btn" data-i18n="noise.pauseBtn">⏸ Pause</button>
+            <button class="btn-secondary" id="btn-noise-restart" data-i18n="noise.restartBtn">↻ Restart</button>
+          </div>
+        </div>
+
+        <div class="card explainer-card">
+          <div class="card-title" data-i18n="common.whatJustHappened">What just happened</div>
+          <p class="bit-explainer" id="noise-explainer" data-i18n="noise.explainerDefault">Watch the Bloch vector shrink and drift toward the north pole — that shrinkage is real information loss, not just a visual effect. A shorter vector means the qubit's state is genuinely less certain, exactly the same "mixed state" idea already used for entangled qubits elsewhere in this app.</p>
+        </div>
+      </div>
+
+      <div class="card mt-14">
+        <div class="card-title" data-i18n="noise.t1t2Title">T₁ vs. T₂ — Two Different Ways to Forget</div>
+        <p class="bit-explainer" data-i18n="noise.t1t2Body">T₁ (relaxation) is how long the qubit takes to leak energy into its environment and settle toward |0⟩ — it's why the z-component of the Bloch vector drifts toward the north pole. T₂ (dephasing) is how long the qubit keeps track of the relative phase between |0⟩ and |1⟩ — it's why the x/y components, the part that actually carries superposition information, shrink away. Losing T₂ is often the bigger practical problem: a qubit can still "mostly" be |0⟩ or |1⟩ long after it's lost every trace of being in a genuine superposition.</p>
+        <div class="formula" style="margin-top:10px;" data-i18n="noise.t1t2Formula" data-i18n-html>T₂ ≤ 2×T₁ &nbsp;&nbsp;&nbsp; (dephasing can never be slower than relaxation allows)</div>
+      </div>
+
+      <div class="card mt-14">
+        <div class="card-title" data-i18n="noise.whyMattersTitle">Why This Fight Never Stops on Real Hardware</div>
+        <p class="bit-explainer" data-i18n="noise.whyMattersBody">Every other simulation in this app runs gates and measurements as mathematically perfect operations, because that's the right way to learn the ideas first. Real quantum processors — including the superconducting and trapped-ion devices CERN's own Quantum Technology Initiative experiments with for particle-physics simulation — only stay coherent for a limited window measured in exactly these T₁/T₂ numbers, typically tens to hundreds of microseconds. Every gate in a real circuit has to finish well inside that window, which is the entire reason quantum error correction and hardware-aware circuit design are active engineering problems, not solved ones.</p>
+      </div>
+
+    </div>
+
+    <div class="lesson-embed" id="lesson-embed-noise"></div>
+  </section>
+
+  <!-- ═══════════════════ ROADMAP VIEW (home / mind-map) ═══════════════════ -->
+  <!-- The app's landing page. "Concept Map" is the default: each node
+       navigates straight into that concept's simulation tab (see
+       roadmap.js's goToLessonSimulation()), where the lesson text and
+       quick-check quiz are embedded at the bottom (.lesson-embed below).
+       "My Progress" is a compact read-only summary of the same
+       completedLessons/quizAnswers state (see setRoadmapMode() in
+       roadmap.js) — there's no separate standalone quiz here, quick
+       checks live only on each concept's own page. -->
   <section id="roadmap-view" class="active">
 
     <div class="roadmap-hero roadmap-hero--full" id="roadmap-hero">
@@ -2652,17 +3525,21 @@
 
       <div class="mode-grid roadmap-mode-grid" style="grid-template-columns:1fr 1fr 1fr;max-width:480px;margin:0 auto 20px;">
         <button class="preset-btn mode-btn active" data-roadmap-mode="map" data-i18n="roadmap.conceptMap">Concept Map</button>
-        <!-- no [data-roadmap-mode] here on purpose, this isn't a real
-             sub-mode - just navigates to Important Concepts via the
-             [data-goto-tab] handler in initRoadmap() -->
+        <!-- Not a roadmap sub-mode like its neighbors (no [data-roadmap-mode],
+             so setRoadmapMode()'s active-class toggle and initModeGridThumbs()'s
+             .mode-btn.active lookup both ignore it) — clicking it navigates
+             straight into the Important Concepts tab instead, via the
+             [data-goto-tab] handler in roadmap.js's initRoadmap(). -->
         <button class="preset-btn mode-btn" data-goto-tab="important-concepts" data-i18n="nav.importantConcepts">Important Concepts</button>
         <button class="preset-btn mode-btn" data-roadmap-mode="progress" data-i18n="roadmap.myProgress">My Progress</button>
       </div>
 
       <div class="roadmap-mindmap" id="roadmap-mindmap"></div>
 
-      <!-- below 760px the mind-map's absolute-positioned nodes don't have
-           room, so we swap in a plain link list instead (roadmap.css) -->
+      <!-- Plain link list shown instead of the mind-map below the 760px
+           breakpoint, where the mind-map's absolutely-positioned node
+           layout has no room (see .roadmap-mindmap-fallback in css/roadmap.css
+           and its render call in roadmap.js). -->
       <div class="roadmap-mindmap-fallback" id="roadmap-mindmap-fallback"></div>
     </div>
 
@@ -2687,9 +3564,13 @@
 
   </section>
 
-  <!-- footer is a sibling of #roadmap-view/.tab-content so it just sits
-       under whatever's visible, no toggle logic needed. copyright year
-       comes from renderFooter() in app.js instead of being hardcoded -->
+  <!-- Page footer — a sibling of #roadmap-view/.tab-content, so it sits
+       at the bottom of whichever one is currently visible rather than
+       needing its own mode-toggle logic. Mirrors the header's own
+       branding (logo-badge/logo-psi, JetBrains Mono small-caps labels)
+       rather than the plain unstyled text it replaces. The copyright
+       year is filled in by renderFooter() (app.js) rather than hardcoded,
+       so it never goes stale. -->
   <footer class="app-footer">
     <div class="app-footer-top">
       <div class="app-footer-brand">
@@ -2742,6 +3623,9 @@
   <script src="js/tabs/interference-tab.js"></script>
   <script src="js/tabs/beam-splitter-tab.js"></script>
   <script src="js/tabs/stern-gerlach-tab.js"></script>
+  <script src="js/tabs/teleport-tab.js"></script>
+  <script src="js/tabs/superdense-tab.js"></script>
+  <script src="js/tabs/noise-tab.js"></script>
   <script src="js/roadmap.js"></script>
   <script src="js/tour.js"></script>
   <script src="js/app.js"></script>

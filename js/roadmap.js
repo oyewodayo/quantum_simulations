@@ -1,22 +1,36 @@
 'use strict';
-// Roadmap mode = the home page. Mind-map by default, click a node and
-// goToLessonSimulation() below switches app mode + jumps to that tab
-// (see switchToTab() in app.js). Each tab then embeds its own lesson +
-// "mark as read" + quiz at the bottom via renderEmbeddedLessons(), into
-// the #lesson-embed-<tab> spot in index.html. "My Progress" is just a
-// read-only view of the same completedLessons/quizAnswers state.
-// Not part of the tabs/TABS registry - has its own Concepts/Home toggle
-// in the header. Only touches app.js's switchToTab()/currentTab from
-// inside goToLessonSimulation(), which only runs on click, long after
-// every script has loaded - so load order doesn't matter here.
+// Roadmap mode — a cross-cutting, non-simulation feature (parallel to
+// tour.js): the app's landing page defaults to a mind-map of every
+// concept: click a node and it's goToLessonSimulation() below that
+// switches app mode and jumps straight to that concept's simulation tab
+// (see app.js's switchToTab()). Each simulation tab then carries its own
+// lesson text + "Mark as read" + quick-check quiz, embedded at the
+// bottom of its section by renderEmbeddedLessons() below (into that
+// tab's #lesson-embed-<tab> placeholder in index.html) — so the write-up
+// and the quiz for a concept live on the same page as the concept
+// itself. A "My Progress" sub-view (setRoadmapMode()) sits alongside the
+// mind-map on the home page for a compact read-only summary of the same
+// completedLessons/quizAnswers state — there's no separate standalone
+// quiz sequence, only the per-lesson quick checks.
+// NOT part of the tabs/TABS registry — it has its own top-level mode
+// toggle (Concepts/Home) in the header, entirely independent of
+// switchToTab()'s tab-content sweep (see the header comment in app.js's
+// switchToTab for why that matters). Depends on app.js's
+// switchToTab()/currentTab, only inside goToLessonSimulation() — called
+// long after all scripts run, so it's safe regardless of load order,
+// same reasoning as tour.js.
 
-// lesson + quiz content
+// ═══════════════════════════════════════════════════════════════════
+// LESSON + QUIZ CONTENT
+// ═══════════════════════════════════════════════════════════════════
 const ROADMAP_LESSONS = [
   { id: 'qubit', title: 'Bits', tab: 'qubit',
     body: 'A classical bit is always definitively 0 or 1. A qubit can be in a superposition of both at once, described by two amplitudes rather than a single value. The Bloch sphere gives every possible qubit state a point on its surface.' },
-  // the 5 Maths Concept sections each get their own lesson+quiz (id !== tab,
-  // they all share tab: 'mathsconcept') since each is its own topic worth
-  // checking separately, unlike everything else here
+  // Maths Concept's five reference sections each get their own lesson +
+  // quiz (id !== tab, all sharing tab: 'mathsconcept') rather than one
+  // lesson for the whole tab — unlike every other entry here, each
+  // section is a distinct, self-contained topic worth checking on its
+  // own. See renderEmbeddedLessons()'s id-keyed lookup above.
   { id: 'maths-complex', title: 'Complex Numbers', tab: 'mathsconcept',
     body: 'A qubit\'s amplitudes are complex numbers, not just real ones — each has a real and imaginary part, z = a + bi. Only the squared modulus |z|² is directly observable as a probability; the phase is invisible to a single measurement but is exactly what drives interference.' },
   { id: 'maths-vectors', title: 'Vectors', tab: 'mathsconcept',
@@ -46,11 +60,19 @@ const ROADMAP_LESSONS = [
   { id: 'beamsplitter', title: 'Beam Splitter', tab: 'beamsplitter',
     body: 'A 50/50 beam splitter sends a single photon down one of two paths with equal probability — reflected to one detector or transmitted to the other. The photon isn\'t secretly divided between both paths; only one detector ever clicks per photon, and which one is genuinely random each time.' },
   { id: 'sterngerlach', title: 'Stern–Gerlach Experiment', tab: 'sterngerlach',
-    body: 'A beam of silver atoms passing through an inhomogeneous magnetic field splits into exactly two discrete spots, never a continuous smear — direct evidence that spin is quantized, with only two possible outcomes along any measurement axis, exactly like a qubit\'s own |0⟩/|1⟩ measurement results.' }
+    body: 'A beam of silver atoms passing through an inhomogeneous magnetic field splits into exactly two discrete spots, never a continuous smear — direct evidence that spin is quantized, with only two possible outcomes along any measurement axis, exactly like a qubit\'s own |0⟩/|1⟩ measurement results.' },
+  { id: 'teleport', title: 'Quantum Teleportation', tab: 'teleport',
+    body: 'Alice can send Bob the exact state of a qubit without ever sending the qubit itself — using one pre-shared entangled pair and two classical bits. Her own qubit is destroyed by the measurement this requires, so no copy ever exists at both ends at once, exactly as the no-cloning theorem demands.' },
+  { id: 'superdense', title: 'Superdense Coding', tab: 'superdense',
+    body: 'Teleportation\'s mirror image: Alice sends Bob two classical bits using only one qubit, by encoding her message onto her half of a pre-shared entangled pair and physically sending Bob that single qubit. Bob decodes both bits exactly, every time — nothing about this protocol is probabilistic.' },
+  { id: 'noise', title: 'Noise & Decoherence', tab: 'noise',
+    body: 'Real qubits aren\'t perfectly isolated: T₁ relaxation lets them leak energy toward |0⟩, and T₂ dephasing erases the relative phase that makes a superposition meaningful. Both shrink the Bloch vector toward the center — the same "mixed state" signature already seen when tracing out an entangled qubit, just caused by an uncontrolled environment instead of a deliberate measurement.' }
 ];
 
-// one question per lesson, lessonId matches ROADMAP_LESSONS[].id.
-// explanation shows after answering either way, right or wrong
+// One question per lesson (lessonId matches ROADMAP_LESSONS[].id), shown
+// as a "Quick check" embedded directly under that lesson's body.
+// `explanation` is shown after answering, regardless of whether the pick
+// was right or wrong.
 const ROADMAP_QUIZ = [
   { lessonId: 'qubit',
     q: 'A classical bit and a qubit both start in a definite state. What is the key difference between them?',
@@ -131,10 +153,27 @@ const ROADMAP_QUIZ = [
     q: 'A beam of silver atoms passes through a Stern–Gerlach magnet. What does the experiment actually show on the detector screen?',
     options: ['A continuous smear from one extreme to the other', 'Exactly two discrete spots, never anything in between', 'A single spot in the exact center', 'No pattern at all — the atoms are absorbed'],
     correct: 1,
-    explanation: 'Classically, a randomly-oriented magnetic dipole should deflect by any amount, producing a continuous smear. Stern and Gerlach found only two discrete spots — direct evidence that spin, like a qubit\'s own measurement outcomes, is quantized into just two possibilities along any axis.' }
+    explanation: 'Classically, a randomly-oriented magnetic dipole should deflect by any amount, producing a continuous smear. Stern and Gerlach found only two discrete spots — direct evidence that spin, like a qubit\'s own measurement outcomes, is quantized into just two possibilities along any axis.' },
+  { lessonId: 'teleport',
+    q: 'After Bob applies his correction gates, how does his qubit compare to Alice\'s original message?',
+    options: ['It\'s a good approximation, close but not exact', 'It exactly matches — same amplitudes, same state', 'It\'s a classical copy, not a real quantum state', 'It only matches half the time'],
+    correct: 1,
+    explanation: 'Once the correct Z/X correction is applied, Bob\'s qubit equals Alice\'s original exactly, not approximately — that\'s the whole point of the protocol\'s classically-controlled correction step.' },
+  { lessonId: 'superdense',
+    q: 'In superdense coding, what actually has to physically travel from Alice to Bob?',
+    options: ['Two classical bits, sent by radio or phone', 'A single qubit', 'Nothing — the entangled pair alone is enough', 'Four qubits, one per possible message'],
+    correct: 1,
+    explanation: 'Only Alice\'s one qubit ever travels. The entangled pair was shared in advance, and her message is encoded onto that single qubit before she sends it — that\'s what makes it "superdense": 2 bits of information from just 1 qubit of communication.' },
+  { lessonId: 'noise',
+    q: 'A qubit starts in a genuine superposition. After it fully decoheres (T₂ has elapsed many times over), what happens to its Bloch vector?',
+    options: ['Nothing — decoherence only affects measurement, not the state', 'It shrinks toward the center, the same signature as a mixed/entangled state', 'It grows longer than 1', 'It instantly jumps to the south pole'],
+    correct: 1,
+    explanation: 'Losing coherence to the environment is mathematically identical to becoming entangled with something you can\'t track — both leave the qubit\'s own Bloch vector shorter than 1, a genuinely mixed state, not just a randomized pure one.' }
 ];
 
-// progress persistence, localStorage, same convention as theme.js/tour.js
+// ═══════════════════════════════════════════════════════════════════
+// PROGRESS PERSISTENCE (localStorage — same convention as theme.js/tour.js)
+// ═══════════════════════════════════════════════════════════════════
 const ROADMAP_STORAGE_KEY = 'qe-roadmap-progress';
 
 function loadRoadmapProgress() {
@@ -142,7 +181,8 @@ function loadRoadmapProgress() {
   try { raw = JSON.parse(localStorage.getItem(ROADMAP_STORAGE_KEY)); } catch (e) { raw = null; }
   return {
     completedLessons: Array.isArray(raw && raw.completedLessons) ? raw.completedLessons : [],
-    quizAnswers: (raw && typeof raw.quizAnswers === 'object' && raw.quizAnswers !== null) ? raw.quizAnswers : {}  // { [lessonId]: chosenOptionIndex }
+    // Per-lesson "Quick check" answers: { [lessonId]: chosenOptionIndex }
+    quizAnswers: (raw && typeof raw.quizAnswers === 'object' && raw.quizAnswers !== null) ? raw.quizAnswers : {}
   };
 }
 
@@ -150,8 +190,11 @@ function saveRoadmapProgress() {
   localStorage.setItem(ROADMAP_STORAGE_KEY, JSON.stringify(roadmapProgress));
 }
 
-// this is destructive and can't be undone with one more click like toggling
-// a single lesson can, so confirm first (showConfirmModal, dom-utils.js)
+/** Wipes every "Mark as read" and quick-check answer so every lesson
+ *  (including all five Maths Concept sections) can be retaken from
+ *  scratch — confirmed first (via showConfirmModal(), core/dom-utils.js)
+ *  since this is destructive and, unlike toggling a single lesson, can't
+ *  be undone with one more click. */
 function resetRoadmapProgress() {
   showConfirmModal({
     title: 'Reset all progress?',
@@ -168,30 +211,40 @@ function resetRoadmapProgress() {
 
 let roadmapProgress = loadRoadmapProgress();
 
-// mode switching
-// top-level Concepts/Home switch. only toggles inline style.display, never
-// touches which tab carries .active - so switching back to 'sim' restores
-// whatever tab was active before, no bookkeeping needed
+// ═══════════════════════════════════════════════════════════════════
+// MODE SWITCHING
+// ═══════════════════════════════════════════════════════════════════
+/** Top-level Concepts/Home switch. Only reads .tab-content/currentTab
+ *  state (via inline style.display) — never mutates which one carries
+ *  .active, so returning to 'sim' restores exactly the tab that was
+ *  active before, with no extra bookkeeping. */
 function setAppMode(mode) {
   document.querySelectorAll('.mode-btn[data-app-mode]').forEach(b =>
     b.classList.toggle('active', b.dataset.appMode === mode));
   document.getElementById('tab-sidebar').style.display = mode === 'sim' ? '' : 'none';
   document.querySelectorAll('.tab-content').forEach(s => { s.style.display = mode === 'sim' ? '' : 'none'; });
   document.getElementById('roadmap-view').classList.toggle('active', mode === 'roadmap');
-  // both the mind-map and progress panel are display:none until this runs,
-  // so any earlier render would've measured a hidden 0x0 container -
-  // re-render now that it's actually visible
+  // Both the mind-map and #roadmap-progress-panel sit at display:none
+  // until this toggle — any earlier render measured a 0x0 (or hidden)
+  // container. Re-render whichever roadmap sub-view is current now that
+  // it's actually visible.
   if (mode === 'roadmap') {
     if (roadmapSubMode === 'map') renderRoadmapMindmap();
     else renderRoadmapProgress();
   }
+
+  // Same reasoning as switchToTab()'s own scrollTo (app.js) — Home and
+  // Concepts are full page swaps sharing the one window scroll position,
+  // so this needs the same reset switchToTab() already gets.
+  window.scrollTo(0, 0);
 }
 
 let roadmapSubMode = 'map';
 
-// Concept Map / My Progress sub-switch, mirrors setCircuitMode() in
-// circuit-multiqubit-tab.js. mind-map gets the full-viewport treatment,
-// progress summary is just a compact card list
+/** Concept Map/My Progress sub-switch on the home page — mirrors
+ *  circuit-multiqubit-tab.js's setCircuitMode(). The mind-map keeps the
+ *  full-viewport treatment (.roadmap-hero--full); the progress summary
+ *  is a compact, natural-height card list instead. */
 function setRoadmapMode(mode) {
   roadmapSubMode = mode;
   document.querySelectorAll('.mode-btn[data-roadmap-mode]').forEach(b =>
@@ -204,11 +257,15 @@ function setRoadmapMode(mode) {
   else renderRoadmapProgress();
 }
 
-// lessons embed at the bottom of each concept's own tab (see the
-// #lesson-embed-<tab> spots in index.html) rather than a separate grid
-
-// shared template so mark-as-read/quick-check markup doesn't drift between
-// lessons. click handling is wired up separately, in initRoadmap()
+// ═══════════════════════════════════════════════════════════════════
+// LESSONS — embedded at the bottom of each concept's own simulation tab
+// (see the #lesson-embed-<tab> placeholders in index.html), rather than
+// collected in a separate Lessons grid.
+// ═══════════════════════════════════════════════════════════════════
+/** Shared per-lesson template — single source of truth so the "Mark as
+ *  read"/quick-check markup can't drift out of sync across lessons.
+ *  Interactive bits are wired up via the delegated listener in
+ *  initRoadmap(), not attached here. */
 function buildLessonInfoHTML(lesson) {
   const done  = roadmapProgress.completedLessons.includes(lesson.id);
   const title = t(`lessons.${lesson.id}.title`, lesson.title);
@@ -223,8 +280,13 @@ function buildLessonInfoHTML(lesson) {
 }
 
 
-// keyed by lesson.id not lesson.tab, since the 5 maths lessons all share
-// one tab but each needs its own placeholder inside its own .maths-panel
+/** Renders each lesson into its own #lesson-embed-<id> placeholder — a
+ *  no-op for any lesson whose id isn't on the page (defensive only, every
+ *  ROADMAP_LESSONS entry is expected to have a matching section). Keyed
+ *  by `lesson.id` rather than `lesson.tab` because Maths Concept's five
+ *  lessons all share one tab (mathsconcept) but each needs its own
+ *  placeholder inside its own .maths-panel — every other lesson still
+ *  has id === tab, so this is a no-op change for them. */
 function renderEmbeddedLessons() {
   ROADMAP_LESSONS.forEach(lesson => {
     const host = document.getElementById(`lesson-embed-${lesson.id}`);
@@ -233,9 +295,13 @@ function renderEmbeddedLessons() {
   });
 }
 
-// Introduction tab's "Suggested learning path" list - reads ROADMAP_LESSONS
-// directly instead of duplicating the copy, and reuses the same
-// [data-lesson-tryit] handler the mind-map uses (see initRoadmap below)
+/** The Introduction tab's "Suggested learning path" — one row per
+ *  ROADMAP_LESSONS entry, in the same order as the sidebar/mind-map, each
+ *  linking straight to that concept's tab via the same [data-lesson-tryit]
+ *  delegated handler the mind-map itself uses (see initRoadmap() below).
+ *  Reads ROADMAP_LESSONS directly rather than duplicating its copy, so a
+ *  lesson's description can never drift out of sync between this page and
+ *  its own embedded lesson card. */
 function renderIntroLearningPath() {
   const host = document.getElementById('intro-learning-path');
   if (!host) return;
@@ -254,34 +320,54 @@ function renderIntroLearningPath() {
   }).join('');
 }
 
-// mind-map (home page) - "Quantum World" center with branches fanning out
-// left/right, based on a yFiles diagram someone put together. MINDMAP_TREE
-// is that branch tree. Introduction and Circuits' sub-branches carry a
-// `tab` field (+ circuitDomain/circuitMode for Circuits) and are actually
-// navigable, per goToLessonSimulation() below. Qubit's and Gates' sub-
-// branches stay collapse/expand-only since nothing on those tabs actually
-// distinguishes e.g. a "One Qubit" page from the tab itself.
-// this doesn't reorder ROADMAP_LESSONS - that array's own order still
-// drives the lesson-content lists independently of this layout.
-// node positions come from the container's measured pixel size rather than
-// fixed percentages so it stays correct down to the 760px breakpoint,
-// where it's replaced by a plain link list instead (.roadmap-mindmap-fallback,
-// see roadmap.css + renderMindmapFallback below - no room for absolutely
-// positioned nodes or a multi-level tree on a narrow screen).
-//
-// numbering matches #tab-sidebar's order. Bell States sits right after
-// Circuits (where it's actually built) instead of after Entangle, and
-// that's also what keeps the left/right column split an even 6-and-6 -
-// it was 5-and-5 until Stern-Gerlach got added and tipped it to 5-and-6.
-// doesn't mean anything beyond visual balance, feel free to rebalance if
-// the count changes again - just keep each side in ascending `number`
-// order since layoutColumn() renders a side in array order, not sorted.
-// State Vector isn't its own top-level branch, it only shows up under
-// Maths Concept's own children below.
-//
-// translation keys for tree nodes with no matching ROADMAP_LESSONS entry -
-// renderNode() below prefers a lesson's own title when one exists, so this
-// only needs to cover the structural/collapse-only branches
+// ═══════════════════════════════════════════════════════════════════
+// MIND-MAP (the home page — "Quantum World" center, branches fanning out
+// left and right, reproducing the structure of a yFiles mind-map diagram
+// the user supplied). MINDMAP_TREE is the full branch tree from that
+// diagram. "1. Introduction" links to its own (currently blank) tab, and
+// so do Circuits' Classical/Quantum/qubit-count sub-branches — those
+// carry a `tab` field (plus circuitDomain/circuitMode for the Circuits
+// ones) and are genuinely navigable, per goToLessonSimulation() below.
+// Qubit's and Gates' sub-branches remain collapse/expand-only (a
+// [data-mindmap-toggle] button, not a click-to-navigate one) since
+// nothing on those tabs actually distinguishes a "One Qubit" page from
+// the tab itself — per the source diagram's own CollapseDecorator data,
+// that's the on-demand affordance for a branch with no destination of its
+// own. MINDMAP_TREE doesn't reorder ROADMAP_LESSONS itself — that still
+// drives every lesson-content list (embedded lessons, its own array
+// order) independently of this layout. Node positions are computed from
+// the container's measured pixel size rather than fixed percentages, so
+// the layout stays correct at any width down to the 760px breakpoint,
+// where it's hidden in favor of a plain link list
+// (.roadmap-mindmap-fallback, see css/roadmap.css and renderMindmapFallback
+// below — absolutely-positioned nodes have no room on a narrow screen,
+// and neither does a multi-level tree, so that fallback only lists
+// navigable top-level nodes).
+// ═══════════════════════════════════════════════════════════════════
+// Numbering matches the #tab-sidebar dock's order exactly: Introduction,
+// Bits, Maths Concept, Gates, Circuits, Bell States, Measure, Entangle,
+// Tunnel, Interference, Beam Splitter, Stern–Gerlach. Bell States sits
+// right after Circuits — where it's actually built, gate by gate — rather
+// than after Entangle, the state it's an instance of; it's also the one
+// "phenomenon" branch placed on the left (with Introduction/Bits/Maths/
+// Gates/Circuits) rather than the right (Measure onward), which happens to
+// keep the two columns an even 6-and-6. The left/right split was 5-and-5
+// (Measure sits first on the right, ahead of Entangle) until Stern–
+// Gerlach's addition tipped it to 5-and-6 — purely a balanced two-column
+// layout, it doesn't otherwise mean anything, so rebalance it freely if a
+// future addition/removal tips the count uneven again; just keep each
+// side's members in ascending `number` order, since layoutColumn() lists
+// a side in whatever order its members appear in
+// this array, not sorted by `number` itself. State Vector isn't its own
+// top-level branch here — it only ever appears as Maths Concept's own
+// State Vector sub-branch (see mathsconcept's children below), which now
+// also carries the interactive classical-vs-quantum comparison that used
+// to live on a separate "Statevec" tab.
+// Translation keys for the MINDMAP_TREE nodes that have no matching
+// ROADMAP_LESSONS entry (renderNode() below prefers a lesson's own title
+// when one exists — see its comment — so this map only needs to cover
+// the structural/collapse-only branches: Introduction, Maths Concept
+// itself, and every Classical/Quantum/One-Two-Three-Qubit sub-branch).
 const MINDMAP_NODE_TITLE_KEYS = {
   introduction: 'mindmap.introduction',
   mathsconcept: 'maths.title',
@@ -303,8 +389,10 @@ const MINDMAP_NODE_TITLE_KEYS = {
 const MINDMAP_TREE = [
   { id: 'introduction', number: 1,  title: 'Introduction', side: 'left', tab: 'introduction' },
   { id: 'qubit',        number: 2,  title: 'Bits',               side: 'left',  tab: 'qubit', children: [
-      // real destinations on the Bits tab (setQubitMode()/setQubitSubmode()
-      // in qubit-tab.js), navigable like Circuits' sub-branches
+      // Real destinations on the Bits tab (see setQubitMode()/
+      // setQubitSubmode() in qubit-tab.js), so — like Circuits'
+      // sub-branches — these carry `tab` + qubitMode(+qubitSubmode) and
+      // are genuinely navigable.
       { id: 'qubit-classical', title: 'Classical',  tab: 'qubit', qubitMode: 'classical' },
       { id: 'qubit-quantum',   title: 'Quantum',    tab: 'qubit', qubitMode: 'quantum', children: [
           { id: 'qubit-one',   title: 'One Qubit',    tab: 'qubit', qubitMode: 'quantum', qubitSubmode: '1q' },
@@ -313,7 +401,8 @@ const MINDMAP_TREE = [
         ] }
     ] },
   { id: 'mathsconcept', number: 3,  title: 'Maths Concept',      side: 'left',  tab: 'mathsconcept', children: [
-      // see setMathsSection() in mathsconcept-tab.js
+      // Real destinations on the Maths Concept tab (see setMathsSection()
+      // in tabs/mathsconcept-tab.js) — navigable for the same reason.
       { id: 'maths-complex',     title: 'Complex Numbers', tab: 'mathsconcept', mathsSection: 'complex' },
       { id: 'maths-vectors',     title: 'Vectors',         tab: 'mathsconcept', mathsSection: 'vectors' },
       { id: 'maths-matrices',    title: 'Matrices',        tab: 'mathsconcept', mathsSection: 'matrices' },
@@ -322,16 +411,20 @@ const MINDMAP_TREE = [
       { id: 'maths-tensor',      title: 'Tensor Products', tab: 'mathsconcept', mathsSection: 'tensor' }
     ] },
   { id: 'gates',        number: 4,  title: 'Gates',              side: 'left',  tab: 'gates', children: [
-      // see setGatesDomain() in gates-tab.js
+      // Real destinations on the Gates tab (see setGatesDomain() in
+      // gates-tab.js) — navigable for the same reason.
       { id: 'gates-classical', title: 'Classical', tab: 'gates', gatesDomain: 'classical' },
       { id: 'gates-quantum',   title: 'Quantum',   tab: 'gates', gatesDomain: 'quantum' },
       { id: 'gates-compare',   title: 'Compare',   tab: 'gates', gatesDomain: 'compare' }
     ] },
   { id: 'circuit',      number: 5,  title: 'Circuits',           side: 'left',  tab: 'circuit', children: [
-      // unlike Qubit/Gates' sub-branches these map to real distinct pages
-      // on the Circuits tab (setCircuitDomain() in circuit-tab.js,
-      // setCircuitMode() in circuit-multiqubit-tab.js) so they're
-      // actually navigable, not just collapse/expand
+      // Unlike Qubit/Gates' sub-branches (purely structural — nothing on
+      // those tabs actually distinguishes "One Qubit" as its own page),
+      // these map onto real, distinct destinations on the Circuits tab
+      // (see setCircuitDomain() in circuit-tab.js and setCircuitMode() in
+      // circuit-multiqubit-tab.js), so they carry `tab` +
+      // circuitDomain/circuitMode and are genuinely navigable, not
+      // collapse/expand-only.
       { id: 'circuit-classical', title: 'Classical', tab: 'circuit', circuitDomain: 'classical' },
       { id: 'circuit-quantum',   title: 'Quantum', tab: 'circuit', circuitDomain: 'quantum', children: [
           { id: 'circuit-quantum-one',   title: 'One Qubit',   tab: 'circuit', circuitDomain: 'quantum', circuitMode: '1q' },
@@ -340,19 +433,24 @@ const MINDMAP_TREE = [
         ] }
     ] },
   { id: 'bellstates',   number: 6,  title: 'Bell States',        side: 'left',  tab: 'bellstates' },
-  { id: 'measure',      number: 7,  title: 'Measurements',       side: 'right', tab: 'measure' },
-  { id: 'entangle',     number: 8,  title: 'Entanglement',       side: 'right', tab: 'entangle' },
+  { id: 'measure',      number: 7,  title: 'Measurements',       side: 'left', tab: 'measure' },
+  { id: 'entangle',     number: 8,  title: 'Entanglement',       side: 'left', tab: 'entangle' },
   { id: 'tunnel',       number: 9,  title: 'Quantum Tunneling',  side: 'right', tab: 'tunnel' },
   { id: 'interference', number: 10, title: 'Interference',       side: 'right', tab: 'interference' },
   { id: 'beamsplitter', number: 11, title: 'Beam Splitter',      side: 'right', tab: 'beamsplitter' },
-  { id: 'sterngerlach', number: 12, title: 'Stern–Gerlach Experiment', side: 'right', tab: 'sterngerlach' }
+  { id: 'sterngerlach', number: 12, title: 'Stern–Gerlach Experiment', side: 'right', tab: 'sterngerlach' },
+  { id: 'teleport',     number: 13, title: 'Quantum Teleportation',    side: 'right', tab: 'teleport' },
+  { id: 'superdense',   number: 14, title: 'Superdense Coding',        side: 'right', tab: 'superdense' },
+  { id: 'noise',        number: 15, title: 'Noise & Decoherence',      side: 'right', tab: 'noise' }
 ];
 
-// color is per depth, not per branch - matches the source diagram's own
-// per-node color tags. top-level branches are individually teal or navy
-// (not alternating, just copied from the file), level-2 is one uniform
-// mauve regardless of parent, level-3 (Circuits > Quantum's children) is
-// a separate darker purple
+/** Color is per depth, not per branch — reproducing the source diagram's
+ *  own scheme exactly (read from its per-node "color" tags): each
+ *  top-level branch is individually teal or navy (not a clean
+ *  alternation — this is the literal per-node assignment from the file),
+ *  while every level-2 sub-branch shares one uniform mauve regardless of
+ *  which parent it hangs off, and the one level-3 pair (Circuits >
+ *  Quantum's own children) shares a separate, darker uniform purple. */
 const MINDMAP_LEVEL1_COLORS = {
   introduction: '#4281a4',
   qubit:        '#4281a4',
@@ -365,22 +463,29 @@ const MINDMAP_LEVEL1_COLORS = {
   tunnel:       '#4281a4',
   interference: '#242265',
   beamsplitter: '#4281a4',
-  sterngerlach: '#242265'
+  sterngerlach: '#242265',
+  teleport:     '#4281a4',
+  superdense:   '#242265',
+  noise:        '#4281a4'
 };
 const MINDMAP_LEVEL2_COLOR = '#aa5f82';
 const MINDMAP_LEVEL3_COLOR = '#6c4f77';
 
 let mindmapResizeTimer = null;
-// ids of branches currently expanded - starts empty (everything collapsed)
-// and persists across re-renders since this Set lives outside the render fn
+// Ids of branches currently showing their children — sub-branches start
+// collapsed (matching the source diagram's CollapseDecorator being an
+// on-demand affordance rather than a permanently-expanded tree), and stay
+// however the user last left them across re-renders since this Set
+// persists independently of the render itself.
 let mindmapExpanded = new Set();
 
 function renderRoadmapMindmap() {
   const container = document.getElementById('roadmap-mindmap');
   if (!container) return;
 
-  // clear any height override left over from a previous expanded render,
-  // otherwise growth compounds across renders
+  // Reset any height override a previous (expanded) render left behind
+  // before measuring, so growth never compounds across renders — every
+  // render starts from the container's natural CSS-driven size.
   container.style.height = '';
   container.style.maxHeight = '';
   const rect = container.getBoundingClientRect();
@@ -388,16 +493,22 @@ function renderRoadmapMindmap() {
   const h = rect.height || 420;
   const cx = w / 2;
 
-  // distance from center to each top-level column, clamped so a 3-deep
-  // expanded branch (Circuits > Quantum > One/Two Qubit) still fits a
-  // mid-size container
+  // Horizontal distance from center to each top-level column, and how far
+  // each further tree level sits past its parent — both clamped so an
+  // expanded 3-deep branch (Circuits > Quantum > One/Two Qubit) still has
+  // a chance of fitting a mid-size container.
   const colOffset   = Math.min(w * 0.28, 240);
   const childOffsets = [110, 90]; // depth 1, depth 2
-  // top-level rows spaced generously (5 rows max on either side), child
-  // rows tighter since there's never more than 2-3 siblings
+  // Vertical gaps: top-level rows are spaced generously (5 rows max, the
+  // side with Introduction/Circuits' full column); child rows sit closer
+  // together since they're only ever 2 siblings at a time.
   const rowSpacing   = Math.min(90, h / 6);
   const childSpacing = 44;
-  // trunk-to-tip thickness taper, one [start,end] pair per depth
+  // Branch thickness tapers from a thick "trunk" at the parent end down
+  // to a thin tip at the child end, one pair per tree depth — echoing the
+  // source diagram's three MindMapEdgeStyle tiers (root→branch,
+  // branch→sub, sub→sub-sub), scaled down to suit ten branches sharing
+  // one center instead of that diagram's smaller fan.
   const THICKNESS = [[14, 6], [6, 3], [3, 2]];
 
   const shapes = [];
@@ -405,18 +516,22 @@ function renderRoadmapMindmap() {
   let branchIdSeq = 0;
   const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-  // color is purely a function of depth, see the MINDMAP_LEVEL*_COLOR
-  // constants above
+  /** A node's color is purely a function of its depth (see
+   *  MINDMAP_LEVEL1_COLORS/_LEVEL2_COLOR/_LEVEL3_COLOR above) — the source
+   *  diagram colors level-1 branches individually but gives every deeper
+   *  level one uniform shade regardless of which branch it hangs off. */
   function colorForDepth(depth, node) {
     if (depth === 0) return MINDMAP_LEVEL1_COLORS[node.id];
     if (depth === 1) return MINDMAP_LEVEL2_COLOR;
     return MINDMAP_LEVEL3_COLOR;
   }
 
-  // tapered wedge from (x0,y0) to (x1,y1), w0 wide at the start narrowing
-  // to w1 at the end. control points sit level with their own endpoint at
-  // the horizontal midpoint, which is what gives it that S-curve look
-  // instead of a plain bowed arc
+  /** Filled tapered wedge from (x0,y0) to (x1,y1), width w0 at the start
+   *  narrowing to w1 at the end. Both ends are horizontal-tangent (the
+   *  cubic's control points sit at the same y as their own endpoint, at
+   *  the horizontal midpoint) — that's what turns this into the flowing
+   *  "S-curve" branch shape the source diagram uses, rather than a
+   *  simple bowed arc. */
   function taperedBranch(x0, y0, x1, y1, w0, w1, color) {
     const midX = (x0 + x1) / 2;
     const hw0 = w0 / 2, hw1 = w1 / 2;
@@ -427,13 +542,19 @@ function renderRoadmapMindmap() {
       + `fill="${color}" opacity="0.92"></path>`;
   }
 
-  // small glowing dots traveling along a branch, purely decorative, drawn
-  // on top of the taperedBranch() wedge. the guide path is invisible
-  // (fill/stroke none), just there for animateMotion to follow - reuses
-  // the same curve geometry so it lines up with the wedge underneath.
-  // duration scales with distance so dots move at roughly the same speed
-  // everywhere, and negative `begin` staggers each dot instead of having
-  // them all start synchronized. skipped under prefers-reduced-motion
+  /** A couple of small glowing dots traveling outward along a branch's
+   *  own centerline (root → node, current flowing down a wire) — purely
+   *  decorative, drawn on top of the filled taperedBranch() wedge for
+   *  that edge, not a replacement for it. The centerline reuses the same
+   *  S-curve tangent geometry as the wedge (control points level with
+   *  their own endpoint at the horizontal midpoint) so it visually lines
+   *  up with the wedge underneath; it's otherwise invisible
+   *  (fill/stroke none) and exists only for <animateMotion> to ride.
+   *  Duration scales with distance so every dot moves at roughly the
+   *  same speed regardless of branch length, and each dot's negative
+   *  `begin` staggers it to a different point in the loop immediately
+   *  rather than waiting for a synchronized start. Skipped entirely
+   *  under prefers-reduced-motion. */
   function electronFlow(x0, y0, x1, y1, color) {
     if (reduceMotion) return '';
     const id = `mindmap-branch-path-${branchIdSeq++}`;
@@ -456,8 +577,11 @@ function renderRoadmapMindmap() {
     const color = colorForDepth(depth, node);
     const lesson = node.tab ? ROADMAP_LESSONS.find(l => l.id === node.id) : null;
     const done = lesson ? roadmapProgress.completedLessons.includes(lesson.id) : false;
-    // prefer the lesson's own title so a node never reads differently here
-    // than where it lands. nodes with no lesson fall back to MINDMAP_NODE_TITLE_KEYS
+    // Prefer the lesson's own title (the one shown on its actual tab and
+    // embedded lesson card) over the tree's label, so a navigable node
+    // never reads differently here than where it lands — nodes with no
+    // lesson (Introduction, every collapse-only sub-branch) fall back to
+    // MINDMAP_NODE_TITLE_KEYS, since there's no lesson id to look up.
     const displayTitle = lesson
       ? t(`lessons.${lesson.id}.title`, lesson.title)
       : t(MINDMAP_NODE_TITLE_KEYS[node.id] || '', node.title);
@@ -473,8 +597,11 @@ function renderRoadmapMindmap() {
     const toggleHTML = node.children
       ? `<span class="mindmap-toggle" data-mindmap-toggle="${node.id}">${mindmapExpanded.has(node.id) ? '−' : '+'}</span>`
       : '';
-    // background tint alone isn't a strong enough "done" signal against
-    // every branch color, so add an explicit checkmark too
+    // A checkmark, not just the .is-done background tint, marks a read
+    // lesson — a subtle background wash alone isn't always a strong
+    // enough signal against every branch color, so "done" needs its own
+    // unmistakable glyph too (see .mindmap-node.is-done in css/roadmap.css for
+    // the matching solid-green border override).
     const doneMark = done ? ' <span class="mindmap-done-mark">✓</span>' : '';
 
     return `<button class="${classes.join(' ')}" ${navAttr} data-tooltip="${tip}" style="left:${x}px;top:${y}px;--branch-color:${color};">${label}${doneMark}${toggleHTML}</button>`;
@@ -496,10 +623,11 @@ function renderRoadmapMindmap() {
     });
   }
 
-  // how much vertical space an expanded subtree needs from its own row -
-  // mirrors the y offsets placeChildren() actually draws so reserved space
-  // always matches what gets rendered, recursing through however many
-  // levels are expanded
+  // Vertical half-extent an expanded subtree needs measured from its own
+  // row — mirrors the y offsets placeChildren() below actually draws, so
+  // a row's reserved space always matches what will be rendered under it
+  // (recurses through however many levels are currently expanded, e.g.
+  // Circuits > Quantum > Two Qubits three deep).
   function subtreeHalfExtent(node) {
     if (!node.children || !mindmapExpanded.has(node.id)) return 0;
     const n = node.children.length;
@@ -512,11 +640,13 @@ function renderRoadmapMindmap() {
     return maxExtent;
   }
 
-  // minimum half-extent every row keeps even collapsed, so two collapsed
-  // neighbors land exactly rowSpacing apart. only a row whose
-  // subtreeHalfExtent is actually bigger pushes its neighbors out further -
-  // used to pay the rowGap unconditionally, which grew the collapsed map
-  // past the viewport for no reason, hence this
+  // Minimum half-extent every top-level row keeps even collapsed, sized
+  // so two fully-collapsed neighbors land exactly rowSpacing apart center
+  // to center — i.e. identical to the old fixed layout — and only a row
+  // whose subtreeHalfExtent exceeds this pushes its neighbors further
+  // out, rather than every row paying the rowGap up front regardless of
+  // whether anything is actually expanded (that inflation was itself a
+  // bug: it grew the fully-collapsed map past the viewport).
   const rowGap = 18;
   const minRowHalfExtent = (rowSpacing - rowGap) / 2;
 
@@ -536,10 +666,14 @@ function renderRoadmapMindmap() {
   const leftCol = measureColumn('left');
   const rightCol = measureColumn('right');
 
-  // grow the container only when an expanded tree actually needs more room
-  // than the natural CSS height - otherwise absolutely positioned nodes
-  // would overflow onto whatever's below. small margin just keeps the
-  // outermost pill off the edge, doesn't affect the collapsed case
+  // Grow the container to fit an expanded tree — rather than letting
+  // absolutely-positioned nodes overflow on top of whatever sits below
+  // the mind-map — only when content actually needs more room than the
+  // container's natural CSS height. The small margin is just enough that
+  // the outermost node's own pill isn't flush against the container edge;
+  // it's not meant to inflate the fully-collapsed case, which already
+  // fits within a natural-height container by construction (see
+  // minRowHalfExtent above).
   const contentHeight = Math.max(leftCol.columnHeight, rightCol.columnHeight);
   const finalH = Math.max(h, contentHeight + 6);
   if (finalH > h) {
@@ -571,10 +705,15 @@ function renderRoadmapMindmap() {
   renderMindmapFallback();
 }
 
-// plain link list shown below the 760px breakpoint instead of the mind-map.
-// only top-level nodes (doesn't recurse into .children) - Circuits' own
-// navigable sub-branches are only reachable from the full mind-map.
-// rebuilt alongside the mind-map so "read" state never drifts out of sync
+/** Plain vertical list of concept links, shown instead of the mind-map
+ *  below the 760px breakpoint (see .roadmap-mindmap-fallback in
+ *  css/roadmap.css). Only navigable top-level nodes (MINDMAP_TREE.filter
+ *  doesn't recurse into .children) — every collapse/expand-only
+ *  sub-branch has no page to link to, and a multi-level tree has nowhere
+ *  to go on a narrow screen anyway; Circuits' own navigable sub-branches
+ *  are reachable from the full mind-map only. Kept in sync with the
+ *  mind-map's "read" state and rebuilt alongside it so the two never
+ *  drift apart. */
 function renderMindmapFallback() {
   const list = document.getElementById('roadmap-mindmap-fallback');
   if (!list) return;
@@ -590,21 +729,24 @@ function renderMindmapFallback() {
   }).join('');
 }
 
-// recomputed at render time rather than a constant, so it picks up
-// language changes - see setLanguage()'s callbacks below
+/** Recomputed at render time (not a module-level constant) so it picks
+ *  up the active language — see setLanguage()'s callback list below. */
 function mindmapCenterTooltip() {
   return t('roadmap.centerTooltip', '{count} core quantum computing concepts, from a single qubit to entanglement and wave interference — click any topic to explore it.')
     .replace('{count}', ROADMAP_LESSONS.length);
 }
 
-// first sentence only, so the tooltip stays short - it reuses the Bloch
-// axis tooltip box (showBlochTooltip below) which is sized for one line
+/** First sentence of a lesson body, used for the mind-map's hover
+ *  tooltip so it stays short (the tooltip's box is sized for a one-liner
+ *  like the Bloch axis tooltips it reuses — see showBlochTooltip below —
+ *  not a full paragraph). */
 function firstSentence(text) {
   const m = text.match(/^[^.]*\./);
   return m ? m[0] : text;
 }
 
-// one-question quick check under the lesson body, immediate feedback + explanation
+/** One-question "Quick check" embedded directly under a lesson's body —
+ *  immediate right/wrong feedback plus a short explanation. */
 function buildQuickCheckHTML(lesson) {
   const q = ROADMAP_QUIZ.find(item => item.lessonId === lesson.id);
   if (!q) return '';
@@ -643,19 +785,25 @@ function buildQuickCheckHTML(lesson) {
     </div>`;
 }
 
-// keeps the header "Home" button showing live progress, e.g. "Home · 3/9"
+/** Keeps the header "Home" toggle showing live progress (e.g.
+ *  "Home · 3/9") so it's visible without opening the mind-map. */
 function updateRoadmapBadge() {
   const btn = document.getElementById('btn-roadmap-toggle');
   const done = roadmapProgress.completedLessons.length;
-  // count lives in its own span, hidden below ~480px (responsive.css) so
-  // narrow headers can give that space back to the tab nav
+  // The count lives in its own span (hidden below ~480px, see css/responsive.css)
+  // so narrow headers can reclaim that space for the tab nav instead.
   btn.innerHTML = `${t('nav.home', 'Home')}<span class="roadmap-badge-count"> · ${done}/${ROADMAP_LESSONS.length}</span>`;
 }
 
-// progress summary ("My Progress" sub-view)
-// same completedLessons/quizAnswers state as everywhere else, just a
-// different view of it - quiz score only counts questions actually
-// answered, not a replayable standalone quiz
+// ═══════════════════════════════════════════════════════════════════
+// PROGRESS SUMMARY (the "My Progress" sub-view of the home page)
+// ═══════════════════════════════════════════════════════════════════
+/** Renders the completion bar, quick-check score, and per-lesson
+ *  checklist from the same completedLessons/quizAnswers state everything
+ *  else on the page reads — there's no separate tracking to keep in
+ *  sync, just a different view of it. "Quick Check Score" counts right
+ *  answers among quizAnswers actually given (each lesson's Quick check,
+ *  see buildQuickCheckHTML) rather than a replayable standalone quiz. */
 function renderRoadmapProgress() {
   const total = ROADMAP_LESSONS.length;
   const done  = roadmapProgress.completedLessons.length;
@@ -684,8 +832,11 @@ function renderRoadmapProgress() {
   }).join('');
 }
 
-// re-renders everything that shows lesson state, called after any mutation
-// (mark-as-read, quiz answer) so they all stay in sync
+/** Re-renders every surface that shows lesson state (mind-map + its mobile
+ *  fallback list, each concept tab's embedded lesson, and the Progress
+ *  summary if that's the current home sub-view) — called after any
+ *  mutation (mark-as-read, quick-check answer) so all of them stay in
+ *  sync no matter which one the user interacted with. */
 function refreshLessonUI() {
   renderRoadmapMindmap();
   renderEmbeddedLessons();
@@ -693,8 +844,10 @@ function refreshLessonUI() {
   if (roadmapSubMode === 'progress') renderRoadmapProgress();
 }
 
-// flat id -> node lookup across the whole tree including nested children,
-// built once so goToLessonSimulation() can resolve a click from any depth
+/** Flat id → node lookup across all of MINDMAP_TREE, including nested
+ *  children — built once so goToLessonSimulation() below can resolve a
+ *  click from any depth (top-level concept or a navigable sub-branch
+ *  like Circuits > Quantum > Two Qubits) the same way. */
 const MINDMAP_NODE_BY_ID = (function flatten(nodes, map = {}) {
   nodes.forEach(node => {
     map[node.id] = node;
@@ -703,9 +856,12 @@ const MINDMAP_NODE_BY_ID = (function flatten(nodes, map = {}) {
   return map;
 })(MINDMAP_TREE);
 
-// switches to Concepts mode, picks the tab, and applies whatever sub-state
-// a sub-branch needs (Circuits > Quantum > Two Qubits, etc). nodes with
-// no tab just do nothing
+/** Navigates straight to a node's live simulation — switches app mode to
+ *  Concepts, selects the matching tab, and (for sub-branches that
+ *  target a specific builder state, like Circuits > Classical or
+ *  Circuits > Quantum > Two Qubits) applies that state too. A node with
+ *  no `tab` (Introduction, and every collapse/expand-only sub-branch)
+ *  simply does nothing, same as before. */
 function goToLessonSimulation(nodeId) {
   const node = MINDMAP_NODE_BY_ID[nodeId];
   if (!node || !node.tab) return;
@@ -720,14 +876,17 @@ function goToLessonSimulation(nodeId) {
   if (node.mathsSection) setMathsSection(node.mathsSection);
 }
 
-// init
+// ═══════════════════════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════════════════════
 function initRoadmap() {
   document.querySelectorAll('.mode-btn[data-app-mode]').forEach(btn =>
     btn.addEventListener('click', () => setAppMode(btn.dataset.appMode)));
   document.querySelectorAll('.mode-btn[data-roadmap-mode]').forEach(btn =>
     btn.addEventListener('click', () => setRoadmapMode(btn.dataset.roadmapMode)));
-  // "Important Concepts" sits in the same row as Concept Map/My Progress
-  // but isn't a real roadmap sub-mode, just navigates to that static tab
+  // The Home page's "Important Concepts" button sits in the same row as
+  // Concept Map/My Progress but isn't a roadmap sub-mode — it navigates
+  // straight into that static tab, same as a mind-map node click.
   document.querySelectorAll('.mode-btn[data-goto-tab]').forEach(btn =>
     btn.addEventListener('click', () => {
       setAppMode('sim');
@@ -735,12 +894,16 @@ function initRoadmap() {
     }));
   renderIntroLearningPath();
 
-  // delegated rather than bound per-render since the same lesson's controls
-  // show up in three places at once (mind-map node, fallback list, embedded
-  // lesson card) and re-binding all of them every render is asking for bugs
+  // Delegated (rather than attached-per-render) because the same lesson's
+  // controls can exist in more than one place at once — the mind-map
+  // node, its mobile fallback list item, and the embedded lesson card on
+  // its own tab — and re-binding all of them on every render would be
+  // easy to get out of sync.
   document.addEventListener('click', (e) => {
-    // checked first since the toggle span is nested inside the parent's
-    // own tryit button - otherwise expanding a branch would also navigate
+    // Checked first because a [data-mindmap-toggle] span sits nested
+    // inside its parent's own [data-lesson-tryit] button (see renderNode
+    // in renderRoadmapMindmap) — without this, expanding/collapsing a
+    // branch would also navigate away via the outer button.
     const toggleBtn = e.target.closest('[data-mindmap-toggle]');
     if (toggleBtn) {
       const id = toggleBtn.dataset.mindmapToggle;
@@ -775,9 +938,9 @@ function initRoadmap() {
       if (optionsEl) {
         const id = optionsEl.dataset.quickcheckLesson;
         roadmapProgress.quizAnswers[id] = parseInt(choiceBtn.dataset.choice, 10);
-        // answering the quiz at all (right or wrong) counts as engaging
-        // with the lesson, so auto-mark it read instead of making people
-        // click "mark as read" separately too
+        // Finishing the quick check — right or wrong — means the concept
+        // was engaged with, so mark it read automatically instead of
+        // making the learner also click "Mark as read" separately.
         if (!roadmapProgress.completedLessons.includes(id)) {
           roadmapProgress.completedLessons.push(id);
         }
@@ -788,8 +951,9 @@ function initRoadmap() {
     }
   });
 
-  // re-layout on resize, but only while actually visible (reads 0x0 while
-  // hidden, e.g. in Concepts mode)
+  // The mind-map measures its own container to lay itself out, so a
+  // resize needs to trigger a re-layout — but only while it's actually
+  // visible (it reads 0x0 while hidden, e.g. while in Concepts mode).
   window.addEventListener('resize', () => {
     clearTimeout(mindmapResizeTimer);
     mindmapResizeTimer = setTimeout(() => {
@@ -798,10 +962,12 @@ function initRoadmap() {
     }, 150);
   });
 
-  // reuses the Bloch sphere's floating tooltip (dom-utils.js), fed from
-  // [data-tooltip] instead of a hotspot hit-test. bound to the container,
-  // not individual nodes, so it survives innerHTML getting replaced on
-  // every re-render
+  // Hover tooltips on the mind-map's center + topic nodes — reuses the
+  // same floating tooltip element/CSS as the Bloch sphere's axis-label
+  // hover (core/dom-utils.js), just fed from [data-tooltip] instead of a
+  // hotspot hit-test. Attached to the container (survives its innerHTML
+  // being replaced on every renderRoadmapMindmap() re-render) rather than
+  // to individual nodes, so it doesn't need re-binding per render.
   const mindmapEl = document.getElementById('roadmap-mindmap');
   mindmapEl.addEventListener('mousemove', (e) => {
     const node = e.target.closest('[data-tooltip]');
@@ -814,9 +980,10 @@ function initRoadmap() {
   renderRoadmapMindmap();
   updateRoadmapBadge();
 
-  // all of this renders text from JS rather than static [data-i18n] markup,
-  // so a language switch needs its own re-render pass (see onLangChange
-  // in i18n.js)
+  // Everything above renders lesson/quiz/mind-map text from JS (not
+  // static [data-i18n] markup applyTranslations() can walk on its own),
+  // so a language switch needs its own re-render pass here — see
+  // core/i18n.js's onLangChange().
   onLangChange(() => {
     renderIntroLearningPath();
     refreshLessonUI(); // already re-renders My Progress too, if that's the current sub-view

@@ -1,17 +1,21 @@
 'use strict';
-// theme-sensitive tabs/app.js register their own redraw via onThemeChange()
-// below, during their own init (always runs inside DOMContentLoaded, before
-// toggleTheme() could ever fire from a click), so this file never needs to
-// know which tabs exist or what they draw. Same registration trick as
-// tab-registry.js's onEnter/onLeave.
+// No file dependencies at load time. Theme-sensitive tabs/app.js register
+// their own redraw via onThemeChange() below (called during their own init,
+// which always runs inside DOMContentLoaded before toggleTheme() could ever
+// fire from a user click) — this file never needs to know which tabs exist
+// or what they draw, the same registration pattern core/tab-registry.js
+// uses for onEnter/onLeave.
 
+// ─── THEME SYSTEM ────────────────────────────────────────────────────
 const THEME_STORAGE_KEY = 'qe-theme';
 
 let isDark = false;
 let BLOCH_COLORS = {};
 
-// canvases mostly, anything with theme-dependent colors registers its
-// redraw here instead of us having to call into tab-specific draw fns by name
+// ─── THEME-CHANGE CALLBACKS ────────────────────────────────────────────
+// Anything that draws with theme-dependent colors (a canvas, mainly)
+// registers a redraw callback here instead of this file calling into
+// tab-specific draw functions/state by name.
 const themeChangeCallbacks = [];
 function onThemeChange(fn) { themeChangeCallbacks.push(fn); }
 
@@ -32,9 +36,9 @@ function refreshThemeColors() {
   };
 }
 
-// syncs the header icon to whatever data-theme is already active, called
-// once on load, after the inline anti-flash script in <head> applies the
-// saved preference (see index.html)
+// Sets the header icon to match whatever data-theme is currently active
+// (called once on load, after the inline anti-flash script in <head> has
+// already applied any saved preference — see index.html).
 function syncThemeIcon() {
   const dark = document.documentElement.getAttribute('data-theme') !== 'light';
   document.getElementById('theme-icon').textContent = dark ? '☀' : '☾';

@@ -3,12 +3,23 @@
 // (setExplainer), core/tab-registry.js (registerTab). Registers onEnter/
 // onLeave hooks that start/pause the simulation loop when this tab
 // becomes visible/hidden — tunnelAnimId itself stays private to this file.
+// Every run that fully settles (not one abandoned mid-flight by a slider
+// drag) also logs a {heightRatio, widthCells, reflPct, transPct} entry to
+// tunnelHistory, rendered as the #tunnel-history strip — unlike Stern-
+// Gerlach/Beam Splitter's per-atom randomness, this solver is fully
+// deterministic, so the strip isn't building toward a probability; it's
+// a record of your own exploration, letting "raise V0, watch transmitted
+// shrink" be something you can see across runs instead of just read in
+// the explainer text.
 
-// real time-dependent Schrodinger solver (staggered leapfrog), not a fake
-// animation. units: hbar = m = 1, so H = -0.5 d^2/dx^2 + V(x). checked
-// separately - probability stays conserved to <0.3% over a full run, and
-// transmission falls off correctly as V0/E increases (23% at V0=E down to
-// 0.1% at V0=2.5E).
+// ═══════════════════════════════════════════════════════════════════
+// QUANTUM TUNNELING TAB
+// Real time-dependent Schrodinger solver (staggered leapfrog), not a
+// fake animation. Units: hbar = m = 1, so H = -0.5 d^2/dx^2 + V(x).
+// Validated separately: probability stays conserved to <0.3% over a
+// full run, and transmission falls off correctly as V0/E increases
+// (23% at V0=E down to 0.1% at V0=2.5E).
+// ═══════════════════════════════════════════════════════════════════
 const TUNNEL_N   = 320;
 const TUNNEL_DX  = 1 / TUNNEL_N;
 const TUNNEL_DT  = 0.4 * TUNNEL_DX * TUNNEL_DX;
@@ -29,26 +40,32 @@ let tunnelElapsedSteps = 0;
 let tunnelDrawScale = 1;
 let tunnelBarrier = null; // { heightRatio, widthCells, V0, center, half }
 let tunnelInitialized = false;
+let tunnelHistory = []; // completed runs only — [{ heightRatio, widthCells, reflPct, transPct }, ...]
+const TUNNEL_HISTORY_MAX = 24;
 
-// wires the static controls already in index.html - called once from
-// app.js's DOMContentLoaded. safe before the tab's ever been visited: these
-// controls are only reachable once the tab's active, and activating it
-// runs ensureTunnelStarted() first which allocates tunnelPsiR/I before any
-// listener could fire.
+/* Wires the static controls (sliders/buttons already in index.html) —
+   called once from app.js's DOMContentLoaded. Safe to attach before the
+   tab has ever been visited: these controls are only reachable once the
+   Tunnel tab is active, and activating it runs ensureTunnelStarted()
+   first, which allocates tunnelPsiR/I before any listener could fire. */
 function initTunnelControls() {
   document.getElementById('tunnel-height').addEventListener('input', onTunnelSliderChange);
   document.getElementById('tunnel-width').addEventListener('input', onTunnelSliderChange);
   document.getElementById('tunnel-play-btn').addEventListener('click', toggleTunnelPlay);
   document.getElementById('btn-fire-tunnel').addEventListener('click', fireTunnelPacket);
+  document.getElementById('btn-clear-tunnel-history').addEventListener('click', clearTunnelHistory);
+  renderTunnelHistory();
 
   registerTab('tunnel', { onEnter: ensureTunnelStarted, onLeave: stopTunnelSim });
 }
 
 function tunnelEnergy() { return TUNNEL_K0 * TUNNEL_K0 / 2; }
 
-// applies the discretized Hamiltonian H = -0.5 d^2/dx^2 + V(x) to psi via
-// a centered finite difference, writes into out. boundaries fixed to zero
-// (infinite well) so waves don't wrap.
+/**
+ * Applies the discretized Hamiltonian H = -0.5 d^2/dx^2 + V(x) to `psi`
+ * via a centered finite difference, writing the result into `out`.
+ * Boundaries are fixed to zero (infinite well), so waves don't wrap.
+ */
 function tunnelHpsi(psi, out) {
   const c = 0.5 / (TUNNEL_DX * TUNNEL_DX);
   for (let j = 1; j < TUNNEL_N - 1; j++) {
@@ -99,10 +116,10 @@ function tunnelLaunchWave() {
   tunnelElapsedSteps = 0;
 }
 
-// one leapfrog step: advance psiR using the already-half-step-ahead psiI,
-// then advance psiI using the freshly-updated psiR - each half always
-// sees the other at the correct interleaved time, which is what keeps
-// this stable and norm-conserving
+/* One leapfrog step: advance psiR using the (already half-step-ahead)
+   psiI, then advance psiI using the freshly-updated psiR — each half of
+   the wavefunction always "sees" the other at the correct interleaved
+   time, which is what keeps this scheme both stable and norm-conserving. */
 function tunnelStep() {
   tunnelHpsi(tunnelPsiI, tunnelHtmp);
   for (let j = 0; j < TUNNEL_N; j++) tunnelPsiR[j] += TUNNEL_DT * tunnelHtmp[j];
@@ -136,17 +153,63 @@ function drawTunnel() {
 
   const baseline = h * 0.86;
 
-  // barrier
+  // ── barrier ─────────────────────────────────────────
   const bx1 = (tunnelBarrier.center - tunnelBarrier.half) / TUNNEL_N * w;
   const bx2 = (tunnelBarrier.center + tunnelBarrier.half) / TUNNEL_N * w;
   const barrierPxH = 14 + (tunnelBarrier.heightRatio / 2.5) * h * 0.55;
+  const bw = Math.max(2, bx2 - bx1);
+  const by = baseline - barrierPxH;
 
-  ctx.fillStyle   = isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.045)';
+  // A solid-material gradient (bright top edge fading to a darker core)
+  // instead of one flat tint — the same "lit from above" convention used
+  // for every other apparatus part across the app (magnet poles, beam
+  // splitter plate), so this classically-forbidden wall reads as
+  // physical rather than a placeholder rectangle next to the genuinely
+  // solved wavefunction beside it.
+  const barrierGrad = ctx.createLinearGradient(0, by, 0, baseline);
+  if (isDark) {
+    barrierGrad.addColorStop(0,    'rgba(255,255,255,0.22)');
+    barrierGrad.addColorStop(0.18, 'rgba(255,255,255,0.09)');
+    barrierGrad.addColorStop(1,    'rgba(255,255,255,0.035)');
+  } else {
+    barrierGrad.addColorStop(0,    'rgba(0,0,0,0.16)');
+    barrierGrad.addColorStop(0.18, 'rgba(0,0,0,0.065)');
+    barrierGrad.addColorStop(1,    'rgba(0,0,0,0.03)');
+  }
+  ctx.fillStyle   = barrierGrad;
   ctx.strokeStyle = isDark ? 'rgba(255,255,255,0.28)' : 'rgba(0,0,0,0.24)';
   ctx.lineWidth = 1;
   ctx.beginPath();
-  ctx.rect(bx1, baseline - barrierPxH, Math.max(2, bx2 - bx1), barrierPxH);
+  ctx.rect(bx1, by, bw, barrierPxH);
   ctx.fill(); ctx.stroke();
+
+  // Diagonal hatching — the standard textbook symbol for "classically
+  // forbidden / solid" regions in a potential-energy diagram, not just a
+  // decorative texture.
+  ctx.save();
+  ctx.beginPath();
+  ctx.rect(bx1, by, bw, barrierPxH);
+  ctx.clip();
+  ctx.strokeStyle = isDark ? 'rgba(255,255,255,0.16)' : 'rgba(0,0,0,0.13)';
+  ctx.lineWidth = 1;
+  const hatchGap = 7;
+  for (let hx = bx1 - barrierPxH; hx < bx2 + barrierPxH; hx += hatchGap) {
+    ctx.beginPath();
+    ctx.moveTo(hx, baseline);
+    ctx.lineTo(hx + barrierPxH, by);
+    ctx.stroke();
+  }
+  ctx.restore();
+
+  // A thin bright top edge, echoing the knife-edge highlight on the
+  // Stern-Gerlach magnet poles — a cheap specular cue that this surface
+  // is a real, solid boundary the wave has to contend with.
+  ctx.strokeStyle = isDark ? 'rgba(255,255,255,0.55)' : 'rgba(255,255,255,0.85)';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(bx1, by);
+  ctx.lineTo(bx2, by);
+  ctx.stroke();
 
   ctx.font = `11px 'JetBrains Mono', monospace`;
   ctx.fillStyle = isDark ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.45)';
@@ -154,11 +217,11 @@ function drawTunnel() {
   ctx.textBaseline = 'bottom';
   ctx.fillText('V₀', (bx1 + bx2) / 2, baseline - barrierPxH - 5);
 
-  // baseline axis
+  // ── baseline axis ───────────────────────────────────
   ctx.strokeStyle = isDark ? 'rgba(255,255,255,0.14)' : 'rgba(0,0,0,0.14)';
   ctx.beginPath(); ctx.moveTo(0, baseline); ctx.lineTo(w, baseline); ctx.stroke();
 
-  // |psi(x)|^2 filled probability cloud
+  // ── |psi(x)|^2 filled probability cloud ─────────────
   const glow = BLOCH_COLORS.arrow || (isDark ? 'rgba(255,255,255,0.9)' : 'rgba(10,10,10,0.85)');
   ctx.beginPath();
   ctx.moveTo(0, baseline);
@@ -180,7 +243,7 @@ function drawTunnel() {
   ctx.stroke();
   ctx.restore();
 
-  // faint oscillating carrier wave inside the envelope
+  // ── faint oscillating carrier wave inside the envelope ──
   ctx.save();
   ctx.globalAlpha = 0.4;
   ctx.strokeStyle = isDark ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.4)';
@@ -199,6 +262,44 @@ function drawTunnel() {
 function updateTunnelStats(pLeft, pRight) {
   document.getElementById('tunnel-refl').textContent  = Math.round(pLeft * 100) + '%';
   document.getElementById('tunnel-trans').textContent = Math.round(pRight * 100) + '%';
+}
+
+/** Renders #tunnel-history from tunnelHistory — a plain rebuild each
+ *  call rather than incremental DOM diffing, since the list is capped at
+ *  TUNNEL_HISTORY_MAX (24) entries, cheap either way. Each bar's title
+ *  attribute carries the exact numbers for anyone who wants to read a
+ *  specific run rather than eyeball the strip. */
+function renderTunnelHistory() {
+  const wrap = document.getElementById('tunnel-history');
+  wrap.replaceChildren();
+  if (tunnelHistory.length === 0) {
+    const empty = document.createElement('span');
+    empty.className = 'tunnel-history-empty';
+    empty.textContent = t('tunnel.historyEmpty', 'No completed runs yet.');
+    wrap.appendChild(empty);
+  } else {
+    tunnelHistory.forEach((run, i) => {
+      const bar = document.createElement('div');
+      bar.className = 'tunnel-history-bar' + (i === tunnelHistory.length - 1 ? ' latest' : '');
+      bar.title = `V₀ = ${run.heightRatio.toFixed(2)}×E, w = ${run.widthCells} — ${run.transPct}% transmitted, ${run.reflPct}% reflected`;
+      const segTrans = document.createElement('div');
+      segTrans.className = 'seg-trans';
+      segTrans.style.height = run.transPct + '%';
+      const segRefl = document.createElement('div');
+      segRefl.className = 'seg-refl';
+      segRefl.style.height = run.reflPct + '%';
+      bar.append(segTrans, segRefl);
+      wrap.appendChild(bar);
+    });
+  }
+  document.getElementById('tunnel-history-count').textContent = tunnelHistory.length
+    ? t('tunnel.historyCount', '· {count} runs').replace('{count}', tunnelHistory.length)
+    : '';
+}
+
+function clearTunnelHistory() {
+  tunnelHistory = [];
+  renderTunnelHistory();
 }
 
 function updateTunnelPlayButton() {
@@ -258,6 +359,14 @@ function tunnelAnimate() {
     tunnelSettled = true;
     const transPct = Math.round(pRight * 100);
     const reflPct  = Math.round(pLeft * 100);
+
+    // Only a run that actually finished gets logged — a slider drag
+    // that re-fires mid-flight abandons the previous run without ever
+    // reaching here, so the strip never shows an interrupted result.
+    tunnelHistory.push({ heightRatio: tunnelBarrier.heightRatio, widthCells: tunnelBarrier.widthCells, reflPct, transPct });
+    if (tunnelHistory.length > TUNNEL_HISTORY_MAX) tunnelHistory.shift();
+    renderTunnelHistory();
+
     if (tunnelBarrier.heightRatio < 0.02) {
       setExplainer('tunnel-explainer', `No barrier, no contest — ${transPct}% sailed straight through. Turn up V₀ to actually test the wall.`);
     } else {
@@ -284,8 +393,8 @@ function ensureTunnelStarted() {
   if (!tunnelAnimId) tunnelAnimId = requestAnimationFrame(tunnelAnimate);
 }
 
-// pauses the rAF loop while this tab isn't visible - called from app.js's
-// tab-switch handler instead of touching tunnelAnimId directly
+/* Pauses the rAF loop while the Tunnel tab isn't visible — called by
+   app.js's tab-switch handler instead of touching tunnelAnimId directly. */
 function stopTunnelSim() {
   if (tunnelAnimId) {
     cancelAnimationFrame(tunnelAnimId);

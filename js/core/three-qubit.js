@@ -1,21 +1,25 @@
 'use strict';
-// needs core/complex.js (C.*). same shape as two-qubit.js's TwoQubitState,
-// generalized from 4 to 8 amplitudes - every method here is that file's
-// exact algorithm with one more bit threaded through the index math, not
-// a different approach.
+// Depends on: core/complex.js (C.*). Same shape as two-qubit.js's
+// TwoQubitState, generalized from 4 to 8 amplitudes — every method here
+// is that file's exact algorithm with one more bit threaded through the
+// index math, not a different approach.
 
-// |ψ⟩ = Σ c_b |b⟩ over b = 000..111, stored as a flat 8-entry amplitude
-// array indexed by (q0<<2)|(q1<<1)|q2, i.e. amps[0]=|000⟩, amps[1]=|001⟩,
-// ... amps[7]=|111⟩. Same normalization invariant as Qubit/TwoQubitState.
+// ─── THREE-QUBIT STATE ─────────────────────────────────────────────────
+/**
+ * A three-qubit state |ψ⟩ = Σ c_b |b⟩ over b = 000..111, stored as a flat
+ * 8-entry amplitude array indexed by (q0<<2)|(q1<<1)|q2 — i.e. amps[0]=|000⟩,
+ * amps[1]=|001⟩, … amps[7]=|111⟩. Same normalization invariant as Qubit/
+ * TwoQubitState: renormalized after every gate.
+ */
 class ThreeQubitState {
   constructor() {
     this.amps = [{ r: 1, i: 0 }, { r: 0, i: 0 }, { r: 0, i: 0 }, { r: 0, i: 0 },
                  { r: 0, i: 0 }, { r: 0, i: 0 }, { r: 0, i: 0 }, { r: 0, i: 0 }];
   }
 
-  // applies a single-qubit 2x2 gate to just one of the three qubits
-  // (I⊗I⊗matrix etc, whichever position qubitIndex names), other two
-  // untouched
+  /** Applies a single-qubit 2x2 gate to just one of the three qubits
+   *  (I⊗I⊗matrix etc., in whichever position qubitIndex names), leaving
+   *  the other two untouched. */
   applySingleQubitGate(qubitIndex, matrix) {
     const next = new Array(8);
     for (let idx = 0; idx < 8; idx++) {
@@ -34,14 +38,33 @@ class ThreeQubitState {
     this._normalize();
   }
 
-  // flips target's bit whenever control's bit is 1 (control, target ∈
-  // {0,1,2}) - permutation of basis states, no amplitude mixing, same as
-  // TwoQubitState.applyCNOT
+  /** Controlled-NOT: flips `target`'s bit whenever `control`'s bit is 1
+   *  (control, target ∈ {0,1,2}). A permutation of basis states — no
+   *  amplitude mixing — same as TwoQubitState.applyCNOT. */
   applyCNOT(control, target) {
     const next = new Array(8);
     for (let idx = 0; idx < 8; idx++) {
       const bits = [(idx >> 2) & 1, (idx >> 1) & 1, idx & 1];
       if (bits[control] === 1) bits[target] = 1 - bits[target];
+      const newIdx = (bits[0] << 2) | (bits[1] << 1) | bits[2];
+      next[newIdx] = this.amps[idx];
+    }
+    this.amps = next;
+  }
+
+  /** Toffoli (CCNOT): flips `target`'s bit whenever BOTH `control1` and
+   *  `control2` are 1 (all three ∈ {0,1,2}) — a permutation of basis
+   *  states, same as applyCNOT just gated on two controls instead of
+   *  one. This is the standard building block for classical logic
+   *  embedded reversibly in a quantum circuit: with `target` starting at
+   *  |0⟩, Toffoli(A, B, target) computes target = A AND B — the Carry
+   *  half of a half adder (see CIRCUIT3_PRESETS' 'Half Adder' preset in
+   *  circuit-multiqubit-tab.js). */
+  applyToffoli(control1, control2, target) {
+    const next = new Array(8);
+    for (let idx = 0; idx < 8; idx++) {
+      const bits = [(idx >> 2) & 1, (idx >> 1) & 1, idx & 1];
+      if (bits[control1] === 1 && bits[control2] === 1) bits[target] = 1 - bits[target];
       const newIdx = (bits[0] << 2) | (bits[1] << 1) | bits[2];
       next[newIdx] = this.amps[idx];
     }
@@ -57,11 +80,36 @@ class ThreeQubitState {
 
   prob(idx) { return C.mag(this.amps[idx]) ** 2; }
 
-  // reduced single-qubit Bloch vector for qubitIndex, tracing out the other
-  // two qubits - same partial-trace idea as TwoQubitState's version, just
-  // summed over the other two qubits' 4 joint values instead of 1 qubit's 2.
-  // see that method's comment for what the vector length means (1 =
-  // pure/unentangled, shrinking toward 0 = more entangled with the rest)
+  /** Projectively measures `qubitIndex` in the computational basis: sums
+   *  the Born-rule probability of that bit reading 0 across every joint
+   *  value of the other two qubits, draws an outcome weighted by that
+   *  probability, zeroes every amplitude inconsistent with the outcome,
+   *  and renormalizes what's left — an honest partial-measurement
+   *  collapse (used by the Teleport tab to measure Alice's two qubits
+   *  mid-protocol), not just a read. Measuring a second qubit afterward
+   *  is just another call to this — projective measurements onto
+   *  different bit positions commute, so calling this twice in either
+   *  order gives the same joint statistics as measuring both at once. */
+  measureQubit(qubitIndex) {
+    const shift = 2 - qubitIndex;
+    let p0 = 0;
+    for (let idx = 0; idx < 8; idx++) {
+      if (((idx >> shift) & 1) === 0) p0 += this.prob(idx);
+    }
+    const outcome = Math.random() < p0 ? 0 : 1;
+    for (let idx = 0; idx < 8; idx++) {
+      if (((idx >> shift) & 1) !== outcome) this.amps[idx] = { r: 0, i: 0 };
+    }
+    this._normalize();
+    return outcome;
+  }
+
+  /** Reduced single-qubit Bloch vector for `qubitIndex`, tracing out the
+   *  other two qubits — same partial-trace idea as TwoQubitState's
+   *  version, just summed over the other two qubits' 4 joint values
+   *  instead of 1 qubit's 2. See that method's comment for what the
+   *  resulting vector's length means (1 = pure/unentangled, shrinking
+   *  toward 0 = increasingly entangled with the rest). */
   getSingleQubitBloch(qubitIndex) {
     const others = [0, 1, 2].filter(q => q !== qubitIndex);
     let rho00 = 0, rho11 = 0, rho01 = { r: 0, i: 0 };

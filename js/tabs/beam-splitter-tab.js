@@ -1,10 +1,14 @@
 'use strict';
-// needs registerTab (tab-registry.js) and pulseElement (dom-utils.js) for the
-// detector click ring. one photon hits the 50/50 splitter and randomly ends
-// up at detector A or B - never split in half. the faint "ghost" that travels
-// the other path is just there to sell the superposition idea before it
-// collapses. no qubit/Bloch state here, this is plain classical probability
-// so it keeps its own local counters instead of hooking into qubit.js.
+// Depends on: core/tab-registry.js (registerTab), core/dom-utils.js
+// (pulseElement, used for the detector click ring). A single photon is
+// fired at a 50/50 beam splitter and randomly reflected to detector A or
+// transmitted to detector B — one photon, one random click, never a
+// photon split in half. A faint "ghost" duplicate briefly travels the
+// path NOT taken and fades out at the same time, visualizing the
+// superposition that existed right up until the real photon landed. No
+// qubit/Bloch state involved (see qubit.js) — this tab is a plain
+// classical-probability animation, so it keeps its own small bit of
+// local state instead.
 
 let bsCountA = 0, bsCountB = 0, bsAnimating = false;
 
@@ -12,14 +16,52 @@ const BS_SOURCE = { x: 115, y: 280 };
 const BS_SPLIT  = { x: 380, y: 280 };
 const BS_DET_A  = { x: 380, y: 82  };
 const BS_DET_B  = { x: 587, y: 280 };
+const BS_MARK_MAX = 140; // caps SVG node count on the accumulation plates; oldest mark is dropped past this
+
+/** Sum of three uniforms, centered on 0 and clamped to ±spread — same
+ *  cheap stand-in for a normal distribution used by Stern-Gerlach's
+ *  sgJitter(), so accumulated marks cluster toward the detector center
+ *  and thin out toward the edges rather than landing uniformly. */
+function bsJitter(spread) {
+  return ((Math.random() + Math.random() + Math.random()) / 3 - 0.5) * 2 * spread;
+}
+
+/** Appends one small dot to detector A or B's accumulation plate at a
+ *  jittered position — visualizes the 50/50 split building up over many
+ *  photons, the same "photographic plate" upgrade Stern-Gerlach's
+ *  detectors got, rather than only ever showing the latest hit via the
+ *  click flash. Oldest mark is dropped past BS_MARK_MAX so the SVG
+ *  doesn't grow unbounded over a long session. */
+function bsAddScreenMark(isA) {
+  const group  = document.getElementById(isA ? 'bs-marks-a' : 'bs-marks-b');
+  const center = isA ? BS_DET_A : BS_DET_B;
+  const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+  circle.setAttribute('class', 'bs-mark');
+  circle.setAttribute('cx', center.x + bsJitter(24));
+  circle.setAttribute('cy', center.y + bsJitter(18));
+  circle.setAttribute('r', 1.5 + Math.random() * 1.2);
+  circle.setAttribute('fill', isA ? 'var(--zero)' : 'var(--one)');
+  circle.setAttribute('opacity', 0.4 + Math.random() * 0.25);
+  group.appendChild(circle);
+  if (group.childElementCount > BS_MARK_MAX) group.removeChild(group.firstElementChild);
+}
+
+/** Wipes both accumulation plates — called alongside the tally reset,
+ *  since a plate mixing marks from before and after a Reset would be
+ *  exactly as misleading as a tally that didn't reset. */
+function bsClearScreenMarks() {
+  document.getElementById('bs-marks-a').replaceChildren();
+  document.getElementById('bs-marks-b').replaceChildren();
+}
 
 function initBeamSplitterTab() {
   document.getElementById('btn-fire-photon').addEventListener('click', fireBeamSplitterPhoton);
   document.getElementById('btn-reset-beamsplitter').addEventListener('click', resetBeamSplitter);
 
-  // skipping onLeave - the animation's only 900ms, not worth canceling on
-  // tab switch. onEnter just resets any photon left mid-flight so you don't
-  // come back to it frozen halfway down a path.
+  // No onLeave needed — a fire-and-forget animation this short (900ms)
+  // isn't worth canceling on tab switch; onEnter just clears any photon
+  // left mid-flight from a switch-away, so revisiting the tab never shows
+  // it frozen partway down a path.
   registerTab('beamsplitter', { onEnter: resetBeamSplitterPhoton });
 }
 
@@ -32,10 +74,13 @@ function resetBeamSplitterPhoton() {
 
 function bsLerp(a, b, t) { return a + (b - a) * t; }
 
-// moves el (a <g>) from (x0,y0) to (x1,y1), translating the whole group so
-// the glow halo and bright core move together instead of repositioning cx/cy
-// separately. also lerps opacity op0->op1 over the same duration - reused for
-// both the real photon (opacity stays 1) and the fading ghost (1 -> 0).
+/** Moves `el` (a <g>, translated as a group rather than repositioning
+ *  individual circles via cx/cy — that's what lets one call move both
+ *  the glow halo and bright core together) from (x0,y0) to (x1,y1) over
+ *  `duration` ms, interpolating opacity from op0 to op1 at the same
+ *  time. Reused for both the real photon (opacity held at 1 throughout)
+ *  and the fading ghost duplicate (opacity 1 → 0), so there's one
+ *  animation code path instead of two. */
 function bsAnimateMove(el, x0, y0, x1, y1, op0, op1, duration, cb) {
   const start = performance.now();
   function step(now) {
@@ -77,6 +122,7 @@ function fireBeamSplitterPhoton() {
       pulseElement(ping, 'active', 650);
       flash.setAttribute('opacity', 0.5);
       setTimeout(() => flash.setAttribute('opacity', 0), 400);
+      bsAddScreenMark(isA);
 
       if (isA) bsCountA++; else bsCountB++;
       document.getElementById('beamsplitter-result').textContent = isA ? 'Detector A clicked' : 'Detector B clicked';
@@ -104,6 +150,7 @@ function updateBeamSplitterHistogram() {
 
 function resetBeamSplitter() {
   bsCountA = 0; bsCountB = 0;
+  bsClearScreenMarks();
   updateBeamSplitterHistogram();
   document.getElementById('beamsplitter-result').textContent = '—';
   setExplainer('beamsplitter-explainer', 'A photon is about to launch toward the beam splitter. Fire it and watch which detector clicks.');

@@ -1,12 +1,14 @@
 'use strict';
-// needs CLASSICAL_GATES (classical-circuit-tab.js), setExplainer (dom-utils).
-// classical counterpart of the Gates tab, reachable via its own
-// Classical/Quantum toggle (setGatesDomain() in gates-tab.js). pick one
-// gate, see the effect immediately - same single-gate paradigm the
-// quantum side already uses, not Circuits' build-a-sequence thing.
-// reuses CLASSICAL_GATES instead of redefining it - load order's not an
-// issue since this only touches it from inside function bodies, after
-// everything's already loaded.
+// Depends on: tabs/classical-circuit-tab.js (CLASSICAL_GATES),
+// core/dom-utils.js (setExplainer).
+// The Gates tab's classical counterpart, reachable via its own
+// Classical/Quantum domain toggle (see setGatesDomain() in gates-tab.js).
+// Pick ONE gate and see its immediate effect — the same single-gate
+// paradigm the quantum side of this tab already uses (apply one gate,
+// read the result), as opposed to Circuits' build-a-sequence paradigm.
+// Reuses CLASSICAL_GATES rather than redefining the gate table — script
+// load order doesn't matter here since this only reads it from inside a
+// function body, called after every script has already run.
 
 let gatesClassicalGate = 'AND';
 let gcInputA = 1;
@@ -93,10 +95,12 @@ function renderClassicalGatesTruthTable() {
   table.innerHTML = html;
 }
 
-// all-gates-at-once version of renderClassicalGatesTruthTable() above -
-// every gate's full table stacked, not just the selected one. for the
-// Gates tab's Compare panel (item 14). called once from buildGateButtons()
-// in gates-tab.js, and again on language change since headers go through t().
+/** All-gates-at-once variant of renderClassicalGatesTruthTable() above —
+ *  every CLASSICAL_GATES entry's full truth table, one after another,
+ *  rather than just the currently-selected gate's. Built for the Gates
+ *  tab's Compare panel (item 14), called once from gates-tab.js's
+ *  buildGateButtons() plus again on every language change (the header
+ *  cells go through t()). */
 function buildAllClassicalGatesTruthTables(targetId) {
   const table = document.getElementById(targetId);
   if (!table) return;

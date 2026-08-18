@@ -1,11 +1,21 @@
 'use strict';
 // Lightweight, dependency-free correctness checks for the quantum math
-// core (complex arithmetic, Qubit, gate matrices). Run with:
+// core (complex arithmetic, Qubit, gate matrices, 2/3-qubit states and
+// their measureQubit() collapse), the Teleportation and Superdense
+// Coding protocols built on top of it, and the Tunnel tab's real
+// Schrödinger solver (probability conservation, transmission scaling).
+// Run with:
 //   node tests/run.js
 //
-// js/core/*.js are written as plain browser globals (no module.exports),
-// by design, so this loads them into a vm sandbox instead of `require`-ing
-// them — the app files themselves stay untouched, browser-only scripts.
+// js/core/*.js and js/tabs/tunneling-tab.js are written as plain browser
+// globals (no module.exports), by design, so this loads them into a vm
+// sandbox instead of `require`-ing them — the app files themselves stay
+// untouched, browser-only scripts. tunneling-tab.js also touches
+// `document` in its DOM-facing functions, so a minimal stub goes in
+// before it loads — see the comment further down, above where it's
+// loaded — letting the real physics functions run as production code
+// rather than a parallel reimplementation that could quietly drift out
+// of sync with them.
 
 const fs = require('fs');
 const path = require('path');
@@ -23,6 +33,7 @@ function loadIntoSandbox(relPath) {
 loadIntoSandbox('js/core/complex.js');
 loadIntoSandbox('js/core/qubit.js');
 loadIntoSandbox('js/core/two-qubit.js');
+loadIntoSandbox('js/core/three-qubit.js');
 loadIntoSandbox('js/core/gates.js');
 
 // complex.js/qubit.js/gates.js declare with const/class, which (like in a
@@ -30,10 +41,54 @@ loadIntoSandbox('js/core/gates.js');
 // context but NOT as own-properties of the sandbox object — bridge them
 // out via a `var`, which (unlike const/class) does attach to the global object.
 vm.runInContext(
-  'var __exports = { C: C, Qubit: Qubit, GATES: GATES, TwoQubitState: TwoQubitState, rotationMatrix: rotationMatrix };',
+  'var __exports = { C: C, Qubit: Qubit, GATES: GATES, TwoQubitState: TwoQubitState, ThreeQubitState: ThreeQubitState, rotationMatrix: rotationMatrix };',
   sandbox
 );
-const { C, Qubit, GATES, TwoQubitState, rotationMatrix } = sandbox.__exports;
+const { C, Qubit, GATES, TwoQubitState, ThreeQubitState, rotationMatrix } = sandbox.__exports;
+
+// ─── TUNNEL SOLVER (js/tabs/tunneling-tab.js) ──────────────────────────
+// That file is UI-glue as much as physics — most of its functions read
+// slider values straight off `document` and draw to a <canvas>. Rather
+// than reimplementing the leapfrog solver here (which could silently
+// drift out of sync with the real thing), a minimal `document` stub lets
+// the actual file load and its pure physics functions (tunnelHpsi,
+// tunnelBuildBarrier, tunnelLaunchWave, tunnelStep, tunnelSplitProbs) run
+// exactly as production code does — only drawTunnel()/ensureTunnelStarted()/
+// the rAF loop, none of which these checks call, would need a real canvas.
+const tunnelSliderValues = { 'tunnel-height': '100', 'tunnel-width': '14' };
+vm.runInContext(
+  `var document = { getElementById: (id) => ({ value: ${JSON.stringify(tunnelSliderValues)}[id], textContent: '' }) };
+   var isDark = false;
+   var BLOCH_COLORS = {};`,
+  sandbox
+);
+loadIntoSandbox('js/tabs/tunneling-tab.js');
+vm.runInContext(
+  `tunnelPsiR = new Float64Array(TUNNEL_N);
+   tunnelPsiI = new Float64Array(TUNNEL_N);
+   tunnelV    = new Float64Array(TUNNEL_N);
+   tunnelHtmp = new Float64Array(TUNNEL_N);
+   var __tunnelExports = {
+     TUNNEL_N: TUNNEL_N,
+     // Mirrors what fireTunnelPacket() does in production — build the
+     // barrier AND stash it on the module-level tunnelBarrier, since
+     // tunnelSplitProbs() (like the real UI) reads that global rather
+     // than taking a parameter.
+     runBarrier: () => { tunnelBarrier = tunnelBuildBarrier(); return tunnelBarrier; },
+     tunnelLaunchWave: tunnelLaunchWave,
+     tunnelStep: tunnelStep,
+     tunnelSplitProbs: tunnelSplitProbs,
+     setSliderValues: (heightPct, widthCells) => {
+       document.getElementById = (id) => ({
+         value: id === 'tunnel-height' ? String(heightPct) : id === 'tunnel-width' ? String(widthCells) : '0',
+         textContent: ''
+       });
+     },
+     getPsi: () => ({ psiR: tunnelPsiR, psiI: tunnelPsiI })
+   };`,
+  sandbox
+);
+const { TUNNEL_N, runBarrier, tunnelLaunchWave, tunnelStep, tunnelSplitProbs, setSliderValues, getPsi } = sandbox.__tunnelExports;
 
 let passed = 0;
 function check(name, fn) {
@@ -214,6 +269,134 @@ check('TwoQubitState normalization invariant holds after any gate sequence', () 
     const total = s.prob(0) + s.prob(1) + s.prob(2) + s.prob(3);
     approxEqual(total, 1, 1e-9, `trial ${trial}`);
   }
+});
+
+// ─── THREE-QUBIT STATE / measureQubit() (Teleport) ─────────────────────
+check('ThreeQubitState.measureQubit() collapses consistently and stays normalized', () => {
+  for (let trial = 0; trial < 100; trial++) {
+    const s = new ThreeQubitState();
+    s.applySingleQubitGate(0, GATES.H.matrix);
+    s.applySingleQubitGate(1, GATES.H.matrix);
+    s.applyCNOT(1, 2);
+    const outcome = s.measureQubit(1);
+    for (let idx = 0; idx < 8; idx++) {
+      const bit = (idx >> 1) & 1;
+      if (bit !== outcome) approxEqual(s.prob(idx), 0, 1e-12, `idx ${idx} should be zeroed`);
+    }
+    const total = [0,1,2,3,4,5,6,7].reduce((a, i) => a + s.prob(i), 0);
+    approxEqual(total, 1, 1e-9, `trial ${trial} renormalized`);
+  }
+});
+
+// ─── TWO-QUBIT STATE / measureQubit() (Superdense Coding) ──────────────
+check('TwoQubitState.measureQubit() collapses consistently and stays normalized', () => {
+  for (let trial = 0; trial < 100; trial++) {
+    const s = new TwoQubitState();
+    s.applySingleQubitGate(0, GATES.H.matrix);
+    s.applyCNOT(0, 1);
+    const outcome = s.measureQubit(0);
+    for (let idx = 0; idx < 4; idx++) {
+      const bit = (idx >> 1) & 1;
+      if (bit !== outcome) approxEqual(s.prob(idx), 0, 1e-12, `idx ${idx} should be zeroed`);
+    }
+    approxEqual(s.prob(0) + s.prob(1) + s.prob(2) + s.prob(3), 1, 1e-9, `trial ${trial} renormalized`);
+  }
+});
+
+// ─── TELEPORTATION PROTOCOL (Teleport tab) ──────────────────────────────
+// Forces a specific (m0,m1) outcome by hand (test-only — production uses
+// the real random measureQubit()) so every correction branch gets
+// exercised, not just whichever one chance happens to land on.
+function forceMeasure3(state, qubitIndex, outcome) {
+  const shift = 2 - qubitIndex;
+  for (let idx = 0; idx < 8; idx++) {
+    if (((idx >> shift) & 1) !== outcome) state.amps[idx] = { r: 0, i: 0 };
+  }
+  state._normalize();
+}
+
+function runTeleport(theta, phi, m0, m1) {
+  const msg = new Qubit();
+  msg.setState(theta, phi);
+  const state = new ThreeQubitState();
+  state.amps[0] = { ...msg.alpha }; // |000>
+  state.amps[4] = { ...msg.beta };  // |100>
+  state.applySingleQubitGate(1, GATES.H.matrix);
+  state.applyCNOT(1, 2);
+  state.applyCNOT(0, 1);
+  state.applySingleQubitGate(0, GATES.H.matrix);
+  forceMeasure3(state, 0, m0);
+  forceMeasure3(state, 1, m1);
+  if (m0 === 1) state.applySingleQubitGate(2, GATES.Z.matrix);
+  if (m1 === 1) state.applySingleQubitGate(2, GATES.X.matrix);
+  return { bloch: state.getSingleQubitBloch(2), expected: msg.getBloch() };
+}
+
+check('Teleportation reproduces the original message exactly, all 4 correction branches, 40 random states', () => {
+  for (let trial = 0; trial < 40; trial++) {
+    const theta = Math.random() * Math.PI;
+    const phi = Math.random() * 2 * Math.PI;
+    for (const m0 of [0, 1]) {
+      for (const m1 of [0, 1]) {
+        const { bloch, expected } = runTeleport(theta, phi, m0, m1);
+        const dist = Math.hypot(bloch.x - expected.x, bloch.y - expected.y, bloch.z - expected.z);
+        assert.ok(dist < 1e-6, `trial ${trial} m0=${m0} m1=${m1}: distance ${dist} too large`);
+      }
+    }
+  }
+});
+
+// ─── SUPERDENSE CODING PROTOCOL ─────────────────────────────────────────
+check('Superdense coding decodes all 4 messages exactly, with probability 1', () => {
+  for (const b0 of [0, 1]) {
+    for (const b1 of [0, 1]) {
+      const state = new TwoQubitState();
+      state.applySingleQubitGate(0, GATES.H.matrix);
+      state.applyCNOT(0, 1);
+      if (b1 === 1) state.applySingleQubitGate(0, GATES.X.matrix);
+      if (b0 === 1) state.applySingleQubitGate(0, GATES.Z.matrix);
+      state.applyCNOT(0, 1);
+      state.applySingleQubitGate(0, GATES.H.matrix);
+      const expectedIdx = (b0 << 1) | b1;
+      approxEqual(state.prob(expectedIdx), 1, 1e-9, `message (${b0},${b1}) -> index ${expectedIdx}`);
+      for (let idx = 0; idx < 4; idx++) {
+        if (idx !== expectedIdx) approxEqual(state.prob(idx), 0, 1e-9, `message (${b0},${b1}) leak into index ${idx}`);
+      }
+    }
+  }
+});
+
+// ─── TUNNEL SOLVER (js/tabs/tunneling-tab.js, loaded for real above) ───
+// Backs up the "validated separately" claim in tunneling-tab.js's own
+// header comment with an actual checked-in assertion, run every time
+// instead of having been eyeballed once.
+check('Tunnel solver conserves probability to <0.3% over a full run', () => {
+  setSliderValues(100, 14); // V0 = 1.00×E, width 14 — the tab's own default
+  const barrier = runBarrier();
+  tunnelLaunchWave();
+  const { psiR, psiI } = getPsi();
+  let normBefore = 0;
+  for (let j = 0; j < TUNNEL_N; j++) normBefore += (psiR[j] ** 2 + psiI[j] ** 2);
+  for (let s = 0; s < 3200; s++) tunnelStep();
+  let normAfter = 0;
+  for (let j = 0; j < TUNNEL_N; j++) normAfter += (psiR[j] ** 2 + psiI[j] ** 2);
+  const drift = Math.abs(normAfter - normBefore) / normBefore;
+  assert.ok(drift < 0.003, `norm drifted by ${(drift * 100).toFixed(3)}%, expected <0.3%`);
+});
+
+check('Tunnel transmission probability falls as the barrier grows relative to the packet energy', () => {
+  const transmissionAt = (heightPct) => {
+    setSliderValues(heightPct, 14);
+    runBarrier();
+    tunnelLaunchWave();
+    for (let s = 0; s < 3200; s++) tunnelStep();
+    return tunnelSplitProbs().pRight;
+  };
+  const atEqualEnergy  = transmissionAt(100); // V0 = 1.00×E
+  const atHigherEnergy = transmissionAt(250); // V0 = 2.50×E
+  assert.ok(atEqualEnergy > 0.1, `expected noticeable tunneling at V0=E, got ${(atEqualEnergy * 100).toFixed(1)}%`);
+  assert.ok(atHigherEnergy < atEqualEnergy, `raising the barrier should reduce transmission: ${(atHigherEnergy*100).toFixed(2)}% vs ${(atEqualEnergy*100).toFixed(2)}%`);
+  assert.ok(atHigherEnergy < 0.02, `expected transmission near-zero at V0=2.5E, got ${(atHigherEnergy * 100).toFixed(2)}%`);
 });
 
 console.log(`\n${passed} check(s) passed.`);

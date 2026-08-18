@@ -1,17 +1,20 @@
 'use strict';
-// needs core/complex.js (C.*)
+// Depends on: core/complex.js (C.*).
 
-// |ψ⟩ = c00|00⟩ + c01|01⟩ + c10|10⟩ + c11|11⟩, stored as a flat 4-entry
-// amplitude array indexed by (qubit0 << 1) | qubit1, i.e. amps[0]=|00⟩,
-// amps[1]=|01⟩, amps[2]=|10⟩, amps[3]=|11⟩. Same normalization invariant
-// as Qubit - renormalized after every gate.
+// ─── TWO-QUBIT STATE ──────────────────────────────────────────────────
+/**
+ * A two-qubit state |ψ⟩ = c00|00⟩ + c01|01⟩ + c10|10⟩ + c11|11⟩, stored
+ * as a flat 4-entry amplitude array indexed by (qubit0 << 1) | qubit1 —
+ * i.e. amps[0]=|00⟩, amps[1]=|01⟩, amps[2]=|10⟩, amps[3]=|11⟩.
+ * Same normalization invariant as Qubit: renormalized after every gate.
+ */
 class TwoQubitState {
   constructor() {
     this.amps = [{ r: 1, i: 0 }, { r: 0, i: 0 }, { r: 0, i: 0 }, { r: 0, i: 0 }];
   }
 
-  // applies a single-qubit 2x2 gate to just one of the two qubits
-  // (matrix⊗I or I⊗matrix), leaving the other untouched
+  /** Applies a single-qubit 2x2 gate to just one of the two qubits
+   *  (i.e. matrix⊗I or I⊗matrix), leaving the other untouched. */
   applySingleQubitGate(qubitIndex, matrix) {
     const next = [null, null, null, null];
     for (let q0 = 0; q0 < 2; q0++) {
@@ -33,9 +36,10 @@ class TwoQubitState {
     this._normalize();
   }
 
-  // flips target's bit whenever control's bit is 1. CNOT is just a
-  // permutation of basis states, no amplitude mixing, so we remap each
-  // amplitude to its flipped index instead of doing a matrix multiply
+  /** Controlled-NOT: flips `target`'s bit whenever `control`'s bit is 1.
+   *  A CNOT is just a permutation of basis states — no amplitude mixing —
+   *  so this remaps each amplitude to its flipped index rather than doing
+   *  a matrix multiply. */
   applyCNOT(control, target) {
     const next = [null, null, null, null];
     for (let idx = 0; idx < 4; idx++) {
@@ -56,16 +60,42 @@ class TwoQubitState {
 
   prob(idx) { return C.mag(this.amps[idx]) ** 2; }
 
-  // reduced single-qubit Bloch vector for qubitIndex, found by tracing out
-  // the other qubit: rho00/rho11 are just the summed probabilities of that
-  // qubit reading 0/1 regardless of the other qubit's value, rho01 is the
-  // coherence term (Σ amp(this=0,other=s) · conj(amp(this=1,other=s))) - same
-  // role alpha·conj(beta) plays in Qubit.getBloch(), just summed over the
-  // traced-out qubit's two possibilities. when the two qubits are entangled
-  // this vector shrinks below the sphere's surface (dead-center for a
-  // maximal Bell pair) instead of sitting on it - that shrinkage IS the
-  // entanglement, a genuinely mixed single-qubit state even though the
-  // two-qubit state as a whole is pure.
+  /** Projectively measures `qubitIndex` in the computational basis — same
+   *  algorithm as ThreeQubitState.measureQubit(), one fewer bit threaded
+   *  through the index math: sums the Born-rule probability of that bit
+   *  reading 0, draws an outcome weighted by it, zeroes every amplitude
+   *  inconsistent with the outcome, and renormalizes. Used by the
+   *  Superdense Coding tab to read Bob's two decoded bits off a state
+   *  that (for a correctly-run protocol) is already an exact eigenstate
+   *  of this measurement — so the "random" draw always lands on the
+   *  same outcome with probability 1, but goes through a genuine
+   *  measurement rather than a shortcut read of the amplitudes. */
+  measureQubit(qubitIndex) {
+    const shift = 1 - qubitIndex;
+    let p0 = 0;
+    for (let idx = 0; idx < 4; idx++) {
+      if (((idx >> shift) & 1) === 0) p0 += this.prob(idx);
+    }
+    const outcome = Math.random() < p0 ? 0 : 1;
+    for (let idx = 0; idx < 4; idx++) {
+      if (((idx >> shift) & 1) !== outcome) this.amps[idx] = { r: 0, i: 0 };
+    }
+    this._normalize();
+    return outcome;
+  }
+
+  /**
+   * Reduced single-qubit Bloch vector for `qubitIndex`, found by tracing
+   * out the other qubit: rho00/rho11 are just the summed probabilities
+   * of that qubit reading 0/1 regardless of the other qubit's value, and
+   * rho01 is the coherence term (Σ amp(this=0,other=s) · conj(amp(this=1,other=s))) —
+   * the same rho01 role alpha·conj(beta) plays in Qubit.getBloch(), just
+   * summed over the traced-out qubit's two possibilities. When the two
+   * qubits are entangled, this vector shrinks below the sphere's surface
+   * (down to dead-center for a maximal Bell pair) rather than sitting on
+   * it — that shrinkage IS the entanglement, visible as a genuinely mixed
+   * single-qubit state even though the two-qubit state as a whole is pure.
+   */
   getSingleQubitBloch(qubitIndex) {
     let rho00 = 0, rho11 = 0, rho01 = { r: 0, i: 0 };
     for (let s = 0; s < 2; s++) {

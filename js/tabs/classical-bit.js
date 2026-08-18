@@ -2,6 +2,9 @@
 // Depends on: app.js state (classicalBit).
 // initClassicalBit() is called from app.js's DOMContentLoaded handler.
 
+// ═══════════════════════════════════════════════════════════════════
+// CLASSICAL BIT
+// ═══════════════════════════════════════════════════════════════════
 function initClassicalBit() {
   const toggle = document.getElementById('bit-toggle');
   toggle.addEventListener('change', () => {
@@ -15,13 +18,15 @@ function initClassicalBit() {
 const CLASSICAL_TRYME_FLIPS = 5;
 const CLASSICAL_TRYME_INTERVAL_MS = 2600; // bumped from 1400 alongside the detailed per-step explanation below — needs real reading time, not just a glance at the flip
 
-// auto-flips the bit CLASSICAL_TRYME_FLIPS times then stops - passive demo
-// of "always 0 or 1, never both" instead of making the learner keep
-// clicking. reuses runTryMeSequence() from qubit-tab.js (fine even though
-// it's defined in another <script> tag - plain scripts share one global
-// scope, and this only ever runs from a click handler, well after
-// everything's loaded) so it gets the re-entrancy guard, step explainer,
-// and history trail for free, same as the qubit Try Me runs.
+/** Auto-flips the bit back and forth CLASSICAL_TRYME_FLIPS times, then
+ *  stops on its own — a passive demo of "always 0 or 1, never both"
+ *  rather than something the learner has to keep clicking. Built on the
+ *  shared runTryMeSequence() driver (qubit-tab.js — plain <script> tags
+ *  share one global scope, and it's only ever called from inside a click
+ *  handler, long after every script has loaded, so load order doesn't
+ *  matter) rather than its own interval bookkeeping, so it gets the same
+ *  disabled-button re-entrancy guard plus a step explainer + history
+ *  trail for free, matching the One/Two Qubit Try Me runs. */
 function runClassicalTryMe() {
   const toggle = document.getElementById('bit-toggle');
   const states = [];

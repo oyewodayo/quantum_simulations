@@ -1,7 +1,8 @@
-/* Entangle tab (js/tabs/entanglement-tab.js) - the two-coin layout, the
-   entangle/measure link indicator, and the trial-stats readout. needs
-   ../base.css, ../components.css (.card, .muted-text), ../tabs/measure.css
-   (@keyframes measure-result-pop, reused by .entangle-result.collapsing) */
+/* Entangle tab (js/tabs/entanglement-tab.js) — the two-coin layout, the
+   entangle/measure link indicator, and the trial-stats readout.
+   Depends on: ../base.css, ../components.css (.card, .muted-text),
+   ../tabs/measure.css (@keyframes measure-result-pop, reused by
+   .entangle-result.collapsing below). */
 
 .entangle-layout {
   max-width: 680px;
@@ -28,11 +29,13 @@
   border-bottom: 1px solid var(--border);
 }
 
-/* stylized world map behind .coins-row (static SVG, see index.html) so
-   the two coins read as sitting at distant pinned locations rather than
-   two icons side by side - backs up "measuring one instantly determines
-   the other, no matter how far apart" (also in the relativity card
-   further down this tab) */
+/* ─── MAP ─────────────────────────────────────────────── */
+/* Stylized world map sitting behind .coins-row (SVG, static, see
+   index.html) so the two gold coins read as sitting at two distant,
+   pinned locations rather than just two icons side by side — visual
+   backing for "measuring one instantly determines the other, no matter
+   how far apart" (also spelled out in the relativity card further down
+   this tab). */
 .entangle-map {
   position: relative;
   border-radius: 12px;
@@ -143,9 +146,9 @@
   .entangle-result.collapsing { animation: none; }
 }
 
-/* reused on any canvas at the moment it settles to a definite outcome -
-   the entangled coins here, but could apply wherever else a canvas
-   "resolves" */
+/* Reused on any canvas at the moment it settles to a definite outcome
+   (the entangled coins here; could apply anywhere else a canvas
+   "resolves"). */
 @keyframes canvas-collapse-pulse {
   0%   { transform: scale(1); filter: brightness(1); }
   35%  { transform: scale(1.12); filter: brightness(1.35); }
@@ -166,10 +169,10 @@ canvas.collapsing { animation: canvas-collapse-pulse 0.45s ease-out; }
   .coins-row { flex-wrap: wrap; justify-content: center; }
   .entangle-mid { flex-direction: row; min-width: auto; }
   .entangle-note { display: none; }
-  /* the map's viewBox stretches to fill .entangle-map's box
-     (preserveAspectRatio="none") - once the coins wrap to two rows and
-     the box grows tall the map would visibly distort, so it just steps
-     aside instead of trying to reflow with the coins */
+  /* The map's viewBox stretches to fill .entangle-map's own box
+     (preserveAspectRatio="none") — once the coins wrap to two rows and
+     that box grows tall, the map would visibly distort, so it steps
+     aside here rather than trying to reflow with the coins. */
   .entangle-map { padding: 0; border-radius: 0; }
   .entangle-map-bg, .entangle-map-caption { display: none; }
 }
