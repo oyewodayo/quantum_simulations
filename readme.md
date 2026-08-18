@@ -1,235 +1,100 @@
 # Quantum Explorer · CERN
 
-An interactive quantum computing simulation platform that visualizes quantum mechanics concepts through intuitive comparisons with classical systems. Built with pure JavaScript, HTML, and CSS.
+A browser-based quantum computing simulator, built so that "trust me, it's a unitary matrix" doesn't have to be the whole intro to quantum computing. Fifteen simulation modules — a single qubit on a Bloch sphere, multi-qubit circuits, entanglement, tunnelling, teleportation, superdense coding, noise — plus reference tabs for the concepts and math underneath them, each simulation paired with the equivalent classical picture so you can actually see where the two diverge.
 
-## Overview
+No backend, no build step, no npm install. It's plain HTML/CSS/JS that runs straight off the filesystem.
 
-Quantum Explorer transforms complex quantum mechanics into interactive visual experiences. From qubit superposition and quantum gates to entanglement and wave interference, this platform makes quantum concepts tangible through real-time visualization and hands-on experimentation.
-
-## Features
-
-### Learning Roadmap
-A "Simulations / Roadmap" switch in the header toggles between the interactive simulator (below) and a lightweight learning tracker: **Lessons** (a short write-up per simulation, with a "Try it" button that jumps straight into that tab), **Progress Tracking** (a completed-lessons bar and best quiz score), and a **Quiz** covering the app's core concepts. Progress is stored locally in the browser — no account needed.
-
-### Qubit Explorer
-- **Classical vs Quantum Comparison**: Side-by-side interaction with classical bits and qubits
-- **Bloch Sphere Visualization**: Real-time 3D state representation with smooth animations
-- **State Vector Display**: Visualize probability amplitudes and superposition
-- **Preset States**: Quick-switch between |0⟩, |1⟩, |+⟩, |-⟩, |i⟩, |-i⟩
-
-### Quantum Gates
-- **All Standard Gates**: H, X, Y, Z, S, T gates with visual feedback
-- **Rotation Gates**: Parametrized Rx/Ry/Rz with a live angle slider, alongside the fixed gate set
-- **Gate Matrix Display**: See the mathematical representation of each operation
-- **Applied Sequence History**: Track the gate sequence applied to the qubit
-- **Live State Updates**: Watch the Bloch sphere rotate in real-time
-
-### Quantum Circuit Builder
-- **Drag-and-Drop Gate Palette**: Build custom quantum circuits
-- **Visual Circuit Representation**: See gates arranged along a quantum wire
-- **Circuit Execution**: Run the circuit step-by-step with animations
-- **State Evolution**: Track the qubit's state as it moves through the circuit
-- **2-Qubit Mode**: Switch to a real two-qubit circuit with a per-qubit gate palette and CNOT — build H + CNOT yourself and watch entanglement emerge in the |00⟩/|01⟩/|10⟩/|11⟩ probability bars
-- **Shareable Links**: Copy a link that reproduces the current qubit state or circuit for someone else to open
-
-### Measurement & Statistics
-- **Single Measurement**: Collapse superposition and observe the result
-- **Batch Measurement**: Run 10, 100, or 1000 measurements to see statistical convergence
-- **Histogram Visualization**: Watch probability distribution emerge from repeated measurements
-- **Quantum vs Classical**: Compare deterministic vs probabilistic outcomes
-
-### Entanglement
-- **Bell State Simulation**: Visualize the (|00⟩ + |11⟩)/√2 entangled state
-- **Instantaneous Correlation**: Measure one qubit and see the other collapse simultaneously
-- **Statistics Tracking**: Observe the perfect correlation between entangled qubits
-- **Interactive Coins**: Visual representation of qubit states with flip animations
-
-### Wave Phenomena
-- **Quantum Tunneling**: Watch wave packets pass through classically forbidden barriers
-- **Real-Time Schrödinger Solver**: Physics-based simulation, not just animation
-- **Wave Interference**: Double-slit experiment with particle-by-particle accumulation
-- **Which-Path Detection**: See interference disappear when path information is available
-
-### State Vector Visualization
-- **Classical vs Quantum State Space**: Visual comparison of discrete vs continuous states
-- **2D Complex Plane**: See α|0⟩ + β|1⟩ represented geometrically
-- **Probability Bars**: Real-time amplitude visualization
-
-## Getting Started
-
-### Prerequisites
-- Modern web browser (Chrome, Firefox, Edge, Safari)
-- No additional dependencies or installations required
-
-### Installation
-1. Clone the repository:
 ```bash
-git clone [repository-url]
-cd quantum-explorer
+git clone git@github.com:oyewodayo/quantum_simulations.git
+cd quantum_simulations
+open index.html   # or just double-click it
 ```
 
-2. Open `index.html` in your browser:
-```bash
-# Or simply double-click the file
-open index.html
-```
+That's it. Everything runs client-side.
 
-### File Structure
+## What's actually in here
+
+**Bits & Qubits.** The classical-vs-quantum comparison the rest of the app builds on — a bit next to a qubit, θ/φ sliders driving a live Bloch sphere, and one-, two-, and three-qubit modes so superposition doesn't stay a one-qubit party trick.
+
+**Gates & Circuits.** All the standard single-qubit gates (H, X, Y, Z, S, T) plus parametrized Rx/Ry/Rz, a classical logic-gate equivalent for comparison, and two circuit builders — a simple checkpoint-wire for one qubit, and a grid-based builder for two and three qubits with CNOT. There's also a classical half-adder built the reversible way (X, CNOT, Toffoli) sitting right next to its normal XOR/AND version, same truth table, built entirely differently.
+
+**Measurement, Entanglement, Bell States.** Collapse a superposition once, or run a thousand measurements and watch the histogram converge on the Born rule. The entanglement tab correlates two qubits and lets you feel how measuring one instantly pins down the other. The Bell States tab walks through all four Bell states with an actual circuit animation, not a canned GIF.
+
+**Wave mechanics.** Tunnelling and double-slit interference are both genuinely simulated — the tunnelling tab integrates the time-dependent Schrödinger equation frame by frame (leapfrog scheme), and interference is real two-source coherent superposition sampled per pixel, not a pre-baked pattern. Turn on which-path detection and watch the fringes actually vanish.
+
+**Beam Splitter & Stern–Gerlach.** Single photons and single atoms hitting a detector one at a time, each outcome genuinely random under the Born rule, accumulating into a pattern you can watch build up.
+
+**Teleportation & Superdense Coding.** The two protocols that spend a shared entangled pair to move information — teleportation sends a qubit's state using two classical bits, superdense coding does the reverse. Both built from the actual protocol steps (entangle, measure, correct), not scripted to just show the right answer.
+
+**Noise.** The one tab where qubits aren't perfectly isolated — a T₁/T₂ relaxation model (with T₂ capped at 2T₁, enforced in the running code, not just mentioned in a tooltip) showing how a real qubit decays toward a mixed state over time.
+
+**Important Concepts & Maths Concept.** A searchable glossary of ~70 terms for when you just need a definition, and a standalone reference for the underlying math — complex numbers, vectors, matrices, state vectors, Dirac notation, tensor products — kept separate from the simulations so it doesn't get in the way of people who just want to click things.
+
+## Home / Roadmap mode
+
+Flip the header switch from the simulator to Home and you get a mind-map of the whole app instead — click a node, get a short lesson with a "try it" link straight into that tab, and a quiz at the end covering the core ideas. Progress is tracked with a completed-lessons bar and your best quiz score, stored in `localStorage`. No login, and if you clear your browser data it just starts over.
+
+## Small things that add up
+
+- **Three languages** — English, French, Spanish, switchable from the header dropdown without a reload.
+- **Light/dark theme**, saved across visits, applied before first paint so there's no flash of the wrong theme.
+- **A first-run guided tour** that shows up once and then leaves you alone.
+- **Shareable links** — the Circuit and Qubit tabs can copy a URL that reproduces the exact state you're looking at, so you can send someone a specific example instead of describing it.
+
+## How it's laid out
+
 ```
-quantum-explorer/
-├── index.html                  # Main HTML file with all tabs and UI
+quantum_simulations/
+├── index.html
 ├── css/
-│   └── style.css               # Complete styling with dark/light theme
-└── js/
-    ├── core/                    # Shared engine — theme, math, gates, renderer
-    │   ├── tab-registry.js      # registerTab(): per-tab onEnter/onLeave hooks
-    │   ├── theme.js             # Dark/light theme state + Bloch color refresh
-    │   ├── complex.js           # Complex number arithmetic
-    │   ├── qubit.js              # Qubit class (state vector, gate application)
-    │   ├── two-qubit.js          # TwoQubitState class (4-amplitude state, CNOT)
-    │   ├── dom-utils.js         # Shared UI helpers (explainer text, share links, tooltips)
-    │   ├── gates.js              # H, X, Y, Z, S, T + Rx/Ry/Rz rotation gates
-    │   ├── bloch-renderer.js    # 3D Bloch sphere canvas renderer (incl. drag-to-set + hover tooltips)
-    │   └── utils.js              # Small generic helpers (delay)
-    ├── tabs/                     # One file per tab, each self-contained
-    │   ├── classical-bit.js
-    │   ├── qubit-tab.js
-    │   ├── gates-tab.js
-    │   ├── circuit-tab.js
-    │   ├── circuit2-tab.js       # 2-qubit circuit mode (CNOT, entanglement)
-    │   ├── measure-tab.js
-    │   ├── statevector-tab.js
-    │   ├── entanglement-tab.js
-    │   ├── tunneling-tab.js     # Real time-dependent Schrödinger solver
-    │   └── interference-tab.js # Double-slit wave + rejection-sampled hits
-    ├── roadmap.js                 # Roadmap mode: lessons, progress tracking, quiz
-    ├── tour.js                   # First-run guided tour (shown once, via localStorage)
-    └── app.js                    # App state + DOMContentLoaded init (loads last)
+│   ├── base.css              theme tokens + reset, loads first
+│   ├── layout.css            header, sidebar dock, footer
+│   ├── roadmap.css           the Home / mind-map view
+│   ├── components.css        shared widgets used across multiple tabs
+│   ├── bloch.css             Bloch sphere wrapper + hover tooltip
+│   ├── tour.css               the guided-tour popover
+│   ├── responsive.css        breakpoint overrides, loads last
+│   └── tabs/                 one stylesheet per simulation tab
+├── js/
+│   ├── core/                 the actual engine everything else sits on
+│   │   ├── complex.js          complex-number arithmetic
+│   │   ├── qubit.js             single-qubit state + Bloch conversion
+│   │   ├── two-qubit.js         2-qubit state, CNOT, partial trace
+│   │   ├── three-qubit.js       3-qubit state, CNOT/Toffoli, projective measurement
+│   │   ├── gates.js             the unitary matrices (H, X, Y, Z, S, T, rotations)
+│   │   ├── bloch-renderer.js   shared 3D Bloch sphere canvas renderer
+│   │   ├── tab-registry.js      registerTab(): per-tab enter/leave hooks
+│   │   ├── theme.js             light/dark state
+│   │   ├── i18n.js              translation lookup + DOM binding
+│   │   ├── dom-utils.js         shared UI bits (tooltips, share links, modals)
+│   │   └── utils.js             small generic helpers (delay, etc.)
+│   ├── locales/               en.js, fr.js, es.js
+│   ├── tabs/                  one file per tab, 20 in total
+│   ├── roadmap.js             Home mode: mind-map, lessons, quiz, progress
+│   ├── tour.js                first-run tour
+│   └── app.js                 wires everything together, loads last
+└── tests/
+    └── run.js                 node tests/run.js — no dependencies
 ```
 
-All scripts are plain classic `<script>` tags (no bundler, no ES modules) loaded in dependency order, so the app keeps working when `index.html` is opened directly via `file://`.
+Every script is a plain `<script>` tag loaded in dependency order — no bundler, no modules — so the whole thing still works if you open `index.html` straight from disk with `file://`.
 
-### Tests
+## Running the tests
 
-`tests/run.js` is a small, dependency-free Node script that checks the quantum math core (complex arithmetic, `Qubit` normalization, and gate unitarity) without a test framework. Run it with:
 ```bash
 node tests/run.js
 ```
 
-## How It Works
-
-### Quantum Engine
-The simulation uses a complete quantum state vector representation:
-- Qubit state: |ψ⟩ = α|0⟩ + β|1⟩, where |α|² + |β|² = 1
-- Complex arithmetic for accurate gate operations
-- Real-time Bloch sphere rendering with smooth animations
-- Physics-based simulations (Schrödinger equation for tunneling)
-
-### Rendering Pipeline
-- **Bloch Renderer**: 3D projection with perspective and depth cues
-- **Theme-Aware**: Automatic dark/light mode adaptation
-- **Smooth Animations**: Interpolated transitions between states
-- **Canvas-Based**: GPU-accelerated graphics for performance
-
-### User Experience
-- **Tab-Based Navigation**: Organizes concepts into clear sections
-- **Responsive Design**: Works on desktop and tablet
-- **Interactive Controls**: Sliders, buttons, and click interactions
-- **Explanatory Text**: Each interaction provides educational context
-
-## Interactive Examples
-
-### Explore Superposition
-1. Open the **Qubit** tab
-2. Drag the θ and φ sliders
-3. Watch the Bloch sphere arrow move to any point
-4. See the probability bars update in real-time
-
-### Build a Circuit
-1. Go to the **Circuit** tab
-2. Click gates in the palette to add them
-3. Press **Run** to execute
-4. Watch the state evolve step-by-step
-
-### Test Tunneling
-1. Navigate to the **Tunnel** tab
-2. Adjust barrier height (V₀) and width
-3. Watch the wave packet approach
-4. See the transmitted probability on the right
-
-### Observe Interference
-1. Open the **Interference** tab
-2. Choose **Double Slit** mode
-3. Watch individual dots accumulate
-4. Switch to **Which-Path** to see the pattern vanish
-
-## Theme
-
-The interface supports both light and dark themes:
-- **Light Theme**: Clean, bright, ideal for presentations
-- **Dark Theme**: Immersive, reduces eye strain
-- **Automatic Toggle**: Click the moon/sun icon in the header
-
-## Technical Details
-
-### Core Technologies
-- **HTML5**: Semantic structure with custom data attributes
-- **CSS3**: CSS custom properties for theming, flexbox/grid layout
-- **Vanilla JavaScript**: No external libraries or frameworks
-- **Canvas API**: All visualizations rendered on canvas elements
-
-### Quantum Simulation
-- **State Representation**: Complex numbers with real/imaginary parts
-- **Gate Operations**: Matrix multiplication on 2D complex vectors
-- **Bloch Sphere**: Spherical coordinates with 3D projection
-- **Schrödinger Equation**: Finite-difference method for tunneling
-- **Rejection Sampling**: Accurate interference pattern generation
-
-### Performance Optimizations
-- **Animation Throttling**: Only active tabs consume resources
-- **Canvas Efficient**: Pixel manipulation for wave rendering
-- **Minimal DOM Updates**: Batched state updates
-
-## Educational Value
-
-This tool is designed for:
-- **Students**: Learn quantum computing concepts visually
-- **Educators**: Demonstrate quantum phenomena in lectures
-- **Enthusiasts**: Explore quantum mechanics interactively
-- **Researchers**: Quick prototyping of quantum concepts
-
-### Key Concepts Covered
-- Superposition and basis states
-- Unitary transformations and quantum gates
-- Measurement and wavefunction collapse
-- Entanglement and non-locality
-- Quantum tunneling and barrier penetration
-- Wave interference and the double-slit experiment
-- The measurement problem in quantum mechanics
+It's a dependency-free Node script, currently 23 checks covering complex arithmetic, qubit/2-qubit/3-qubit normalization, gate unitarity, teleportation and superdense coding round-tripping correctly across random states, and the tunnelling solver's probability conservation and transmission scaling. The tunnelling checks load `tunneling-tab.js` directly into a stubbed-out document rather than re-deriving the solver separately, so a change to the shipped code can't silently drift from what's tested.
 
 ## Contributing
 
-Contributions are welcome! Here's how you can help:
-
-1. **Report Bugs**: Open an issue with detailed steps
-2. **Suggest Features**: Share ideas for new visualizations
-3. **Improve Documentation**: Clarify concepts or add examples
-4. **Enhance Code**: Optimize performance or fix issues
-
-### Development Guidelines
-- Follow existing code style and conventions
-- Add comments for complex logic
-- Test across different browsers
-- Update README for significant changes
+If something's wrong physics-wise, or you find a browser it breaks on, open an issue. PRs are welcome — try to match the existing per-tab file structure (one file in `js/tabs/`, one stylesheet in `css/tabs/`, registered in `js/core/tab-registry.js`) rather than bolting new logic onto an existing tab.
 
 ## License
 
-## Explore More
-
-- **Quantum Computing**: Learn about qubits, gates, and algorithms
-- **CERN**: Discover the world's leading particle physics laboratory
-- **Quantum Education**: Resources for learning quantum mechanics
+No license file yet. If you want to reuse or adapt any of this, open an issue or just reach out.
 
 ---
 
-**Experience quantum mechanics like never before — interact, visualize, and understand.**
+Built by [Temidayo Oyewo](https://github.com/oyewodayo).
