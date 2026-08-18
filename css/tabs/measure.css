@@ -1,6 +1,6 @@
-/* Measure tab (js/tabs/measure-tab.js) - the vertical probability bars,
+/* Measure tab (js/tabs/measure-tab.js) — the vertical probability bars,
    Measure button, collapse-pop result readout, and the repeated-trials
-   histogram. needs ../base.css, ../components.css */
+   histogram. Depends on: ../base.css, ../components.css. */
 
 .measure-layout {
   max-width: 720px;
@@ -28,10 +28,10 @@
   border-radius: 4px 4px 0 0;
   transition: height 0.38s cubic-bezier(0.4,0,0.2,1);
 }
-/* one-shot flash tying an abstract probability bar to the actual
-   outcome it produced - the bar's height deliberately doesn't move (it
-   reflects the fixed odds, not "the answer"), so this glow is the only
-   visual link between the two */
+/* One-shot flash tying an abstract probability bar to the actual outcome
+   it produced — the bar's height deliberately doesn't move (it reflects
+   the prepared state's fixed odds, not "the answer"), so this glow is
+   the only visual link between the two. */
 @keyframes vbar-collapse-flash {
   0%   { box-shadow: 0 0 0 0 currentColor; }
   40%  { box-shadow: 0 0 22px 6px currentColor; }
@@ -42,9 +42,9 @@
   .vbar-track.collapsing { animation: none; }
 }
 
-/* rose accent - MEASURE is the one decisive, irreversible action in
-   this app, so it gets its own bold button family instead of sharing
-   run/secondary's colors */
+/* item 4 — rose --action-measure accent: MEASURE is the one decisive,
+   irreversible action in this app, so it gets the boldest/most distinct
+   button family rather than sharing .btn-run's/.btn-secondary's colors. */
 .btn-measure {
   background: var(--action-measure-dim);
   border: 1px solid var(--action-measure);
@@ -71,8 +71,8 @@
   display: flex; align-items: center; justify-content: center;
   transition: opacity 0.22s;
 }
-/* the "collapse" moment - a snappy overshoot pop instead of a plain
-   fade so the outcome reads as landing decisively */
+/* The "collapse" moment — a snappy overshoot pop rather than a plain
+   fade, so the definite outcome reads as landing decisively. */
 @keyframes measure-result-pop {
   0%   { opacity: 0; transform: scale(0.5) rotate(-6deg); }
   55%  { opacity: 1; transform: scale(1.28) rotate(3deg); }

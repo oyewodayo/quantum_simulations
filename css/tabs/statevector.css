@@ -1,6 +1,6 @@
-/* state-vector comparison widget (js/tabs/statevector-tab.js), embedded
-   in Maths Concept's State Vector section - just the canvas frame, the
-   actual drawing happens in JS. needs ../base.css */
+/* State-vector comparison widget (js/tabs/statevector-tab.js), embedded
+   in Maths Concept's State Vector section — just the canvas frame; the
+   actual vector drawing is done in JS. Depends on: ../base.css. */
 
 .sv-canvas-wrap {
   background: var(--surface);

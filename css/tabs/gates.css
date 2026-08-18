@@ -1,14 +1,16 @@
-/* Gates tab (js/tabs/gates-tab.js) - the gate button grid, the always-
+/* Gates tab (js/tabs/gates-tab.js) — the gate button grid, the always-
    visible gate reference list, the applied-matrix display, and the gate
-   history trail. needs ../base.css, ../components.css (shared
-   .layout-two/.gates-layout, .bloch-wrap via ../bloch.css) */
+   history trail. Depends on: ../base.css, ../components.css (shared
+   .layout-two/.gates-layout, .bloch-wrap via ../bloch.css). */
 
-/* left column of .gates-layout - sphere plus the two cards reporting on
-   its current state (explainer + history), grouped so this column's
-   height roughly matches the right column's controls + reference cards
-   instead of leaving a void under a lone sphere card */
+/* Left column of .gates-layout — the sphere plus the two cards that
+   report on its current state (explainer + history), grouped together
+   so this column's height roughly matches the right column's gate
+   controls + reference cards instead of leaving a void under a lone
+   sphere card (see index.html's gates-quantum-panel). */
 .gates-left-panel { display: flex; flex-direction: column; gap: 10px; }
 
+/* ─── GATE BUTTONS ───────────────────────────────────── */
 .gate-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -24,7 +26,7 @@
   font-size: var(--text-base);
   font-weight: var(--fw-medium);
   transition: transform 0.11s, box-shadow 0.11s;
-  background: var(--surface2);
+  background: var(--surface2) var(--sheen-metal);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -33,9 +35,10 @@
 .gate-btn:hover { transform: scale(1.05); box-shadow: 0 0 10px color-mix(in srgb, currentColor 40%, transparent); }
 .gate-btn:active { transform: scale(0.97); }
 
-/* brief tactile confirmation that a gate was applied - synced with a
-   matching pulse on the sphere card (.bloch-wrap.pulsing in
-   ../bloch.css) so the click and the rotation read as one action */
+/* Brief tactile confirmation that a gate was actually applied — synced
+   with a matching pulse on the Bloch sphere card (.bloch-wrap.pulsing
+   in ../bloch.css) so the click and the resulting rotation read as one
+   action. */
 @keyframes gate-btn-pulse {
   0%   { transform: scale(1); }
   35%  { transform: scale(1.14); box-shadow: 0 0 26px 2px currentColor; }
@@ -53,7 +56,7 @@
   letter-spacing: 0.01em;
 }
 
-/* gate reference - formal names, always visible not hover-only */
+/* ─── GATE REFERENCE (formal names — always visible, not hover-only) ── */
 .gate-reference-list {
   display: flex;
   flex-direction: column;
@@ -76,6 +79,7 @@
 .gate-reference-formal { color: var(--text); }
 .gate-reference-nick { color: var(--text2); font-size: var(--text-sm); white-space: nowrap; }
 
+/* ─── MATRIX ─────────────────────────────────────────── */
 .matrix-display {
   min-height: 64px;
   display: flex;
@@ -113,4 +117,4 @@
 .matrix-cell { text-align: center; }
 
 /* .history-row/.hist-tag ("Applied Sequence" trail) moved to
-   ../components.css - shared by every tab's Try Me now, not gates-only */
+   ../components.css — now shared by every tab's Try Me, not gates-only. */

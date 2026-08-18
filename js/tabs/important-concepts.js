@@ -1,19 +1,24 @@
 'use strict';
-// mostly a static glossary page - the only interactive bits are the live
-// search box that filters as you type (initImportantConceptsSearch) and
-// tapping a card to zoom it into a centered overlay, closed via its own
-// button, Esc, or backdrop click (initImportantConceptsZoom/
-// openConceptZoom). the zoom overlay mirrors showConfirmModal's pattern in
-// dom-utils.js (fixed backdrop, Esc/backdrop close, fresh element per open
-// rather than a reused hidden one). no registerTab() here since there's no
-// simulation state to enter/leave, just these two handlers.
+// Important Concepts tab — the only interactive behavior on an otherwise
+// static glossary page: a live search box that filters the glossary
+// grids as you type (initImportantConceptsSearch()), and tapping a card
+// to zoom it into a centered overlay for a bigger, easier read, dismissed
+// via its own close button, Esc, or a backdrop click
+// (initImportantConceptsZoom()/openConceptZoom()). The zoom overlay
+// depends on: core/dom-utils.js's showConfirmModal for the sibling
+// pattern it mirrors (fixed backdrop, Esc/backdrop-click to close, one
+// fresh element per open rather than a reused hidden one).
+// No registerTab() entry — this tab carries no simulation state to
+// enter/leave, just these two delegated/one-time handlers.
 
-// filters by re-reading each card's live textContent on every keystroke -
-// already translated by i18n's applyTranslations() so no separate search
-// index needed, just an onLangChange() re-run below to stay correct if you
-// switch language mid-search. a group's label + grid hide together once
-// every card in it gets filtered out, so you don't get an empty heading
-// floating above nothing.
+/** Filters the glossary grids by re-reading each card's own live
+ *  textContent on every keystroke — already-translated by i18n.js's
+ *  applyTranslations(), so this needs no separate per-language search
+ *  index and one onLangChange() re-run (below) keeps it correct across a
+ *  language switch mid-search. A group's .section-label and
+ *  .intro-glossary-grid are hidden together whenever every card inside
+ *  it is filtered out, rather than leaving an empty heading floating
+ *  above nothing. */
 function initImportantConceptsSearch() {
   const input = document.getElementById('concept-search');
   if (!input) return;
@@ -47,13 +52,15 @@ function initImportantConceptsSearch() {
 
   input.addEventListener('input', applyFilter);
   clearBtn.addEventListener('click', () => { input.value = ''; applyFilter(); input.focus(); });
-  // re-render the "no results" message so a language switch mid-search
-  // doesn't leave stale English text sitting there
+  // Re-render the "no results" message (and, in principle, re-filter) so
+  // switching language mid-search never leaves stale English text behind
+  // — see core/i18n.js's onLangChange().
   onLangChange(applyFilter);
 }
 
-// one delegated click handler on the whole section instead of one per
-// card, so it still works no matter how many cards get added later
+/** Wires a single delegated click handler on the whole Important Concepts
+ *  section rather than one listener per card, so it keeps working
+ *  regardless of how many glossary cards get added later. */
 function initImportantConceptsZoom() {
   const section = document.getElementById('tab-important-concepts');
   if (!section) return;
@@ -65,12 +72,16 @@ function initImportantConceptsZoom() {
 
 let activeConceptZoom = null; // { close } while a zoom overlay is open, else null
 
-// FLIP transition: build the overlay at its real centered size first,
-// instantly transform it (translate+scale) to sit exactly over the
-// clicked card, then animate that transform back to identity - so frame
-// one looks like the grid card and it visibly grows into the overlay
-// instead of just fading in. closing plays the same transform forward so
-// it shrinks back into the same spot.
+/**
+ * FLIP transition: the overlay card is built at its real (bigger,
+ * centered) size first, then instantly transformed (translate+scale) to
+ * exactly overlay the clicked card's on-screen position/size, then that
+ * transform is animated back to identity — so the very first frame looks
+ * identical to the grid card sitting where it was, and it visibly grows
+ * from there into the centered overlay, rather than just fading in
+ * generically. Closing plays the same transform forward instead of
+ * reversed-from-scratch, so it shrinks back into the same card.
+ */
 function openConceptZoom(card) {
   if (activeConceptZoom) return; // one overlay at a time
   const startRect = card.getBoundingClientRect();

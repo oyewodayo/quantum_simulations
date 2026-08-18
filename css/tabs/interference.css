@@ -1,8 +1,9 @@
-/* Interference tab (js/tabs/interference-tab.js) - the ripple canvas +
-   detector screen layout. the shared mode-grid control this tab uses
-   (Double/Single/Which-path) lives in ../components.css, not here,
-   since Circuits/Bits/Gates/StateVector reuse the same
-   .mode-grid/.mode-btn classes. needs ../base.css, ../components.css */
+/* Interference tab (js/tabs/interference-tab.js) — the ripple canvas +
+   detector screen layout. The shared segmented mode-grid control this
+   tab also uses (Double/Single/Which-path) lives in ../components.css,
+   not here, since Circuits/Bits/Gates/StateVector reuse the exact same
+   .mode-grid/.mode-btn classes. Depends on: ../base.css,
+   ../components.css. */
 
 .interference-layout {
   max-width: 960px;
@@ -35,11 +36,11 @@
   background: var(--bg);
 }
 
-/* scales down visually on narrow screens (same pattern as #tunnel-canvas)
-   without touching the canvas's actual drawing resolution (360x260, set
-   via width/height attrs in index.html, read directly by
-   interference-tab.js) - sim keeps full internal fidelity, only the
-   on-screen size shrinks */
+/* Scales down visually on narrow screens (same pattern as #tunnel-canvas)
+   without touching the canvas's actual drawing resolution (360×260,
+   set via its width/height attributes in index.html and read directly
+   by interference-tab.js) — the simulation keeps full internal
+   fidelity, only the on-screen size shrinks. */
 #ripple-canvas {
   max-width: 100%;
   height: auto;

@@ -1,13 +1,15 @@
-/* Important Concepts tab - the search bar (initImportantConceptsSearch())
+/* Important Concepts tab — the search bar (initImportantConceptsSearch())
    and the card-zoom overlay (initImportantConceptsZoom()/openConceptZoom()),
-   both in js/tabs/important-concepts.js. the zoom overlay follows the
-   same fixed-backdrop convention as .confirm-modal-backdrop in
-   components.css and .tour-backdrop in tour.css, just with a FLIP
-   transform driving the transition instead of a plain fade, so it
-   visibly grows out of the clicked card instead of just appearing
-   centered. needs ../base.css, ../components.css (.card, .card-title,
-   .bit-explainer - the overlay reuses the clicked card's innerHTML) */
+   both in js/tabs/important-concepts.js. The zoom overlay follows the same
+   fixed-backdrop convention as .confirm-modal-backdrop in components.css
+   and .tour-backdrop in tour.css, just with a FLIP transform driving the
+   transition instead of a plain scale/opacity fade, so it visibly grows
+   out of the clicked card instead of appearing generically centered.
+   Depends on: ../base.css (theme variables), ../components.css (.card,
+   .card-title, .bit-explainer — the overlay reuses the clicked card's own
+   innerHTML verbatim). */
 
+/* ─── SEARCH BAR ─────────────────────────────────────── */
 .concept-search-wrap {
   position: relative;
   max-width: 460px;
@@ -45,10 +47,10 @@
   border-color: var(--zero);
   box-shadow: 0 0 0 3px var(--zero-dim);
 }
-/* the browser's native clear-x (WebKit search-cancel-button, Edge
-   clear-button) is styled inconsistently and sits under our own SVG
-   icon's mirror position, so .concept-search-clear replaces it with one
-   that matches the app */
+/* The browser's own native clear-x (WebKit's search-cancel-button, Edge's
+   clear-button) is styled inconsistently across browsers and sits under
+   our own SVG icon's mirror position — .concept-search-clear replaces it
+   with one that matches the rest of the app instead. */
 .concept-search-input::-webkit-search-cancel-button { display: none; }
 .concept-search-input::-ms-clear { display: none; }
 
@@ -79,8 +81,8 @@
   padding: 10px 0 26px;
 }
 
-/* applied by initImportantConceptsSearch() to non-matching cards and any
-   .section-label/.intro-glossary-grid left with zero matches */
+/* Applied by initImportantConceptsSearch() to non-matching cards and to
+   any .section-label/.intro-glossary-grid left with zero matches. */
 .concept-hidden { display: none !important; }
 
 .concept-zoom-backdrop {
@@ -111,8 +113,9 @@
   transition: transform 0.32s cubic-bezier(0.22, 0.9, 0.3, 1), opacity 0.22s ease;
 }
 
-/* the overlay's title/body read larger than the same markup packed into
-   a grid cell - part of what makes zooming in actually worth doing */
+/* The overlay's own title/body read larger than the same markup does
+   packed into a grid cell — part of what makes zooming in actually worth
+   doing, not just a bigger box around identical text. */
 .concept-zoom-card .card-title { font-size: 1.2rem; margin-bottom: 12px; }
 .concept-zoom-card .bit-explainer { font-size: 1rem; line-height: 1.7; }
 

@@ -1,8 +1,12 @@
 'use strict';
-// Depends on: core/utils.js (delay), core/theme.js (isDark, onThemeChange),
-// core/tab-registry.js (registerTab),
+// Depends on: core/utils.js (delay), core/theme.js (onThemeChange),
+// core/tab-registry.js (registerTab), core/dom-utils.js (drawCoin,
+// animateCoinFlip — shared with tabs/measure-tab.js's own coin),
 // app.js state (coin1State, coin2State, coinAnimating, entangleCounts).
 
+// ═══════════════════════════════════════════════════════════════════
+// ENTANGLEMENT TAB
+// ═══════════════════════════════════════════════════════════════════
 function initEntangle() {
   drawCoin('coin1', null);
   drawCoin('coin2', null);
@@ -14,138 +18,15 @@ function initEntangle() {
     drawCoin('coin1', coin1State);
     drawCoin('coin2', coin2State);
   };
-  // redraw needed for two separate reasons - entering the tab (onEnter)
-  // and theme changing while it might be visible (onThemeChange) - both
-  // just call this since draw() always reads the live isDark/coin state
+  // Two different reasons a redraw is needed: entering this tab while it
+  // was previously hidden (registerTab's onEnter), and the theme changing
+  // while this tab may or may not be visible (onThemeChange) — both call
+  // the same redraw since draw() always reads the live isDark/coin state.
   registerTab('entangle', { onEnter: redrawCoins });
   onThemeChange(redrawCoins);
 }
 
-// null = superposition(?), 0 or 1 otherwise. styled as an actual gold coin
-// (gradient body, raised rim, reeded edge, glare) instead of a flat disc -
-// the coin itself doesn't change with theme (gold looks like gold either
-// way), just the engraved 0/1 digits follow --zero/--one. canvas
-// fillStyle can't read CSS custom properties so those hex values are
-// just hardcoded per theme below.
-function drawCoin(canvasId, state) {
-  const canvas = document.getElementById(canvasId);
-  if (!canvas) return;
-
-  const who = canvasId === 'coin1' ? 'Qubit A' : 'Qubit B';
-  canvas.setAttribute('aria-label',
-    state === null ? `${who}: unmeasured, in superposition.` : `${who}: measured as |${state}⟩.`);
-
-  const ctx = canvas.getContext('2d');
-  const w = canvas.width, h = canvas.height;
-  const cx = w / 2, cy = h / 2;
-  const r  = Math.min(w, h) / 2 - 6;
-
-  ctx.clearRect(0, 0, w, h);
-
-  // gold body: radial gradient offset toward upper-left for a light
-  // source, bright highlight fading to a deeper amber edge
-  const bodyGrad = ctx.createRadialGradient(cx - r * 0.35, cy - r * 0.35, r * 0.08, cx, cy, r);
-  bodyGrad.addColorStop(0,    '#FFEFB8');
-  bodyGrad.addColorStop(0.45, '#F4C430');
-  bodyGrad.addColorStop(1,    '#B8860B');
-  ctx.beginPath();
-  ctx.arc(cx, cy, r, 0, 2 * Math.PI);
-  ctx.fillStyle = bodyGrad;
-  ctx.fill();
-
-  // Raised rim — two concentric strokes, mimicking a real coin's milled edge.
-  ctx.lineWidth = 2;
-  ctx.strokeStyle = '#8B6508';
-  ctx.stroke();
-  ctx.beginPath();
-  ctx.arc(cx, cy, r - 5, 0, 2 * Math.PI);
-  ctx.lineWidth = 1;
-  ctx.strokeStyle = 'rgba(139,101,8,0.55)';
-  ctx.stroke();
-
-  // Reeded edge — short radial ticks around the circumference, like the
-  // ridged side of a real coin.
-  ctx.strokeStyle = 'rgba(139,101,8,0.4)';
-  ctx.lineWidth = 1;
-  const tickCount = 36;
-  for (let i = 0; i < tickCount; i++) {
-    const a  = (i / tickCount) * 2 * Math.PI;
-    const x1 = cx + Math.cos(a) * (r - 1),   y1 = cy + Math.sin(a) * (r - 1);
-    const x2 = cx + Math.cos(a) * (r - 4.5), y2 = cy + Math.sin(a) * (r - 4.5);
-    ctx.beginPath();
-    ctx.moveTo(x1, y1);
-    ctx.lineTo(x2, y2);
-    ctx.stroke();
-  }
-
-  // Glare — a soft bright ellipse near the light source, for a metallic sheen.
-  ctx.save();
-  ctx.beginPath();
-  ctx.ellipse(cx - r * 0.32, cy - r * 0.38, r * 0.42, r * 0.22, -0.5, 0, 2 * Math.PI);
-  ctx.fillStyle = 'rgba(255,255,255,0.35)';
-  ctx.fill();
-  ctx.restore();
-
-  // engraved digits: a faint dark offset shadow underneath gives the
-  // stamped-into-metal look instead of sitting flat on top
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'middle';
-  const engrave = (ch, x, y, size, alpha = 1) => {
-    ctx.save();
-    ctx.globalAlpha = alpha * 0.35;
-    ctx.fillStyle = '#5C3D00';
-    ctx.font = `bold ${size}px 'JetBrains Mono', monospace`;
-    ctx.fillText(ch, x + 1, y + 1.5);
-    ctx.restore();
-  };
-
-  if (state === null) {
-    // Superposition — faint overlapping 0 and 1
-    const size = r * 0.52;
-    engrave('0', cx - r * 0.14, cy, size, 0.5);
-    ctx.save();
-    ctx.globalAlpha = 0.35;
-    ctx.font = `bold ${size}px 'JetBrains Mono', monospace`;
-    ctx.fillStyle = isDark ? '#5B8DEF' : '#0033A0';
-    ctx.fillText('0', cx - r * 0.14, cy);
-    ctx.restore();
-
-    engrave('1', cx + r * 0.14, cy, size, 0.5);
-    ctx.save();
-    ctx.globalAlpha = 0.35;
-    ctx.font = `bold ${size}px 'JetBrains Mono', monospace`;
-    ctx.fillStyle = isDark ? '#F472B6' : '#BE185D';
-    ctx.fillText('1', cx + r * 0.14, cy);
-    ctx.restore();
-
-    // "?" on top
-    ctx.font = `bold ${r * 0.5}px 'JetBrains Mono', monospace`;
-    ctx.fillStyle = 'rgba(92,61,0,0.55)';
-    ctx.fillText('?', cx, cy);
-  } else if (state === 0) {
-    const size = r * 0.62;
-    engrave('0', cx, cy, size);
-    ctx.font = `bold ${size}px 'JetBrains Mono', monospace`;
-    ctx.fillStyle = isDark ? '#5B8DEF' : '#0033A0';
-    ctx.fillText('0', cx, cy);
-  } else {
-    const size = r * 0.62;
-    engrave('1', cx, cy, size);
-    ctx.font = `bold ${size}px 'JetBrains Mono', monospace`;
-    ctx.fillStyle = isDark ? '#F472B6' : '#BE185D';
-    ctx.fillText('1', cx, cy);
-  }
-}
-
-// rapidly alternates coin faces to fake a flip
-async function animateCoinFlip(canvasId, flips = 10, intervalMs = 55) {
-  for (let i = 0; i < flips; i++) {
-    drawCoin(canvasId, i % 2);
-    await delay(intervalMs);
-  }
-}
-
-// measure both coins at once - simultaneous collapse of the Bell state
+/* MEASURE BOTH — simultaneous collapse of Bell state */
 async function flipEntangled() {
   if (coinAnimating) return;
   coinAnimating = true;
@@ -187,7 +68,7 @@ async function flipEntangled() {
   coinAnimating = false;
 }
 
-// measure only A - shows the nonlocal correlation with B
+/* MEASURE A ONLY — demonstrates nonlocal correlation */
 async function measureCoinA() {
   if (coinAnimating) return;
   coinAnimating = true;

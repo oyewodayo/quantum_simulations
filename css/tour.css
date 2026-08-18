@@ -1,5 +1,6 @@
-/* first-run guided tour overlay, pairs with js/tour.js. needs base.css,
-   components.css (.btn-secondary/.btn-run for Skip/Next) */
+/* First-run guided tour overlay — pairs with js/tour.js.
+   Depends on: base.css, components.css (.btn-secondary/.btn-run, used
+   for the tour's Skip/Next buttons). */
 
 .tour-backdrop {
   position: fixed;

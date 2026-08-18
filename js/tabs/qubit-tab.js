@@ -4,10 +4,13 @@
 // and share button declared in index.html — called once from app.js's
 // DOMContentLoaded.
 
+// ═══════════════════════════════════════════════════════════════════
+// QUBIT TAB
+// ═══════════════════════════════════════════════════════════════════
 function initQubitTab() {
-  // scoped to #qubit-1q-panel, not the whole tab - the Two Qubits panel
-  // below has its own [data-qubit2] preset buttons that must not also
-  // drive qubitMain
+  // Scoped to #qubit-1q-panel (not the whole #tab-qubit) — the Two Qubits
+  // panel added below has its own [data-qubit2] preset buttons that must
+  // NOT also drive qubitMain.
   document.querySelectorAll('#qubit-1q-panel .preset-btn').forEach(btn => {
     const theta = parseFloat(btn.dataset.thetaMult) * Math.PI;
     const phi   = parseFloat(btn.dataset.phiMult)   * Math.PI;
@@ -21,9 +24,9 @@ function initQubitTab() {
     copyShareLink({ tab: 'qubit', theta: b.theta.toFixed(4), phi: b.phi.toFixed(4) }, e.currentTarget);
   });
 
-  // keyboard control - the sphere's drag-only otherwise, which locks out
-  // anyone without a mouse/touchscreen. arrows nudge theta/phi, shift for
-  // bigger steps.
+  // Keyboard control: the sphere is drag-only otherwise, which locks out
+  // anyone not using a mouse/touchscreen. Arrow keys nudge theta/phi in
+  // small steps; hold Shift for bigger steps.
   document.getElementById('bloch-main').addEventListener('keydown', e => {
     const step = e.shiftKey ? Math.PI / 6 : Math.PI / 36; // 30° or 5°
     const b = qubitMain.getBloch();
@@ -71,10 +74,11 @@ function initQubitTab() {
   });
 }
 
-// |0⟩, |1⟩, |+⟩, |-⟩, |i⟩, |-i⟩ - same six presets as the Basis States
-// buttons above, same order, just as (theta, phi) radians instead of the
-// buttons' mult-of-pi attributes. shared by both Try Me buttons below -
-// the Two Qubit one only uses the first four, no |i⟩/|-i⟩ there.
+/** |0⟩, |1⟩, |+⟩, |-⟩, |i⟩, |-i⟩ — the same six presets as the Basis
+ *  States buttons above, in the same order, as (theta, phi) radians
+ *  rather than the buttons' own theta/phi-mult-of-π attributes. Shared
+ *  by both Try me buttons below — the Two Qubit one just uses the first
+ *  four (it has no |i⟩/|-i⟩ presets of its own). */
 const QUBIT_TRYME_STATES = [
   { theta: 0,         phi: 0 },
   { theta: Math.PI,   phi: 0 },
@@ -83,11 +87,12 @@ const QUBIT_TRYME_STATES = [
   { theta: Math.PI/2, phi: Math.PI/2 },
   { theta: Math.PI/2, phi: 1.5 * Math.PI }
 ];
-// same order as above - labels each step's history chip/explainer without
-// re-deriving a ket label from (theta, phi)
+// Same order as QUBIT_TRYME_STATES — used to label each step's history
+// chip/explainer without re-deriving a ket label from (theta, phi).
 const QUBIT_TRYME_LABELS = ['|0⟩', '|1⟩', '|+⟩', '|-⟩', '|i⟩', '|-i⟩'];
-// same order again, one sentence per basis state, shared across the
-// One/Two/Three Qubit Try Me explainers so this writeup only lives once
+// Same order again — one detailed, physically-grounded sentence per basis
+// state, shared by the One/Two/Three Qubit Try Me explainers below so the
+// "what does this position mean" writeup only lives in one place.
 const QUBIT_TRYME_DETAILS = [
   'the north pole of the Bloch sphere — the qubit\'s definite "off" state, with zero superposition at all.',
   'the south pole of the Bloch sphere — the definite "on" state, the exact opposite pole from |0⟩.',
@@ -96,30 +101,41 @@ const QUBIT_TRYME_DETAILS = [
   'on the equator at phase φ=90° — 50/50 odds again, but now with an imaginary relative phase between the amplitudes. This is a state a classical bit could never represent — the extra "twist" comes from the complex numbers underlying quantum amplitudes.',
   'on the equator at phase φ=270°, the mirror image of |i⟩ — same 50/50 measurement odds, opposite imaginary phase.'
 ];
-const QUBIT_TRYME_INTERVAL_MS = 2800; // multi-sentence explanations need real reading time, not just sphere-settle time (same reasoning as GATES_TRYME_INTERVAL_MS)
+const QUBIT_TRYME_INTERVAL_MS = 2800; // gives the detailed, multi-sentence per-step explanations below real reading time, not just sphere-settle time (same reasoning as GATES_TRYME_INTERVAL_MS)
 
-// shared driver behind every Try Me button (gates-tab.js's Apply Gate demo
-// uses it too - plain scripts share one global scope so it's reachable
-// there). walks states[] once via applyState, disabling button+disableEls
-// so a manual click/drag can't fight the auto-cycle. one deliberate pass,
-// not a loop - you can revisit any earlier step through the rollback
-// history instead of waiting for it to cycle back. intervalMs is
-// overridable per call (Gates tab wants more reading time for its longer
-// paragraphs). relies on native disabled-button behavior instead of its
-// own re-entrancy flag, so clicking mid-run is just a no-op.
-//
-// describeStep(state, idx) is optional, can return { explain,
-// historyLabel, historyColor }. explain goes into explainerId via
-// setExplainer(); historyLabel/historyColor render a chip into historyId.
-// both ids are independently optional, and describeStep itself is too -
-// callers that already narrate elsewhere (Gates tab's applyGate()) don't
-// need any of this. history strip clears each run rather than
-// accumulating, so replays always start from an empty trail.
-//
-// rollback: each chip's a real button - click any time, mid-run or after,
-// and it replays that step via the same showStep() the auto-play uses,
-// landing the sphere/display back where it was. showStep() also marks
-// whichever chip's current with .is-current.
+/** Shared driver for every "Try me" button in the app (also used by
+ *  gates-tab.js's Apply Gate demo — plain <script> tags share one global
+ *  scope here, so this is reachable there too) — walks through `states`
+ *  exactly once, applying each preset condition via `applyState`, and
+ *  disables `button` + `disableEls` for the run so a manual click/drag
+ *  can't fight the auto-cycle mid-sequence. A single deliberate pass
+ *  through named presets, not a repeating loop — the student can revisit
+ *  any earlier position afterward via the rollback history below instead
+ *  of waiting for it to cycle back around. `intervalMs` defaults to this
+ *  tab's own pacing but is overridable per call (the Gates tab's own demo
+ *  wants more reading time for its longer per-gate paragraphs). Relies on
+ *  the native disabled-button behavior (no click events fire) rather than
+ *  its own re-entrancy flag, so clicking while running is simply a no-op
+ *  until the run finishes.
+ *
+ *  `describeStep(state, idx)` is optional — when given, it may return
+ *  `{ explain, historyLabel, historyColor }`. `explain` is written into
+ *  `explainerId` via setExplainer() (same soft-fade update the Gates tab
+ *  already uses); `historyLabel`/`historyColor` render one chip into
+ *  `historyId`'s `.history-row`. Both target ids are optional
+ *  independently of each other and of `describeStep` itself, so callers
+ *  that don't need a running narration (the Gates tab's own Try Me, which
+ *  already narrates via applyGate()) are unaffected. The history strip is
+ *  cleared at the start of each run rather than accumulating across runs,
+ *  so replaying Try me always starts from an empty trail.
+ *
+ *  Rollback: each history chip is a real button, not just a label — click
+ *  one any time (mid-run or after it finishes) and it replays that exact
+ *  step via the same showStep() the auto-play itself uses, so the student
+ *  can jump back to any earlier position, re-read its explanation, and
+ *  see the sphere/display land back exactly where it was there. showStep()
+ *  also marks the clicked (or currently auto-playing) chip with
+ *  `.is-current` so it's always clear which position is on screen. */
 function runTryMeSequence({ button, disableEls, states, applyState, intervalMs = QUBIT_TRYME_INTERVAL_MS, describeStep = null, explainerId = null, historyId = null }) {
   button.disabled = true;
   disableEls.forEach(el => { el.disabled = true; });
@@ -152,8 +168,8 @@ function runTryMeSequence({ button, disableEls, states, applyState, intervalMs =
       chip.style.borderColor = color + '44';
       chip.textContent = step.historyLabel;
       chip.title = 'Click to revisit this step and re-read its explanation';
-      chip.disabled = true; // re-enabled once the run finishes - no rollback mid-run
-      const stepIdx = idx; // captured per-chip since idx keeps advancing
+      chip.disabled = true; // enabled once the run finishes, below — no rollback mid-run
+      const stepIdx = idx; // captured per-chip — idx itself keeps advancing
       chip.addEventListener('click', () => showStep(stepIdx));
       historyEl.appendChild(chip);
     }
@@ -167,11 +183,12 @@ function runTryMeSequence({ button, disableEls, states, applyState, intervalMs =
   }, intervalMs);
 }
 
-// Classical/Quantum switch for the Bits tab. Classical's its own page;
-// Quantum reveals a second-level One Qubit/Two Qubit toggle
-// (setQubitSubmode). landing on Quantum always resets to the intro
-// explainer regardless of last submode - callers wanting a specific one
-// (roadmap nav) call setQubitSubmode() right after.
+/** Classical/Quantum switch for the Bits tab. Classical is its own
+ *  standalone page; Quantum reveals a second-level toggle for
+ *  One Qubit / Two Qubit (see setQubitSubmode). Landing on Quantum
+ *  always resets to the qubit explainer, regardless of whichever
+ *  submode was last picked — callers that want a specific submode
+ *  (e.g. roadmap navigation) call setQubitSubmode() right after. */
 function setQubitMode(mode) {
   document.querySelectorAll('.mode-btn[data-qubit-mode]').forEach(btn =>
     btn.classList.toggle('active', btn.dataset.qubitMode === mode));
@@ -181,8 +198,8 @@ function setQubitMode(mode) {
   else syncSidebarSub('qubit', { qubitMode: mode, qubitSubmode: undefined });
 }
 
-// One Qubit/Two Qubit switch inside the Quantum panel - until one's
-// picked, qubit-quantum-intro explains what a qubit is instead
+/** One Qubit/Two Qubit switch nested inside the Quantum panel. Until one
+ *  is picked, qubit-quantum-intro explains what a qubit is instead. */
 function setQubitSubmode(submode) {
   document.querySelectorAll('.mode-btn[data-qubit-submode]').forEach(btn =>
     btn.classList.toggle('active', btn.dataset.qubitSubmode === submode));
@@ -193,10 +210,10 @@ function setQubitSubmode(submode) {
   syncSidebarSub('qubit', { qubitMode: 'quantum', qubitSubmode: submode || undefined });
 }
 
-// two independent Qubit instances (qubit2A/qubit2B in app.js), each with
-// its own sphere - deliberately not a shared TwoQubitState since nothing
-// here's entangled, joint probabilities are just the product of each
-// qubit's own, computed fresh in updateQubit2UI()
+/** Two independent Qubit instances (see app.js's qubit2A/qubit2B), each
+ *  with its own Bloch sphere — deliberately not a shared TwoQubitState,
+ *  since nothing here is entangled; the joint probabilities are just the
+ *  product of each qubit's own, computed fresh in updateQubit2UI(). */
 function initQubit2Panel() {
   const qubit2Btns = document.querySelectorAll('[data-qubit2]');
   qubit2Btns.forEach(btn => {
@@ -213,7 +230,7 @@ function initQubit2Panel() {
     runTryMeSequence({
       button: document.getElementById('btn-qubit2-tryme'),
       disableEls: [...qubit2Btns],
-      states: QUBIT_TRYME_STATES.slice(0, 4), // |0⟩, |1⟩, |+⟩, |-⟩ - both qubits move together
+      states: QUBIT_TRYME_STATES.slice(0, 4), // |0⟩, |1⟩, |+⟩, |-⟩ — both qubits move together
       applyState: s => {
         qubit2A.setState(s.theta, s.phi);
         qubit2B.setState(s.theta, s.phi);
@@ -222,9 +239,9 @@ function initQubit2Panel() {
       describeStep: (s, i) => {
         const label  = QUBIT_TRYME_LABELS[i % 4];
         const detail = QUBIT_TRYME_DETAILS[i % 4];
-        // both qubits are always set identically here, so A's own odds
-        // describe both - cross-multiplying gives the joint distribution,
-        // P(ab) = P(a) x P(b) in practice
+        // Both qubits are always set identically here, so A's own odds
+        // describe both — squaring/cross-multiplying them gives the exact
+        // joint distribution, the concrete P(ab) = P(a) × P(b) at work.
         const p0 = qubit2A.prob0(), p1 = qubit2A.prob1();
         const pct = x => Math.round(x * 100);
         return {
@@ -241,14 +258,16 @@ function initQubit2Panel() {
   });
 }
 
-// theta never wraps ([0, π] by construction) but phi does - comparing raw
-// values would treat 0 and 2π as far apart when they're the same angle,
-// so the diff gets folded to the short way around the circle
-const PRESET_MATCH_EPS = 1e-3; // radians, ~0.06° - past float noise, under any deliberate drag
+// theta never wraps (its range is [0, π] by construction), but phi does
+// — comparing raw values would treat 0 and 2π (the same angle) as far
+// apart, so phi's diff is folded to the short way around the circle.
+const PRESET_MATCH_EPS = 1e-3; // radians (~0.06°) — well past round-trip float noise, well under any deliberate drag
 
-// highlights whichever preset button matches (theta, phi) - at most one,
-// since no two presets share a point on the sphere - so the grid always
-// reflects the sphere's actual state, not just the instant something was clicked
+/** Toggles .is-active on whichever button in `presetBtns` matches
+ *  (theta, phi) — at most one, since no two basis-state presets share a
+ *  point on the sphere — so the preset grid always reflects the sphere's
+ *  actual current state instead of only showing feedback for the instant
+ *  a preset was clicked. */
 function highlightMatchingPreset(presetBtns, theta, phi) {
   const twoPi = 2 * Math.PI;
   const normPhi = ((phi % twoPi) + twoPi) % twoPi;
@@ -261,9 +280,9 @@ function highlightMatchingPreset(presetBtns, theta, phi) {
   });
 }
 
-// three independent Qubit instances (qubit3A/B/C in app.js), same
-// not-entangled pattern as initQubit2Panel() above, just one more qubit
-// and an 8-row joint table instead of 4
+/** Three independent Qubit instances (see app.js's qubit3A/B/C), same
+ *  "not entangled" pattern as initQubit2Panel() above — just one more
+ *  qubit and an 8-row joint table instead of 4. */
 function initQubit3Panel() {
   const qubit3Btns = document.querySelectorAll('[data-qubit3]');
   const qubitsByLetter = { a: qubit3A, b: qubit3B, c: qubit3C };
@@ -281,7 +300,7 @@ function initQubit3Panel() {
     runTryMeSequence({
       button: document.getElementById('btn-qubit3-tryme'),
       disableEls: [...qubit3Btns],
-      states: QUBIT_TRYME_STATES.slice(0, 4), // |0⟩, |1⟩, |+⟩, |-⟩ - all three qubits move together
+      states: QUBIT_TRYME_STATES.slice(0, 4), // |0⟩, |1⟩, |+⟩, |-⟩ — all three qubits move together
       applyState: s => {
         qubit3A.setState(s.theta, s.phi);
         qubit3B.setState(s.theta, s.phi);
@@ -291,9 +310,10 @@ function initQubit3Panel() {
       describeStep: (s, i) => {
         const label  = QUBIT_TRYME_LABELS[i % 4];
         const detail = QUBIT_TRYME_DETAILS[i % 4];
-        // the Try Me presets only ever land on |0⟩/|1⟩/|+⟩/|-⟩, so the joint
-        // outcome is always one of two shapes - fully deterministic or a
-        // flat eighth each - no need to spell out all 8 percentages
+        // Only ever |0⟩, |1⟩, |+⟩, or |-⟩ here (this slice's 4 states), so
+        // the joint outcome is always exactly one of these two shapes:
+        // fully deterministic (|0⟩/|1⟩) or a flat eighth each (|+⟩/|-⟩) —
+        // no need to spell out all 8 percentages to be exact about it.
         const p0 = qubit3A.prob0(), p1 = qubit3A.prob1();
         const jointDesc = p0 > 0.999
           ? 'always |000⟩ — 100% certain, zero superposition anywhere in the joint state'
@@ -336,9 +356,9 @@ function updateQubit3UI() {
   document.getElementById('bloch-3q-c').setAttribute('aria-label',
     `Bloch sphere for Qubit C. State: ${qubit3C.getFormula()}. Draggable, or focus and use arrow keys, to set the qubit's state.`);
 
-  // product state: three independent qubits, so joint probability of any
-  // three-bit outcome is just each qubit's probability multiplied
-  // together - same as updateQubit2UI() below, one more factor
+  // Product state: three independent qubits, so the joint probability of
+  // any three-bit outcome is just each qubit's own probability multiplied
+  // together — same reasoning as updateQubit2UI() below, one more factor.
   const pA = [qubit3A.prob0(), qubit3A.prob1()];
   const pB = [qubit3B.prob0(), qubit3B.prob1()];
   const pC = [qubit3C.prob0(), qubit3C.prob1()];
@@ -375,9 +395,10 @@ function updateQubit2UI() {
   document.getElementById('bloch-2q-b').setAttribute('aria-label',
     `Bloch sphere for Qubit B. State: ${qubit2B.getFormula()}. Draggable, or focus and use arrow keys, to set the qubit's state.`);
 
-  // product state: two independent qubits, joint probability is just each
-  // qubit's own probability multiplied together, no entanglement math -
-  // contrast TwoQubitState in Circuit/Entangle, which mixes amplitudes
+  // Product state: two independent qubits, so the joint probability of
+  // any two-bit outcome is just each qubit's own probability multiplied
+  // together — no entanglement math involved (contrast TwoQubitState in
+  // the Circuit/Entangle tabs, which mixes amplitudes instead).
   const pA0 = qubit2A.prob0(), pA1 = qubit2A.prob1();
   const pB0 = qubit2B.prob0(), pB1 = qubit2B.prob1();
   const joint = { '00': pA0 * pB0, '01': pA0 * pB1, '10': pA1 * pB0, '11': pA1 * pB1 };

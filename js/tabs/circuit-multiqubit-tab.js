@@ -1,45 +1,70 @@
 'use strict';
-// needs GATES (gates.js), blochVectorLabel (qubit.js), TwoQubitState/
-// ThreeQubitState, setExplainer/renderTryMe/buildGatePalette (dom-utils),
-// delay (utils.js), rendererCircuit2/rendererCircuit3 from app.js.
+// Depends on: core/gates.js (GATES), core/qubit.js (blochVectorLabel),
+// core/two-qubit.js (TwoQubitState), core/three-qubit.js (ThreeQubitState),
+// core/dom-utils.js (setExplainer, renderTryMe, buildGatePalette),
+// core/utils.js (delay), app.js state (rendererCircuit2, rendererCircuit3).
 //
-// 2-qubit and 3-qubit circuit builders, toggled via the mode switch at the
-// top of the panel (setCircuitMode below). used to be two separate files
-// (circuit2-tab.js/circuit3-tab.js) that were like 90% identical - same
-// gate-entry model, same grid diagram algorithm, same run/status/explainer
-// flow - so I merged them into one implementation driven by a small config
-// per qubit count (CIRCUIT2_CONFIG/CIRCUIT3_CONFIG). makeMultiQubitCircuit(cfg)
-// just returns a plain instance object holding the mutable state; functions
-// take it as the first arg instead of being methods, same as everywhere else
-// in this codebase — classes are reserved for things with real invariants
-// (TwoQubitState, BlochRenderer etc), this is just UI wiring.
+// The 2-qubit and 3-qubit circuit builders, reachable via the "2 Qubits"/
+// "3 Qubits" mode toggle at the top of the Quantum Circuit panel (see
+// setCircuitMode() below). Replaces what used to be two separate,
+// ~90%-identical files (circuit2-tab.js/circuit3-tab.js) — same gate-entry
+// data model (a flat, sequential array of
+// {type:'single',qubit,key}/{type:'cnot',control,target} entries), same
+// CSS-Grid diagram algorithm, same run/status/explainer pattern — with one
+// shared implementation parameterized by a small per-qubit-count config
+// (see CIRCUIT2_CONFIG/CIRCUIT3_CONFIG below) instead of copy-pasted code.
+// makeMultiQubitCircuit(cfg) returns a plain "instance" object holding the
+// mutable per-builder state (gates/targetQubit/state); the functions below
+// take that instance as their first argument rather than being methods on
+// it, matching this codebase's preference for plain functions over classes
+// for UI-glue code (TwoQubitState/ThreeQubitState/BlochRenderer are real
+// classes because they carry real invariants — this is just wiring).
 //
-// single-qubit circuit-tab.js is NOT folded into this — different UI
-// entirely (linear checkpoint wire, one Bloch sphere, no CNOT), not worth
-// bending its markup to fit this grid shape just to save a few lines.
+// The single-qubit circuit (tabs/circuit-tab.js) is NOT part of this —
+// it's a genuinely different UI (a linear "checkpoint wire", one Bloch
+// sphere, no CNOT, no per-wire targeting), not a smaller copy of this one.
+// Folding it in here would mean redesigning its markup to fit this grid-
+// diagram shape, not just deduplicating code.
 
 const CIRCUIT_MULTIQUBIT_MAX_STEPS = 10;
 
 const CIRCUIT3_KETS = ['000', '001', '010', '011', '100', '101', '110', '111'];
 
-// three 2-qubit presets: a standard Bell pair, a same-basis flip with no
-// entanglement, and an anti-correlated variant (X before CNOT flips which
-// pairs show up)
+/** A standard Bell pair, a same-basis flip that needs no entanglement at
+ *  all, and an anti-correlated Bell variant (X on the target qubit before
+ *  the CNOT flips which pairs show up) — three sequences that each land
+ *  on a different, recognizable two-qubit state. */
 const CIRCUIT2_PRESETS = [
   { name: 'Bell Pair',       gates: [{ type: 'single', qubit: 0, key: 'H' }, { type: 'cnot', control: 0, target: 1 }] },
   { name: 'Flip Both',       gates: [{ type: 'single', qubit: 0, key: 'X' }, { type: 'single', qubit: 1, key: 'X' }] },
   { name: 'Anti-Correlated', gates: [{ type: 'single', qubit: 0, key: 'H' }, { type: 'single', qubit: 1, key: 'X' }, { type: 'cnot', control: 0, target: 1 }] }
 ];
 
-// three 3-qubit presets: a GHZ state (one H, CNOT fanning out to each
-// qubit), plain triple flip, and a Bell pair on just two of the three
-// wires - entanglement doesn't have to touch every qubit
+/** A star-topology GHZ state (one H, then CNOT out to each other qubit),
+ *  a plain triple flip needing no entanglement, a Bell pair on just two
+ *  of the three wires, and a Half Adder — Q0/Q1 are set to A=1/B=1 (via
+ *  X), Toffoli(Q0,Q1,Q2) computes Carry = A·B into Q2 *before* Q1 is
+ *  touched again, then CNOT(Q0,Q1) computes Sum = A⊕B into Q1 in place —
+ *  the standard reversible-logic trick that fits a full half adder into
+ *  exactly 3 qubits (Q0 keeps A unchanged, Q1 ends up holding Sum, Q2
+ *  ends up holding Carry). Ends at |101⟩: A=1 (Q0), Sum=0 (Q1), Carry=1
+ *  (Q2) — the one input combination where a half adder actually needs
+ *  its Carry output. */
 const CIRCUIT3_PRESETS = [
   { name: 'GHZ State',        gates: [{ type: 'single', qubit: 0, key: 'H' }, { type: 'cnot', control: 0, target: 1 }, { type: 'cnot', control: 0, target: 2 }] },
   { name: 'Flip All Three',   gates: [{ type: 'single', qubit: 0, key: 'X' }, { type: 'single', qubit: 1, key: 'X' }, { type: 'single', qubit: 2, key: 'X' }] },
-  { name: 'Partial Entangle', gates: [{ type: 'single', qubit: 0, key: 'H' }, { type: 'cnot', control: 0, target: 1 }] }
+  { name: 'Partial Entangle', gates: [{ type: 'single', qubit: 0, key: 'H' }, { type: 'cnot', control: 0, target: 1 }] },
+  { name: 'Half Adder (A=1,B=1)', gates: [
+      { type: 'single', qubit: 0, key: 'X' },
+      { type: 'single', qubit: 1, key: 'X' },
+      { type: 'toffoli', control1: 0, control2: 1, target: 2 },
+      { type: 'cnot', control: 0, target: 1 }
+    ] }
 ];
 
+// ═══════════════════════════════════════════════════════════════════
+// PER-QUBIT-COUNT CONFIG
+// ═══════════════════════════════════════════════════════════════════
 const CIRCUIT2_CONFIG = {
   n: 2,
   prefix: '2q',
@@ -47,13 +72,16 @@ const CIRCUIT2_CONFIG = {
   kets: ['00', '01', '10', '11'],
   presets: CIRCUIT2_PRESETS,
   paletteId: 'circuit-2q-palette',
-  // 2Q uses data-target-qubit, 3Q uses data-target-qubit3 (different
-  // attr name, not just value) - that's what stops an unscoped
-  // querySelectorAll from grabbing both panels' buttons at once
+  // 2Q's target-qubit toggle uses a different HTML attribute name than
+  // 3Q's (data-target-qubit vs data-target-qubit3, not just a different
+  // value) — that's the only thing keeping an unscoped querySelectorAll
+  // from matching both panels' buttons at once, so it's config, not a
+  // shared constant.
   targetQubitSelector: '.mode-btn[data-target-qubit]',
   targetQubitDatasetKey: 'targetQubit',
-  // only 2 CNOT directions possible with 2 qubits so fixed buttons work;
-  // 3Q needs the <select> pair since there are 6 possible pairs
+  // 2 qubits only have 2 possible CNOT directions, so they get two fixed
+  // buttons rather than 3Q's <select> pair (6 possible pairs is too many
+  // for individual buttons).
   wireCnotControls(inst) {
     document.getElementById('btn-add-cnot-01').addEventListener('click', () => addGate(inst, { type: 'cnot', control: 0, target: 1 }));
     document.getElementById('btn-add-cnot-10').addEventListener('click', () => addGate(inst, { type: 'cnot', control: 1, target: 0 }));
@@ -92,6 +120,26 @@ const CIRCUIT3_CONFIG = {
       addGate(inst, { type: 'cnot', control: c, target: t });
     });
   },
+  // Toffoli (CCNOT) — 3Q-only (needs 3 distinct qubits: 2 controls + 1
+  // target, exactly what this builder has), so this is its own config
+  // field rather than something CIRCUIT2_CONFIG also defines; guarded by
+  // an existence check in makeMultiQubitCircuit() below.
+  wireToffoliControls(inst) {
+    const control1 = document.getElementById('toffoli3-control1');
+    const control2 = document.getElementById('toffoli3-control2');
+    const target    = document.getElementById('toffoli3-target');
+    [control1, control2, target].forEach(sel => {
+      sel.innerHTML = [0, 1, 2].map(q => `<option value="${q}">Qubit ${q}</option>`).join('');
+    });
+    control2.value = '1'; target.value = '2'; // default controls=0,1 -> target=2, a usable triple out of the box
+    document.getElementById('btn-add-toffoli3').addEventListener('click', () => {
+      const c1 = parseInt(control1.value, 10);
+      const c2 = parseInt(control2.value, 10);
+      const t  = parseInt(target.value, 10);
+      if (c1 === c2 || c1 === t || c2 === t) { setStatus(inst, 'Controls and target must all be different qubits'); return; }
+      addGate(inst, { type: 'toffoli', control1: c1, control2: c2, target: t });
+    });
+  },
   startMessage: 'All three qubits start at |000⟩ and step through the sequence in order…',
   clearMessage: 'Three qubits, all starting at |000⟩. Try H on Qubit 0, then CNOT Q0→Q1, then CNOT Q0→Q2 — that recipe spreads one qubit\'s coin flip across all three, a three-way GHZ state.',
   describeOutcome(state) {
@@ -104,8 +152,11 @@ const CIRCUIT3_CONFIG = {
   }
 };
 
-let circuit2, circuit3; // live instances, built by initCircuit2Tab()/initCircuit3Tab()
+let circuit2, circuit3; // the two live instances, built by initCircuit2Tab()/initCircuit3Tab()
 
+// ═══════════════════════════════════════════════════════════════════
+// INSTANCE FACTORY
+// ═══════════════════════════════════════════════════════════════════
 function makeMultiQubitCircuit(cfg) {
   const inst = {
     n: cfg.n,
@@ -130,6 +181,7 @@ function makeMultiQubitCircuit(cfg) {
 
   buildGatePalette(cfg.paletteId, key => addGate(inst, { type: 'single', qubit: inst.targetQubit, key }));
   cfg.wireCnotControls(inst);
+  if (cfg.wireToffoliControls) cfg.wireToffoliControls(inst);
   document.getElementById(`btn-run-circuit-${cfg.prefix}`).addEventListener('click', () => runSequence(inst));
   document.getElementById(`btn-clear-circuit-${cfg.prefix}`).addEventListener('click', () => clearSequence(inst));
   renderTryMe(`circuit-${cfg.prefix}-try-me`, cfg.presets, preset => loadPreset(inst, preset));
@@ -141,9 +193,10 @@ function makeMultiQubitCircuit(cfg) {
   return inst;
 }
 
-// 1Q/2Q/3Q panel switch inside the Quantum Circuit builder (see the
-// "Quantum" domain of setCircuitDomain() in circuit-tab.js). wired once
-// from initCircuit2Tab() below since it's not tied to either instance.
+/** 1Q/2Q/3Q panel switch nested inside the Quantum Circuit builder (see
+ *  the "Quantum" domain of setCircuitDomain() in circuit-tab.js) — wired
+ *  once, from initCircuit2Tab() below, since it isn't specific to either
+ *  qubit-count instance. */
 function setCircuitMode(mode) {
   document.querySelectorAll('.mode-btn[data-circuit-mode]').forEach(btn =>
     btn.classList.toggle('active', btn.dataset.circuitMode === mode));
@@ -163,8 +216,12 @@ function initCircuit3Tab() {
   circuit3 = makeMultiQubitCircuit(CIRCUIT3_CONFIG);
 }
 
+// ═══════════════════════════════════════════════════════════════════
+// SHARED LOGIC (operates on whichever instance is passed in)
+// ═══════════════════════════════════════════════════════════════════
 function entryLabel(entry) {
   if (entry.type === 'cnot') return `CNOT Q${entry.control}→Q${entry.target}`;
+  if (entry.type === 'toffoli') return `Toffoli Q${entry.control1},Q${entry.control2}→Q${entry.target}`;
   return `${GATES[entry.key].name} on Q${entry.qubit}`;
 }
 
@@ -189,17 +246,23 @@ function loadPreset(inst, preset) {
   runSequence(inst);
 }
 
-// renders inst.gates[] as an N-wire diagram: one CSS grid, inst.n rows,
-// CIRCUIT_MULTIQUBIT_MAX_STEPS columns. each gate owns one column shared
-// across rows - a CNOT's control dot, target symbol, and connecting line
-// are separate grid items in that column, which is what lines them up
-// without any manual pixel math. columns past gates.length stay empty
-// dashed placeholders.
-//
-// note: n>2 fills the other rows at a single-gate column with empty
-// placeholders too (full-height dashed grid); n=2 doesn't bother. that's
-// a real pre-existing difference between the two diagrams from before
-// the merge, left alone on purpose rather than forced to match.
+/**
+ * Renders inst.gates[] as an actual N-wire circuit diagram: one CSS Grid
+ * with `inst.n` rows and CIRCUIT_MULTIQUBIT_MAX_STEPS columns. Each
+ * gates[] entry owns one column, shared by every row — a CNOT's control
+ * dot, target ⊕, and connecting line are separate grid items placed in
+ * that same grid-column (their own rows, plus a line spanning between
+ * them), which is what makes them line up under each other automatically
+ * without any manual pixel math. Columns past inst.gates.length are empty
+ * dashed placeholders.
+ *
+ * inst.n > 2 fills the *other* rows at a single-gate column with empty
+ * placeholder cells too (so every column shows a full-height dashed
+ * grid); at n=2 it doesn't (the other row gets nothing at that column) —
+ * this is a real, pre-existing visual difference between the two
+ * diagrams that predates this merge, preserved deliberately rather than
+ * "fixed" into one look.
+ */
 function renderDiagram(inst) {
   const container = document.getElementById(`circuit-${inst.prefix}-diagram`);
   let html = '';
@@ -231,6 +294,21 @@ function renderDiagram(inst) {
           html += `<div class="circuit2-cell empty" style="grid-column:${col};grid-row:${row2};"></div>`;
         }
       }
+    } else if (entry.type === 'toffoli') {
+      // Two control dots + one ⊕ target, connected by one line spanning
+      // all three rows — same building blocks as CNOT below, just one
+      // more control dot. Toffoli only exists in the 3Q builder (needs 3
+      // distinct qubits), so the three rows always exactly cover 1..n —
+      // no "row neither control nor target" placeholder loop needed here.
+      const c1Row = entry.control1 + 1;
+      const c2Row = entry.control2 + 1;
+      const tRow  = entry.target + 1;
+      const lineStart = Math.min(c1Row, c2Row, tRow);
+      const lineEnd   = Math.max(c1Row, c2Row, tRow) + 1;
+      html += `<div class="circuit2-cnot-line" style="grid-column:${col};grid-row:${lineStart}/${lineEnd};"></div>`;
+      html += `<button class="circuit2-cell circuit2-cnot-dot" data-i="${c}" style="grid-column:${col};grid-row:${c1Row};" title="${entryLabel(entry)} — click to remove"></button>`;
+      html += `<button class="circuit2-cell circuit2-cnot-dot" data-i="${c}" style="grid-column:${col};grid-row:${c2Row};" title="${entryLabel(entry)} — click to remove"></button>`;
+      html += `<button class="circuit2-cell circuit2-cnot-target" data-i="${c}" style="grid-column:${col};grid-row:${tRow};" title="${entryLabel(entry)} — click to remove">⊕</button>`;
     } else {
       const controlRow = entry.control + 1;
       const targetRow  = entry.target + 1;
@@ -255,10 +333,36 @@ function renderDiagram(inst) {
   });
 }
 
-// A CNOT step has no single GATES entry of its own to borrow a color
-// from (it spans two qubits) — this is just a fixed, theme-legible blue
-// for its history chip, not tied to any GATES color.
-const CNOT_HIST_COLOR = '#5B8DEF';
+// CNOT/Toffoli steps have no single GATES entry of their own to borrow a
+// color from (they span multiple qubits) — these are just fixed,
+// theme-legible colors for their history chips, not tied to any GATES color.
+const CNOT_HIST_COLOR    = '#5B8DEF';
+const TOFFOLI_HIST_COLOR = '#34D399';
+
+function describeStepColor(entry) {
+  if (entry.type === 'cnot') return CNOT_HIST_COLOR;
+  if (entry.type === 'toffoli') return TOFFOLI_HIST_COLOR;
+  return GATES[entry.key].color;
+}
+
+/** The detailed, per-step "What's going on" writeup stored on each Run
+ *  History entry (see restoreHistoryStep()) as well as shown live during
+ *  Run — same depth as every other gate/circuit explainer in the app,
+ *  not just the terse "Step N of M" status line. */
+function describeStepExplain(entry, i, formula) {
+  const color = describeStepColor(entry);
+  if (entry.type === 'cnot') {
+    return `<strong style="color:${color}">Step ${i + 1}: ${entryLabel(entry)}.</strong> Flips Q${entry.target}'s bit whenever Q${entry.control} is |1⟩ — the entangling move behind every Bell pair and GHZ state. ` +
+      `<br><br>State is now <span style="font-family:'JetBrains Mono',monospace">${formula}</span>.`;
+  }
+  if (entry.type === 'toffoli') {
+    return `<strong style="color:${color}">Step ${i + 1}: ${entryLabel(entry)}.</strong> Flips Q${entry.target}'s bit only when BOTH Q${entry.control1} and Q${entry.control2} are |1⟩ — with the target starting at |0⟩, that computes Q${entry.target} = Q${entry.control1} AND Q${entry.control2}, the Carry half of a half adder (a Toffoli is the reversible-logic stand-in for a classical AND gate). ` +
+      `<br><br>State is now <span style="font-family:'JetBrains Mono',monospace">${formula}</span>.`;
+  }
+  const gate = GATES[entry.key];
+  return `<strong style="color:${color}">Step ${i + 1}: ${entryLabel(entry)} — ${gate.desc}.</strong> ${gate.explain} ` +
+    `<br><br>State is now <span style="font-family:'JetBrains Mono',monospace">${formula}</span>.`;
+}
 
 async function runSequence(inst) {
   if (inst.running) return;
@@ -282,22 +386,18 @@ async function runSequence(inst) {
     await delay(320);
     if (entry.type === 'cnot') {
       inst.state.applyCNOT(entry.control, entry.target);
+    } else if (entry.type === 'toffoli') {
+      inst.state.applyToffoli(entry.control1, entry.control2, entry.target);
     } else {
       inst.state.applySingleQubitGate(entry.qubit, GATES[entry.key].matrix);
     }
     updateUI(inst);
-    const color = entry.type === 'cnot' ? CNOT_HIST_COLOR : GATES[entry.key].color;
-    const explain = entry.type === 'cnot'
-      ? `<strong style="color:${color}">Step ${i + 1}: ${entryLabel(entry)}.</strong> Flips Q${entry.target}'s bit whenever Q${entry.control} is |1⟩ — the entangling move behind every Bell pair and GHZ state. ` +
-        `<br><br>State is now <span style="font-family:'JetBrains Mono',monospace">${inst.state.getFormula()}</span>.`
-      : `<strong style="color:${color}">Step ${i + 1}: ${entryLabel(entry)} — ${GATES[entry.key].desc}.</strong> ${GATES[entry.key].explain} ` +
-        `<br><br>State is now <span style="font-family:'JetBrains Mono',monospace">${inst.state.getFormula()}</span>.`;
     inst.history.push({
       amps: inst.state.amps.map(a => ({ ...a })), // cloned — later steps mutate inst.state.amps in place
       label: String(i + 1),
-      color,
+      color: describeStepColor(entry),
       title: `Step ${i + 1}: ${entryLabel(entry)} — ${inst.state.getFormula()}`,
-      explain
+      explain: describeStepExplain(entry, i, inst.state.getFormula())
     });
     inst.historyCursor = inst.history.length - 1;
     renderHistory(inst);
@@ -310,7 +410,8 @@ async function runSequence(inst) {
   setExplainerFor(inst, inst.cfg.describeOutcome(inst.state));
 }
 
-// same .hist-tag/.is-current pattern as every other Run History trail
+/** Renders inst.history as clickable rollback chips (same .hist-tag/
+ *  .is-current pattern as every other Run History / Try Me trail). */
 function renderHistory(inst) {
   const hist = document.getElementById(`circuit-${inst.prefix}-history`);
   if (!hist) return;
@@ -332,9 +433,11 @@ function renderHistory(inst) {
   });
 }
 
-// restores step i's cloned amplitude snapshot directly instead of replaying
-// gates, so it's correct no matter how entangled things got along the way.
-// also puts the explainer text back to what it said at that step.
+/** Rollback — restores step `i`'s cloned amplitude snapshot directly
+ *  rather than replaying gates, so it's correct regardless of how
+ *  entangled the state became along the way — and restores the "What's
+ *  going on" explainer to exactly what it said at that step, not just
+ *  the state/formula. */
 function restoreHistoryStep(inst, i) {
   const entry = inst.history[i];
   if (!entry) return;
@@ -366,11 +469,13 @@ function setExplainerFor(inst, msg) {
   setExplainer(`circuit-${inst.prefix}-explainer`, msg);
 }
 
-// updates the formula line, per-qubit mini Bloch spheres (reduced states
-// via getSingleQubitBloch()), and the joint-probability table - rebuilt
-// from inst.kets every call. circuit-2q-probs/circuit-3q-probs are just
-// empty containers in index.html, no point hand-writing 2Q's 4 rows
-// separately when they generate the same way as 3Q's 8.
+/** Updates the formula line, both/all per-qubit mini Bloch spheres (their
+ *  own reduced single-qubit states — see TwoQubitState/
+ *  ThreeQubitState.getSingleQubitBloch()), and the full joint-probability
+ *  table, generated fresh from inst.kets every call (both circuit-2q-probs
+ *  and circuit-3q-probs are empty containers in index.html — 2Q's 4 rows
+ *  are just as easy to generate as 3Q's 8, so both go through the same
+ *  code instead of 2Q having its own hand-written static markup). */
 function updateUI(inst) {
   document.getElementById(`circuit-${inst.prefix}-formula`).textContent = inst.state.getFormula();
 

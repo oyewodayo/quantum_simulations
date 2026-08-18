@@ -1,10 +1,13 @@
-/* theme vars (dark/light), the reset, and a handful of bare-bones
-   utility classes everything else builds on. every other css/*.css file
-   assumes this one loaded first. monochrome base, color only used
-   functionally (probabilities, accents). */
+/* ═══════════════════════════════════════════════════════
+   QUANTUM EXPLORER v2 · Monochrome Design System
+   Palette: Black/white base · Functional color only
+   ═══════════════════════════════════════════════════════ */
+/* Foundation layer: theme variables (dark/light), the CSS reset, and the
+   handful of bare-bones utility classes everything else builds on. Every
+   other css/*.css file assumes this one loaded first. */
 
 :root {
-  /* dark theme (default) */
+  /* ── Dark theme (default) ──────────────────────── */
   --bg:           #0B0B0B;
   --surface:      #141414;
   --surface2:     #1D1D1D;
@@ -20,8 +23,8 @@
   --shadow-md:    0 6px 20px rgba(0,0,0,0.45);
   --header-shadow: 0 1px 0 var(--border), 0 2px 20px rgba(0,0,0,0.35);
 
-  /* |0> CERN blue (Pantone 286C, lightened for dark bg), |1> pink -
-     probability UI only */
+  /* Functional — |0⟩ CERN blue (Pantone 286C, lightened for dark backgrounds),
+     |1⟩ pink — only used for probability UI */
   --zero:         #5B8DEF;
   --zero-dim:     rgba(91, 141, 239, 0.14);
   --one:          #F472B6;
@@ -31,10 +34,12 @@
   --danger:       #F87171;
   --danger-dim:   rgba(248, 113, 113, 0.14);
 
-  /* per-button-family accent colors so run/secondary/measure buttons each
-     get their own identity instead of one shared neutral palette.
-     key-term and bulb-on share the same amber hue on purpose - same
-     "this is the highlight" idea in two places */
+  /* Per-button-family accent colors (item 4) — gives .btn-run/.btn-secondary/
+     .btn-measure their own identity instead of sharing one neutral
+     surface/border palette. --key-term/--bulb-on share one amber hue
+     (item 2's emphasized terms and item 1's lit bulb are the same "this
+     is the highlight" idea) rather than each getting its own arbitrary
+     color. */
   --action-run:       #2DD4BF;
   --action-run-dim:   rgba(45, 212, 191, 0.14);
   --action-secondary: #818CF8;
@@ -45,7 +50,7 @@
   --bulb-on:          #FBBF24;
   --bulb-glow:         rgba(251, 191, 36, 0.55);
 
-  /* bloch sphere colors, resolved by JS via refreshThemeColors() */
+  /* Bloch sphere — resolved by JS via refreshThemeColors() */
   --bloch-arrow:       rgba(255,255,255,0.92);
   --bloch-sphere-bg:   rgba(255,255,255,0.025);
   --bloch-sphere-ring: rgba(255,255,255,0.18);
@@ -57,12 +62,16 @@
   --bloch-tip:         rgba(255,255,255,0.88);
 
   --header-h: 56px;
-  --dock-clear: 210px;  /* left clearance for the always-expanded tab dock, see #tab-sidebar */
+  --dock-clear: 210px;  /* left clearance for the always-expanded tab dock — see #tab-sidebar; widened alongside the larger tab pills/fonts below */
   --tab-strip-h: 48px;
 
-  /* design tokens, same in dark and light. use these instead of picking
-     another one-off px/rem value - caption text had drifted into like 8
-     different near-.85rem sizes across tab files before this */
+  /* ── Design tokens (theme-independent — same in dark and light) ───
+     Structural scale every css/*.css file should reach for instead of
+     hand-picking a one-off px/rem value. Added to consolidate years of
+     drift (e.g. "caption text" had settled into 8 different near-.85rem
+     sizes across tab files, "card" containers into 3 different radii)
+     rather than a from-scratch redesign — existing values were audited
+     and rounded onto this scale, not invented independently of them. */
   --text-xs:      0.72rem;  /* eyebrow / uppercase labels */
   --text-sm:      0.85rem;  /* captions, secondary body, buttons */
   --text-base:    1rem;     /* body copy */
@@ -82,17 +91,30 @@
   --radius-md:   10px;  /* cards, .mode-grid */
   --radius-pill: 999px;
 
-  /* the "0 0 Npx currentColor" glow was scattered across gate/circuit
-     buttons in like 11 different magnitudes before this - currentColor
-     means the token doesn't need to know each button's own color */
+  /* Formalizes the "0 0 Npx currentColor" hover/active glow already used
+     ad hoc across gate/circuit buttons (previously 11 different
+     magnitudes) — currentColor means each button still glows in its own
+     color without the token needing to know what that color is. */
   --glow-sm: 0 0 12px currentColor;
   --glow-md: 0 0 18px currentColor;
+
+  /* The same "lit from above" white-to-black overlay already used on the
+     Stern-Gerlach apparatus SVG (sg-metal-sheen in index.html) — same
+     stops, as a CSS background-image instead of an SVG gradient, so
+     every CSS-rendered gate box (.gate-btn, .circuit-gate-btn,
+     .circuit2-gate, .gate-slot) can share the exact same material
+     language as the physical apparatus diagrams rather than staying
+     flat. Layered on top of each element's own background-color, not
+     replacing it, so gate-specific hues (each button's border-color)
+     still show through underneath. */
+  --sheen-metal: linear-gradient(180deg, rgba(255,255,255,0.38) 0%, rgba(255,255,255,0.1) 14%, rgba(0,0,0,0) 55%, rgba(0,0,0,0.22) 100%);
 }
 
 [data-theme="light"] {
-  /* cards are whiter than the page bg on purpose (--surface lighter than
-     --bg) so they lift off the background - that plus the shadows below
-     is what gives light mode actual depth instead of looking flat */
+  /* Cards are deliberately whiter than the page canvas (--surface lighter
+     than --bg) so they visually lift off the background — combined with
+     --shadow-sm/--shadow-md below, this is what gives light mode real
+     depth instead of the previous flat, same-tone-as-background look. */
   --bg:           #F1F1F3;
   --surface:      #FFFFFF;
   --surface2:     #EBEBEF;
@@ -138,11 +160,13 @@
   --bloch-tip:         rgba(10,10,10,0.88);
 }
 
+/* ─── RESET ───────────────────────────────────────────── */
 *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
 
-/* bumps every rem-based font-size ~12% in one place - this is for
-   students new to QC and the dense label/badge text (sized originally
-   for a compact dashboard) was too small at the default 16px root */
+/* Raises every rem-based font-size across the app by ~12% in one place —
+   this app is aimed at students new to quantum computing, and the dense
+   label/badge text throughout (originally sized for a compact dashboard)
+   was too small to comfortably read at the default 16px root. */
 html { font-size: 18px; }
 
 body {

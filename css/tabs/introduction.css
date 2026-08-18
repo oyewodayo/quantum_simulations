@@ -1,7 +1,7 @@
-/* Introduction tab - the glossary cards and the "Suggested learning
-   path" list (renderIntroLearningPath() in js/roadmap.js). needs
-   ../base.css, ../components.css (.card, .card-title, .bit-explainer,
-   .section-label, .btn-secondary) */
+/* Introduction tab — the glossary cards and the "Suggested learning
+   path" list (rendered by renderIntroLearningPath() in js/roadmap.js).
+   Depends on: ../base.css, ../components.css (.card, .card-title,
+   .bit-explainer, .section-label, .btn-secondary). */
 
 .intro-layout { max-width: 860px; margin: 0 auto; display: flex; flex-direction: column; gap: 16px; }
 
@@ -14,12 +14,13 @@
   .intro-glossary-grid { grid-template-columns: 1fr; }
 }
 
-/* Important Concepts glossary cards only - a slight lift + shadow on
-   hover invites browsing. scoped to #tab-important-concepts rather than
-   .intro-glossary-grid .card generally since Introduction's own
-   glossary shares the same grid/card markup and stays static on
-   purpose. z-index lifts the hovered card so the scale-up doesn't
-   render underneath its neighbor */
+/* Important Concepts glossary cards only — a slight lift + shadow on
+   hover invites browsing this reference page. Scoped to #tab-important-concepts
+   rather than .intro-glossary-grid .card generally, since Introduction's
+   own glossary cards share the exact same grid/card markup and are
+   deliberately left static. z-index lifts the hovered card above its
+   neighbors so the 2% scale-up doesn't render underneath the next card
+   in the grid. */
 #tab-important-concepts .intro-glossary-grid .card {
   transition: box-shadow 0.2s ease, transform 0.2s ease;
 }
