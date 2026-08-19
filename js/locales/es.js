@@ -31,7 +31,8 @@ registerLocale('es', {
     sternGerlach: 'Stern–Gerlach',
     teleport: 'Teleportar',
     superdense: 'Codificación Superdensa',
-    noise: 'Ruido'
+    noise: 'Ruido',
+    grover: 'Búsqueda de Grover'
   },
   qubitTab: {
     classical: 'Clásico',
@@ -709,6 +710,48 @@ registerLocale('es', {
     whyMattersTitle: 'Por Qué Esta Lucha Nunca Termina en el Hardware Real',
     whyMattersBody: 'Todas las demás simulaciones de esta aplicación ejecutan puertas y mediciones como operaciones matemáticamente perfectas, porque esa es la forma correcta de aprender las ideas primero. Los procesadores cuánticos reales — incluidos los dispositivos superconductores y de iones atrapados con los que experimenta la propia Iniciativa de Tecnología Cuántica de CERN para simulación de física de partículas — solo se mantienen coherentes durante una ventana limitada, medida exactamente en estos números de T₁/T₂, típicamente entre decenas y cientos de microsegundos. Cada puerta de un circuito real tiene que terminar bien dentro de esa ventana, que es la razón completa por la que la corrección de errores cuánticos y el diseño de circuitos consciente del hardware son problemas de ingeniería activos, no resueltos.'
   },
+  grover: {
+    title: 'Búsqueda de Grover',
+    subtitle: 'Encontrar un elemento marcado entre cuatro con una sola consulta, amplificando su amplitud en vez de revisarlos uno por uno',
+    definitionTitle: '¿Qué Es la Búsqueda de Grover?',
+    definitionBody1: 'El algoritmo de Grover busca en una lista desordenada de N elementos uno marcado usando aproximadamente √N consultas al oráculo, en vez de hasta N que necesita una búsqueda clásica en el peor caso. Funciona por amplificación de amplitud: comienza con todos los elementos en superposición equitativa, usa un oráculo para invertir el signo de la amplitud del elemento marcado, y luego usa un paso fijo de "difusión" para convertir ese cambio de signo invisible en un aumento visible de la probabilidad de medición.',
+    definitionBody2: 'Alterna abajo entre dos casos concretos. N = 4 (2 qubits) es el caso más pequeño donde el resultado es exacto: una sola consulta lleva la probabilidad del elemento marcado exactamente a 1. N = 8 (3 qubits) es el caso más pequeño donde visiblemente no lo es: hacen falta dos consultas para alcanzar un máximo de solo alrededor del 94,5%, y — prueba de que esto no es solo "faltan consultas" — una tercera consulta se pasaría de ese máximo en vez de mejorarlo.',
+    targetTitle: 'Elemento a Buscar',
+    targetBody: 'Elige qué elemento está "marcado" — esto es lo que el oráculo reconoce, y lo que la búsqueda de abajo debería encontrar.',
+    targetLabel: 'Elemento marcado',
+    foundLabel: 'Encontrado',
+    circuitTitle: 'El Circuito',
+    oracleGateLabel: 'Oráculo',
+    diffuserGateLabel: 'Difusor',
+    oracleMarks: 'marca {t}',
+    repeatBracketLabel: 'repetir ×2',
+    iterationBadge: 'Iteración {iter} de {total}',
+    modeN4Btn: 'N = 4 (exacto)',
+    modeN8Btn: 'N = 8 (2 iteraciones)',
+    modeN4Desc: '2 qubits, 1 elemento marcado — una sola consulta es exacta.',
+    modeN8Desc: '3 qubits, 1 elemento marcado — necesita 2 consultas, y aun así no llega al 100%.',
+    chartTitle: 'Amplitudes a lo Largo de la Búsqueda',
+    searchBtn: 'Buscar',
+    resultRunning: 'en curso…',
+    resultMatch: 'Encontrado en la primera consulta',
+    resultMismatch: 'Fallo — revisa la consola, esto nunca debería pasar para N=4',
+    resultMatchN8: 'Encontrado tras 2 consultas',
+    resultMismatchN8: 'Fallo esta vez — algo genuinamente posible alrededor de 1 de cada 20 veces para N=8, no es un error',
+    stepStart: 'Toda búsqueda empieza en un estado definido y poco interesante — todo ceros, igual que un registro clásico antes de mirar nada.',
+    stepSuperpose: 'Una Hadamard en cada qubit reparte la amplitud por igual entre los {n} elementos a la vez — cada candidato está "activo" simultáneamente, no revisado uno por uno.',
+    stepOracle: 'El oráculo reconoce el elemento marcado e invierte el signo de su amplitud únicamente. Mira con atención: ninguna barra se movió — una probabilidad es el tamaño al cuadrado de una amplitud, y una amplitud negativa da exactamente la misma probabilidad al elevarla al cuadrado que una positiva del mismo tamaño. Este paso es completamente invisible para cualquier medición tomada ahora mismo.',
+    stepDiffuse: 'La difusión refleja cada amplitud respecto a su promedio compartido. Las demás amplitudes, ya cercanas a ese promedio, colapsan hacia cero; la marcada, al otro lado tras invertirse su signo, sale disparada más allá del promedio por el doble de la distancia — convirtiendo ese cambio de fase invisible en una respuesta visible.',
+    stepDiffuseIteration: 'La difusión refleja cada amplitud respecto a su promedio compartido, la misma regla de siempre. Iteración {iter} de {total} completa: la probabilidad del elemento marcado ahora es {pct}%.',
+    overshootNote: 'Ese es el máximo para N=8 — una tercera iteración se pasaría de ese máximo, bajando la probabilidad de nuevo a cerca del 33%, no subiéndola.',
+    stepMeasure: 'Una consulta, una medición, listo: {found} — para {n} elementos con 1 marcado, exactamente una iteración de Grover lleva la probabilidad del elemento marcado a 1, una medición real sobre una distribución sin ninguna incertidumbre real restante.',
+    stepMeasureApprox: '2 consultas, una medición, listo: {found} — para 8 elementos con 1 marcado, 2 iteraciones de Grover llevan la probabilidad del elemento marcado a cerca del 94,5%, no exactamente a 1 esta vez; medido así, sigue siendo una extracción real según la regla de Born, solo que con una posibilidad genuina de fallar.',
+    explainerDefault: 'Elige un elemento a la izquierda y luego pulsa Buscar. Observa las barras de amplitud en cada paso — el oráculo cambia un signo que nada aquí puede ver, y la difusión es lo que convierte ese cambio invisible en una respuesta visible.',
+    tally: '{n} búsquedas · {found}/{n} encontrados en la primera consulta',
+    tallyN8: '{n} búsquedas · {found}/{n} encontrados tras 2 consultas',
+    whyFasterTitle: 'Por Qué Una Sola Consulta Es Realmente Más Rápida',
+    whyFasterBody: 'Clásicamente, encontrar un elemento marcado entre 4 revisándolos uno por uno toma hasta 3 consultas reales en el peor caso — si los primeros 3 que revisas no son el elemento, solo sabes que el 4.º es la respuesta por eliminación, pero igual necesitaste esas 3 consultas reales para llegar ahí. El algoritmo de Grover necesita exactamente 1 llamada al oráculo para este mismo caso N = 4. La brecha se agranda, no se achica, a medida que crece la lista: para N elementos, la búsqueda clásica necesita del orden de N consultas en el peor caso, mientras que el algoritmo de Grover solo necesita del orden de √N — la misma aceleración cuadrática ya descrita en la propia sección de Algoritmos de esta aplicación.',
+    whyFasterBodyN8: 'El modo N = 8 de arriba es cómo se ve realmente ese patrón general: 2 consultas en vez de hasta 7, una ventaja cuadrática real — pero el algoritmo de Grover no promete certeza en general, solo esa ventaja. Su propia probabilidad alcanza un máximo de alrededor del 94,5% y bajaría si se sigue empujando; N = 4 es el caso especial y más pequeño donde 1 consulta cae exactamente en ese máximo en vez de solo cerca de él.'
+  },
   // Refleja ROADMAP_LESSONS en js/roadmap.js exactamente (mismos ids,
   // mismo contenido de title/body) — ese archivo mantiene sus propias
   // copias en inglés como respaldo de la búsqueda t() (ver
@@ -790,6 +833,10 @@ registerLocale('es', {
     noise: {
       title: 'Ruido y Decoherencia',
       body: 'Los qubits reales no están perfectamente aislados: la relajación T₁ les permite filtrar energía hacia |0⟩, y el desfase T₂ borra la fase relativa que hace significativa una superposición. Ambos encogen el vector de Bloch hacia el centro — la misma firma de "estado mixto" que ya se ve al trazar un qubit entrelazado, solo que causada por un entorno incontrolado en vez de una medición deliberada.'
+    },
+    grover: {
+      title: 'Búsqueda de Grover',
+      body: 'El algoritmo de Grover encuentra un elemento marcado entre N mediante amplificación de amplitud en vez de revisarlos uno por uno: un oráculo invierte el signo de la amplitud del elemento marcado (invisible para cualquier medición, ya que la probabilidad solo depende del tamaño de la amplitud), y luego un paso fijo de "difusión" convierte ese cambio invisible en un aumento visible. Para N=4 con un elemento marcado, una sola consulta lleva su probabilidad de medición exactamente a 1 — una aceleración cuadrática real sobre lo mejor que puede lograr cualquier búsqueda clásica.'
     }
   },
   // Refleja ROADMAP_QUIZ en js/roadmap.js exactamente — mismos lessonIds
@@ -890,6 +937,11 @@ registerLocale('es', {
       q: 'Un qubit empieza en una superposición genuina. Después de decoherer por completo (T₂ ha pasado muchas veces), ¿qué le ocurre a su vector de Bloch?',
       options: ['Nada — la decoherencia solo afecta a la medición, no al estado', 'Se encoge hacia el centro, la misma firma que un estado mixto/entrelazado', 'Se hace más largo que 1', 'Salta instantáneamente al polo sur'],
       explanation: 'Perder coherencia frente al entorno es matemáticamente idéntico a entrelazarse con algo que no puedes rastrear — ambos dejan el vector de Bloch propio del qubit más corto que 1, un estado genuinamente mixto, no solo un estado puro aleatorizado.'
+    },
+    grover: {
+      q: 'Justo después de que el oráculo de Grover invierte el signo de la amplitud del elemento marcado, ¿qué pasa con la probabilidad medida de encontrarlo?',
+      options: ['Salta directamente a 1', 'Se mantiene exactamente igual que antes de que actuara el oráculo', 'Cae a 0', 'Se vuelve aleatoria'],
+      explanation: 'La probabilidad viene de |amplitud|², y un simple cambio de signo no altera eso: (−0,5)² = (0,5)². El cambio de fase del oráculo es completamente invisible para una medición hasta que el paso de difusión lo convierte en un aumento real de probabilidad.'
     }
   }
 });

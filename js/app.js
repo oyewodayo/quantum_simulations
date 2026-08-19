@@ -276,6 +276,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initTeleportTab();
   initSuperdenseTab();
   initNoiseTab();
+  initGroverTab();
 
   // Initial renders
   const b0 = qubitMain.getBloch();

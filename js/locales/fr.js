@@ -31,7 +31,8 @@ registerLocale('fr', {
     sternGerlach: 'Stern–Gerlach',
     teleport: 'Téléporter',
     superdense: 'Codage Superdense',
-    noise: 'Bruit'
+    noise: 'Bruit',
+    grover: 'Recherche de Grover'
   },
   qubitTab: {
     classical: 'Classique',
@@ -708,6 +709,48 @@ registerLocale('fr', {
     whyMattersTitle: 'Pourquoi Ce Combat Ne S\'arrête Jamais sur le Matériel Réel',
     whyMattersBody: 'Toutes les autres simulations de cette application exécutent portes et mesures comme des opérations mathématiquement parfaites, car c\'est la bonne façon d\'apprendre les idées d\'abord. Les processeurs quantiques réels — y compris les dispositifs supraconducteurs et à ions piégés avec lesquels l\'Initiative Technologie Quantique du CERN expérimente pour la simulation de physique des particules — ne restent cohérents que pendant une fenêtre limitée, mesurée exactement par ces nombres T₁/T₂, typiquement de quelques dizaines à quelques centaines de microsecondes. Chaque porte d\'un circuit réel doit se terminer bien à l\'intérieur de cette fenêtre, ce qui est la raison même pour laquelle la correction d\'erreurs quantiques et la conception de circuits adaptée au matériel sont des problèmes d\'ingénierie actifs, non résolus.'
   },
+  grover: {
+    title: 'Recherche de Grover',
+    subtitle: 'Trouver un élément marqué parmi quatre en une seule requête, en amplifiant son amplitude plutôt qu\'en les vérifiant un par un',
+    definitionTitle: 'Qu\'est-ce que la Recherche de Grover ?',
+    definitionBody1: 'L\'algorithme de Grover recherche dans une liste non triée de N éléments celui qui est marqué, en utilisant environ √N requêtes à l\'oracle, au lieu de jusqu\'à N pour une recherche classique dans le pire des cas. Il fonctionne par amplification d\'amplitude : tous les éléments commencent en superposition égale, un oracle inverse le signe de l\'amplitude de l\'élément marqué, puis une étape fixe de « diffusion » transforme ce changement de signe invisible en une hausse visible de la probabilité de mesure.',
+    definitionBody2: 'Basculez ci-dessous entre deux cas concrets. N = 4 (2 qubits) est le plus petit cas où le résultat est exact : une seule requête porte la probabilité de l\'élément marqué exactement à 1. N = 8 (3 qubits) est le plus petit cas où ce n\'est visiblement pas le cas : il faut deux requêtes pour atteindre un maximum d\'environ 94,5 % seulement, et — preuve que ce n\'est pas simplement « pas assez de requêtes » — une troisième requête dépasserait ce maximum au lieu de l\'améliorer.',
+    targetTitle: 'Élément à Trouver',
+    targetBody: 'Choisissez quel élément est « marqué » — c\'est ce que l\'oracle reconnaît, et ce que la recherche ci-dessous devrait trouver.',
+    targetLabel: 'Élément marqué',
+    foundLabel: 'Trouvé',
+    circuitTitle: 'Le Circuit',
+    oracleGateLabel: 'Oracle',
+    diffuserGateLabel: 'Diffuseur',
+    oracleMarks: 'marque {t}',
+    repeatBracketLabel: 'répéter ×2',
+    iterationBadge: 'Itération {iter} sur {total}',
+    modeN4Btn: 'N = 4 (exact)',
+    modeN8Btn: 'N = 8 (2 itérations)',
+    modeN4Desc: '2 qubits, 1 élément marqué — une seule requête est exacte.',
+    modeN8Desc: '3 qubits, 1 élément marqué — nécessite 2 requêtes, et même ainsi plafonne sous les 100 %.',
+    chartTitle: 'Amplitudes Tout au Long de la Recherche',
+    searchBtn: 'Rechercher',
+    resultRunning: 'en cours…',
+    resultMatch: 'Trouvé dès la première requête',
+    resultMismatch: 'Échec — vérifiez la console, cela ne devrait jamais arriver pour N=4',
+    resultMatchN8: 'Trouvé après 2 requêtes',
+    resultMismatchN8: 'Échec cette fois — véritablement possible environ 1 fois sur 20 pour N=8, ce n\'est pas un bug',
+    stepStart: 'Toute recherche commence dans un état défini et sans intérêt — que des zéros, exactement comme un registre classique avant d\'avoir rien regardé.',
+    stepSuperpose: 'Une porte Hadamard sur chaque qubit répartit l\'amplitude également entre les {n} éléments à la fois — chaque candidat est « actif » simultanément, et non vérifié un par un.',
+    stepOracle: 'L\'oracle reconnaît l\'élément marqué et inverse le signe de son amplitude seule. Regardez bien : aucune barre n\'a bougé — une probabilité est le carré de la taille d\'une amplitude, et une amplitude négative donne exactement la même probabilité au carré qu\'une amplitude positive de même taille. Cette étape est totalement invisible pour toute mesure effectuée maintenant.',
+    stepDiffuse: 'La diffusion reflète chaque amplitude autour de leur moyenne commune. Les autres amplitudes, déjà proches de cette moyenne, s\'effondrent vers zéro ; celle marquée, à l\'opposé après son changement de signe, est projetée au-delà de la moyenne du double de l\'écart — transformant ce basculement de phase invisible en une réponse visible.',
+    stepDiffuseIteration: 'La diffusion reflète chaque amplitude autour de leur moyenne commune, toujours la même règle. Itération {iter} sur {total} terminée : la probabilité de l\'élément marqué est maintenant de {pct} %.',
+    overshootNote: 'C\'est le maximum pour N=8 — une troisième itération dépasserait ce maximum, faisant retomber la probabilité à environ 33 %, pas en l\'augmentant.',
+    stepMeasure: 'Une requête, une mesure, terminé : {found} — pour {n} éléments avec 1 marqué, une seule itération de Grover porte la probabilité de l\'élément marqué à 1, une mesure réelle sur une distribution sans aucune incertitude réelle restante.',
+    stepMeasureApprox: '2 requêtes, une mesure, terminé : {found} — pour 8 éléments avec 1 marqué, 2 itérations de Grover portent la probabilité de l\'élément marqué à environ 94,5 %, pas exactement 1 cette fois ; mesurée ainsi, c\'est quand même un tirage réel selon la règle de Born, avec simplement une chance réelle de manquer.',
+    explainerDefault: 'Choisissez un élément à gauche, puis appuyez sur Rechercher. Observez les barres d\'amplitude à chaque étape — l\'oracle change un signe que rien ici ne peut voir, et la diffusion est ce qui transforme ce changement invisible en une réponse visible.',
+    tally: '{n} recherches · {found}/{n} trouvés dès la première requête',
+    tallyN8: '{n} recherches · {found}/{n} trouvés après 2 requêtes',
+    whyFasterTitle: 'Pourquoi Une Seule Requête Est Réellement Plus Rapide',
+    whyFasterBody: 'Classiquement, trouver un élément marqué parmi 4 en les vérifiant un par un prend jusqu\'à 3 requêtes réelles dans le pire des cas — si les 3 premiers éléments vérifiés ne sont pas le bon, vous ne savez que le 4e est la réponse que par élimination, mais il vous a quand même fallu ces 3 requêtes réelles pour y arriver. L\'algorithme de Grover n\'a besoin que d\'exactement 1 appel à l\'oracle pour ce même cas N = 4. L\'écart se creuse, et ne se réduit pas, à mesure que la liste s\'agrandit : pour N éléments, la recherche classique nécessite de l\'ordre de N requêtes dans le pire des cas, alors que l\'algorithme de Grover n\'en nécessite que de l\'ordre de √N — la même accélération quadratique déjà décrite dans la propre section Algorithmes de cette application.',
+    whyFasterBodyN8: 'Le mode N = 8 ci-dessus montre à quoi ressemble réellement ce schéma général : 2 requêtes au lieu de jusqu\'à 7, une véritable avance quadratique — mais l\'algorithme de Grover ne promet pas la certitude en général, seulement cette avance. Sa propre probabilité plafonne à environ 94,5 % et redescendrait si on continuait ; N = 4 est le cas particulier, plus petit, où 1 requête tombe exactement sur ce maximum plutôt que simplement près de lui.'
+  },
   // Reflète exactement ROADMAP_LESSONS dans js/roadmap.js (mêmes ids, même
   // contenu titre/corps) — ce fichier conserve ses propres copies anglaises
   // comme repli pour t() (voir buildLessonInfoHTML()), donc les deux n'ont
@@ -789,6 +832,10 @@ registerLocale('fr', {
     noise: {
       title: 'Bruit et Décohérence',
       body: 'Les qubits réels ne sont pas parfaitement isolés : la relaxation T₁ leur permet de laisser fuir de l\'énergie vers |0⟩, et le déphasage T₂ efface la phase relative qui donne son sens à une superposition. Les deux rétrécissent le vecteur de Bloch vers le centre — la même signature d\'« état mixte » déjà vue en traçant un qubit intriqué, mais causée ici par un environnement incontrôlé plutôt que par une mesure délibérée.'
+    },
+    grover: {
+      title: 'Recherche de Grover',
+      body: 'L\'algorithme de Grover trouve un élément marqué parmi N par amplification d\'amplitude plutôt qu\'en les vérifiant un par un : un oracle inverse le signe de l\'amplitude de l\'élément marqué (invisible pour toute mesure, puisque la probabilité ne dépend que de la taille de l\'amplitude), puis une étape fixe de « diffusion » transforme ce changement invisible en une hausse visible. Pour N=4 avec un élément marqué, une seule requête porte sa probabilité de mesure exactement à 1 — une véritable accélération quadratique par rapport au meilleur qu\'une recherche classique puisse faire.'
     }
   },
   // Reflète exactement ROADMAP_QUIZ dans js/roadmap.js — mêmes lessonIds
@@ -888,6 +935,11 @@ registerLocale('fr', {
       q: 'Un qubit démarre dans une superposition authentique. Une fois complètement décohéré (T₂ écoulé plusieurs fois), qu\'arrive-t-il à son vecteur de Bloch ?',
       options: ['Rien — la décohérence n\'affecte que la mesure, pas l\'état', 'Il rétrécit vers le centre, la même signature qu\'un état mixte/intriqué', 'Il devient plus long que 1', 'Il saute instantanément au pôle sud'],
       explanation: 'Perdre la cohérence face à l\'environnement est mathématiquement identique à s\'intriquer avec quelque chose que l\'on ne peut pas suivre — les deux laissent le vecteur de Bloch propre du qubit plus court que 1, un état véritablement mixte, pas seulement un état pur randomisé.'
+    },
+    grover: {
+      q: 'Juste après que l\'oracle de Grover inverse le signe de l\'amplitude de l\'élément marqué, que devient la probabilité mesurée de le trouver ?',
+      options: ['Elle saute directement à 1', 'Elle reste exactement la même qu\'avant l\'action de l\'oracle', 'Elle tombe à 0', 'Elle devient aléatoire'],
+      explanation: 'La probabilité provient de |amplitude|², et un simple changement de signe ne change rien à cela : (−0,5)² = (0,5)². Le basculement de phase de l\'oracle est totalement invisible pour une mesure jusqu\'à ce que l\'étape de diffusion le transforme en une réelle hausse de probabilité.'
     }
   }
 });

@@ -366,6 +366,83 @@ check('Superdense coding decodes all 4 messages exactly, with probability 1', ()
   }
 });
 
+// ─── GROVER'S SEARCH (js/core/two-qubit.js's applyPhaseFlip()/
+//     applyDiffusionReflect(), added for this tab — js/tabs/grover-tab.js
+//     is itself untested UI glue around exactly this sequence) ─────────
+check('Grover oracle changes no probability, only phase, for all 4 possible marked items', () => {
+  for (let target = 0; target < 4; target++) {
+    const state = new TwoQubitState();
+    state.applySingleQubitGate(0, GATES.H.matrix);
+    state.applySingleQubitGate(1, GATES.H.matrix);
+    const before = [0, 1, 2, 3].map(i => state.prob(i));
+    state.applyPhaseFlip(target);
+    const after = [0, 1, 2, 3].map(i => state.prob(i));
+    before.forEach((p, i) => approxEqual(after[i], p, 1e-12, `target ${target}: prob(${i}) changed after oracle`));
+  }
+});
+
+check('Grover diffusion (1 iteration, N=4) finds the marked item with probability 1, for all 4 possible targets', () => {
+  for (let target = 0; target < 4; target++) {
+    const state = new TwoQubitState();
+    state.applySingleQubitGate(0, GATES.H.matrix);
+    state.applySingleQubitGate(1, GATES.H.matrix);
+    state.applyPhaseFlip(target);
+    state.applySingleQubitGate(0, GATES.H.matrix);
+    state.applySingleQubitGate(1, GATES.H.matrix);
+    state.applyDiffusionReflect();
+    state.applySingleQubitGate(0, GATES.H.matrix);
+    state.applySingleQubitGate(1, GATES.H.matrix);
+    approxEqual(state.prob(target), 1, 1e-9, `target ${target}: marked-item probability`);
+    for (let idx = 0; idx < 4; idx++) {
+      if (idx !== target) approxEqual(state.prob(idx), 0, 1e-9, `target ${target}: leak into index ${idx}`);
+    }
+  }
+});
+
+// N=8 (3 qubits) is the general-case demo mode: 1 iteration isn't enough
+// and 2 iterations isn't exact — both genuinely different from N=4's
+// one-shot-exact special case, which is the whole pedagogical point of
+// offering it as a second mode.
+function runGroverN8(target, iterations) {
+  const state = new ThreeQubitState();
+  state.applySingleQubitGate(0, GATES.H.matrix);
+  state.applySingleQubitGate(1, GATES.H.matrix);
+  state.applySingleQubitGate(2, GATES.H.matrix);
+  for (let k = 0; k < iterations; k++) {
+    state.applyPhaseFlip(target);
+    state.applySingleQubitGate(0, GATES.H.matrix);
+    state.applySingleQubitGate(1, GATES.H.matrix);
+    state.applySingleQubitGate(2, GATES.H.matrix);
+    state.applyDiffusionReflect();
+    state.applySingleQubitGate(0, GATES.H.matrix);
+    state.applySingleQubitGate(1, GATES.H.matrix);
+    state.applySingleQubitGate(2, GATES.H.matrix);
+  }
+  return state;
+}
+
+check('Grover oracle (N=8) changes no probability, only phase, for all 8 possible marked items', () => {
+  for (let target = 0; target < 8; target++) {
+    const state = new ThreeQubitState();
+    state.applySingleQubitGate(0, GATES.H.matrix);
+    state.applySingleQubitGate(1, GATES.H.matrix);
+    state.applySingleQubitGate(2, GATES.H.matrix);
+    const before = Array.from({ length: 8 }, (_, i) => state.prob(i));
+    state.applyPhaseFlip(target);
+    const after = Array.from({ length: 8 }, (_, i) => state.prob(i));
+    before.forEach((p, i) => approxEqual(after[i], p, 1e-12, `target ${target}: prob(${i}) changed after oracle`));
+  }
+});
+
+check('Grover diffusion (N=8) reaches its analytic peak of ~94.5% after 2 iterations, for all 8 possible targets, and a 3rd iteration overshoots', () => {
+  for (let target = 0; target < 8; target++) {
+    const p2 = runGroverN8(target, 2).prob(target);
+    assert.ok(p2 > 0.94 && p2 < 0.95, `target ${target}: expected ~94.5% after 2 iterations, got ${(p2 * 100).toFixed(2)}%`);
+  }
+  const p3 = runGroverN8(0, 3).prob(0);
+  assert.ok(p3 < 0.4, `target 0: expected a 3rd iteration to overshoot past the peak (<40%), got ${(p3 * 100).toFixed(2)}%`);
+});
+
 // ─── TUNNEL SOLVER (js/tabs/tunneling-tab.js, loaded for real above) ───
 // Backs up the "validated separately" claim in tunneling-tab.js's own
 // header comment with an actual checked-in assertion, run every time

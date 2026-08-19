@@ -52,6 +52,7 @@
   <link rel="stylesheet" href="css/tabs/teleport.css">
   <link rel="stylesheet" href="css/tabs/superdense.css">
   <link rel="stylesheet" href="css/tabs/noise.css">
+  <link rel="stylesheet" href="css/tabs/grover.css">
   <link rel="stylesheet" href="css/responsive.css">
 </head>
 <body>
@@ -153,6 +154,7 @@
     <button class="tab" data-tab="teleport"><span class="tab-badge">τ</span><span class="tab-label" data-i18n="nav.teleport">Teleport</span></button>
     <button class="tab" data-tab="superdense"><span class="tab-badge">D</span><span class="tab-label" data-i18n="nav.superdense">Superdense Coding</span></button>
     <button class="tab" data-tab="noise"><span class="tab-badge">N</span><span class="tab-label" data-i18n="nav.noise">Noise</span></button>
+    <button class="tab" data-tab="grover"><span class="tab-badge">🔍</span><span class="tab-label" data-i18n="nav.grover">Grover's Search</span></button>
   </aside>
 
   <!-- ═══════════════════ INTRODUCTION TAB ═══════════════════ -->
@@ -3506,6 +3508,412 @@
     <div class="lesson-embed" id="lesson-embed-noise"></div>
   </section>
 
+  <!-- ═══════════════════ GROVER'S SEARCH TAB ═══════════════════ -->
+  <!-- The application's first quantum-algorithm module, as opposed to a
+       single protocol. Two selectable modes, toggled by setGroverMode()
+       (grover-tab.js) rather than genuinely different tabs, since they're
+       the same algorithm at two sizes, not two different ideas:
+         - N=4 (2 qubits, TwoQubitState): the textbook exact case — a
+           single Grover iteration doesn't just improve the odds, it
+           brings the marked item's measurement probability to exactly 1.
+         - N=8 (3 qubits, ThreeQubitState): the general case made visible
+           — 2 iterations are needed, the peak probability is only
+           ~94.5%, not 1, and a 3rd iteration provably overshoots past
+           that peak rather than improving on it (verified computationally
+           in tests/run.js, same discipline as the N=4 case).
+       Both modes are built on the same two primitives, added to both
+       TwoQubitState and ThreeQubitState this term: applyPhaseFlip() (the
+       oracle) and applyDiffusionReflect() (diffusion's middle step) —
+       verified for every possible marked item in both state sizes before
+       either was used in an interface. -->
+  <section id="tab-grover" class="tab-content">
+
+    <div class="compare-header">
+      <h1 class="compare-title" data-i18n="grover.title">Grover's Search</h1>
+      <p class="compare-subtitle" data-i18n="grover.subtitle">Finding one marked item among four with a single query, by amplifying its amplitude rather than checking items one at a time</p>
+    </div>
+
+    <div class="superdense-layout">
+
+      <div class="card">
+        <div class="card-title" data-i18n="grover.definitionTitle">What Is Grover's Search?</div>
+        <p class="bit-explainer" data-i18n="grover.definitionBody1">Grover's algorithm searches an unsorted list of N items for one marked entry using roughly √N oracle queries, instead of the up to N a classical search needs in the worst case. It works by amplitude amplification: start every item in equal superposition, use an oracle to flip the sign of the marked item's amplitude alone, then use a fixed "diffusion" step to turn that invisible sign flip into a visible boost in measurement probability.</p>
+        <p class="bit-explainer" style="margin-top:10px;" data-i18n="grover.definitionBody2">Toggle below between two concrete cases. N = 4 (2 qubits) is the smallest case where the result is exact: a single query brings the marked item's probability to exactly 1. N = 8 (3 qubits) is the smallest case where it visibly isn't: it takes two queries to reach a peak of only about 94.5%, and — proof this isn't just "not enough queries yet" — a third query would overshoot past that peak rather than improving on it.</p>
+      </div>
+
+      <!-- Circuit diagram — H⊗H, the Oracle as a single black-box gate
+           spanning both wires (its internal wiring depends on which item
+           is marked, so — same convention as the Uω box in every
+           textbook rendering of this circuit — it isn't decomposed),
+           then the Grover diffusion operator drawn as its own real three
+           gates under one bracket (H⊗H, the 2|00⟩⟨00|−I reflection, H⊗H
+           again) rather than a second black box, then a measurement on
+           each wire. The reflection and the oracle are both genuinely
+           2-qubit joint operations, not something a per-wire token could
+           honestly represent — unlike Bell States' H+CNOT, there's no
+           single-wire "value" to animate through them. Idle, every gate
+           carries the same always-on ambient glow Bell States' own
+           circuit uses (.circuit-gate, bell-states.css); running Search
+           additionally fires each gate's one-shot spotlight in sync with
+           the real stage (.teleport-stage.active, teleport.css) via
+           pulseGroverStage() in grover-tab.js — the diffuser's three
+           gates ripple left-to-right in the order they actually run —
+           the circuit's role is to show *which step is live*, while the
+           amplitude chart to its right is what actually shows the
+           physics that step performs. -->
+      <div class="card">
+        <div class="card-title" data-i18n="grover.circuitTitle">The Circuit</div>
+        <div id="grover-circuit-n4-wrap">
+        <svg id="grover-circuit" viewBox="0 0 600 180" role="img" aria-label="Circuit diagram: a Hadamard on each of two qubits, then an Oracle gate spanning both qubits, then the Grover diffusion operator — a Hadamard on each qubit, a reflection about the zero state spanning both qubits, and a Hadamard on each qubit again — then a measurement on each qubit." style="width:100%;max-width:620px;display:block;margin:8px auto 0;">
+          <defs>
+            <linearGradient id="grover-metal-sheen" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%"  stop-color="#fff" stop-opacity="0.38"/>
+              <stop offset="14%" stop-color="#fff" stop-opacity="0.1"/>
+              <stop offset="55%" stop-color="#000" stop-opacity="0"/>
+              <stop offset="100%" stop-color="#000" stop-opacity="0.22"/>
+            </linearGradient>
+          </defs>
+
+          <line x1="50" y1="57" x2="530" y2="57" stroke="var(--border2)" stroke-width="2"/>
+          <line x1="50" y1="117" x2="530" y2="117" stroke="var(--border2)" stroke-width="2"/>
+          <text x="26" y="63"  font-size="14" font-weight="700" fill="var(--zero)" text-anchor="middle">q&#8320;</text>
+          <text x="26" y="123" font-size="14" font-weight="700" fill="var(--one)"  text-anchor="middle">q&#8321;</text>
+          <text x="26" y="92" font-size="13" fill="var(--text2)" text-anchor="middle">|00&#10217;</text>
+
+          <g id="grover-gate-h0" class="circuit-gate teleport-stage">
+            <rect x="90" y="37" width="40" height="40" rx="6" fill="var(--surface2)" stroke="var(--zero)" stroke-width="1.5"/>
+            <rect x="90" y="37" width="40" height="40" rx="6" fill="url(#grover-metal-sheen)" pointer-events="none"/>
+            <text x="110" y="63" font-size="16" font-weight="700" fill="var(--zero)" text-anchor="middle">H</text>
+          </g>
+          <g id="grover-gate-h1" class="circuit-gate teleport-stage">
+            <rect x="90" y="97" width="40" height="40" rx="6" fill="var(--surface2)" stroke="var(--one)" stroke-width="1.5"/>
+            <rect x="90" y="97" width="40" height="40" rx="6" fill="url(#grover-metal-sheen)" pointer-events="none"/>
+            <text x="110" y="123" font-size="16" font-weight="700" fill="var(--one)" text-anchor="middle">H</text>
+          </g>
+
+          <g id="grover-gate-oracle" class="circuit-gate teleport-stage">
+            <rect x="170" y="30" width="70" height="114" rx="8" fill="var(--surface2)" stroke="var(--text2)" stroke-width="1.5"/>
+            <rect x="170" y="30" width="70" height="114" rx="8" fill="url(#grover-metal-sheen)" pointer-events="none"/>
+            <text x="205" y="82" font-size="13" font-weight="700" fill="var(--text)" text-anchor="middle" data-i18n="grover.oracleGateLabel">Oracle</text>
+            <text id="grover-oracle-gate-target" x="205" y="98" font-size="11" fill="var(--text2)" text-anchor="middle">marks 00</text>
+          </g>
+
+          <!-- Diffuser, decomposed into its real three gates rather than
+               one opaque box — H⊗2, the 2|00⟩⟨00|−I reflection (a joint
+               2-qubit operation, boxed the same tall way as the Oracle),
+               H⊗2 again — under one bracket labeled "Diffuser", matching
+               the standard textbook circuit for Grover's algorithm
+               (e.g. the "Grover diffusion operator" brace on Wikipedia's
+               own reference diagram) rather than a black-box shorthand. -->
+          <path d="M 270,24 V 16 H 450 V 24" fill="none" stroke="var(--text3)" stroke-width="1.2"/>
+          <text x="360" y="12" font-size="12" font-weight="700" fill="var(--text2)" text-anchor="middle" data-i18n="grover.diffuserGateLabel">Diffuser</text>
+
+          <g id="grover-gate-diffuse-h0a" class="circuit-gate teleport-stage">
+            <rect x="270" y="37" width="34" height="40" rx="6" fill="var(--surface2)" stroke="var(--zero)" stroke-width="1.5"/>
+            <rect x="270" y="37" width="34" height="40" rx="6" fill="url(#grover-metal-sheen)" pointer-events="none"/>
+            <text x="287" y="63" font-size="16" font-weight="700" fill="var(--zero)" text-anchor="middle">H</text>
+          </g>
+          <g id="grover-gate-diffuse-h1a" class="circuit-gate teleport-stage">
+            <rect x="270" y="97" width="34" height="40" rx="6" fill="var(--surface2)" stroke="var(--one)" stroke-width="1.5"/>
+            <rect x="270" y="97" width="34" height="40" rx="6" fill="url(#grover-metal-sheen)" pointer-events="none"/>
+            <text x="287" y="123" font-size="16" font-weight="700" fill="var(--one)" text-anchor="middle">H</text>
+          </g>
+
+          <g id="grover-gate-reflect" class="circuit-gate teleport-stage">
+            <rect x="324" y="30" width="72" height="114" rx="8" fill="var(--surface2)" stroke="var(--text2)" stroke-width="1.5"/>
+            <rect x="324" y="30" width="72" height="114" rx="8" fill="url(#grover-metal-sheen)" pointer-events="none"/>
+            <text x="360" y="82" font-size="11.5" font-weight="700" fill="var(--text)" text-anchor="middle">2|00&#10217;&#10216;00|</text>
+            <text x="360" y="98" font-size="11.5" font-weight="700" fill="var(--text)" text-anchor="middle">&#8722; I</text>
+          </g>
+
+          <g id="grover-gate-diffuse-h0b" class="circuit-gate teleport-stage">
+            <rect x="416" y="37" width="34" height="40" rx="6" fill="var(--surface2)" stroke="var(--zero)" stroke-width="1.5"/>
+            <rect x="416" y="37" width="34" height="40" rx="6" fill="url(#grover-metal-sheen)" pointer-events="none"/>
+            <text x="433" y="63" font-size="16" font-weight="700" fill="var(--zero)" text-anchor="middle">H</text>
+          </g>
+          <g id="grover-gate-diffuse-h1b" class="circuit-gate teleport-stage">
+            <rect x="416" y="97" width="34" height="40" rx="6" fill="var(--surface2)" stroke="var(--one)" stroke-width="1.5"/>
+            <rect x="416" y="97" width="34" height="40" rx="6" fill="url(#grover-metal-sheen)" pointer-events="none"/>
+            <text x="433" y="123" font-size="16" font-weight="700" fill="var(--one)" text-anchor="middle">H</text>
+          </g>
+
+          <g id="grover-meter-0" class="teleport-stage">
+            <rect x="480" y="37" width="40" height="40" rx="6" fill="var(--surface2)" stroke="var(--zero)" stroke-width="1.5"/>
+            <path d="M492,65 A10,10 0 0 1 508,65" fill="none" stroke="var(--zero)" stroke-width="1.6"/>
+            <line x1="500" y1="66" x2="507" y2="52" stroke="var(--zero)" stroke-width="1.6" stroke-linecap="round"/>
+          </g>
+          <g id="grover-meter-1" class="teleport-stage">
+            <rect x="480" y="97" width="40" height="40" rx="6" fill="var(--surface2)" stroke="var(--one)" stroke-width="1.5"/>
+            <path d="M492,125 A10,10 0 0 1 508,125" fill="none" stroke="var(--one)" stroke-width="1.6"/>
+            <line x1="500" y1="126" x2="507" y2="112" stroke="var(--one)" stroke-width="1.6" stroke-linecap="round"/>
+          </g>
+          <text id="grover-circuit-out0" x="552" y="63"  font-size="14" font-weight="700" fill="var(--zero)" text-anchor="middle">?</text>
+          <text id="grover-circuit-out1" x="552" y="123" font-size="14" font-weight="700" fill="var(--one)"  text-anchor="middle">?</text>
+        </svg>
+        </div>
+
+        <!-- N=8 (3-qubit) circuit — same gate vocabulary as the N=4
+             diagram above (Oracle as one black box, Diffuser decomposed
+             into its own H/reflection/H under a bracket), plus an outer
+             "repeat ×2" bracket around the whole Oracle+Diffuser block,
+             the same nested-bracket convention the standard textbook
+             circuit for this algorithm uses for the general case. Hidden
+             until setGroverMode('n8') shows it (grover-tab.js). -->
+        <div id="grover-circuit-n8-wrap" style="display:none;">
+        <svg id="grover-circuit-n8" viewBox="0 0 640 260" role="img" aria-label="Circuit diagram: a Hadamard on each of three qubits, then an Oracle gate and the Grover diffusion operator spanning all three qubits, repeated twice, then a measurement on each qubit." style="width:100%;max-width:660px;display:block;margin:8px auto 0;">
+          <defs>
+            <linearGradient id="grover-metal-sheen-n8" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%"  stop-color="#fff" stop-opacity="0.38"/>
+              <stop offset="14%" stop-color="#fff" stop-opacity="0.1"/>
+              <stop offset="55%" stop-color="#000" stop-opacity="0"/>
+              <stop offset="100%" stop-color="#000" stop-opacity="0.22"/>
+            </linearGradient>
+          </defs>
+
+          <line x1="50" y1="80" x2="534" y2="80" stroke="var(--border2)" stroke-width="2"/>
+          <line x1="50" y1="140" x2="534" y2="140" stroke="var(--border2)" stroke-width="2"/>
+          <line x1="50" y1="200" x2="534" y2="200" stroke="var(--border2)" stroke-width="2"/>
+          <text x="26" y="86"  font-size="14" font-weight="700" fill="var(--zero)" text-anchor="middle">q&#8320;</text>
+          <text x="26" y="146" font-size="14" font-weight="700" fill="var(--text)" text-anchor="middle">q&#8321;</text>
+          <text x="26" y="206" font-size="14" font-weight="700" fill="var(--one)"  text-anchor="middle">q&#8322;</text>
+          <text x="26" y="48" font-size="12" fill="var(--text2)" text-anchor="middle">|000&#10217;</text>
+
+          <!-- Outer "repeat ×2" bracket — Oracle + Diffuser together run
+               twice; matches the "Repeat ≈ ⌈π/4·√N⌉ times" brace on the
+               standard reference diagram for this algorithm, just with a
+               fixed count rather than a general formula since this demo
+               always uses N=8. -->
+          <path d="M 170,28 V 16 H 454 V 28" fill="none" stroke="var(--text3)" stroke-width="1.2"/>
+          <text id="grover-repeat-label-n8" x="312" y="10" font-size="12" font-weight="700" fill="var(--text2)" text-anchor="middle" data-i18n="grover.repeatBracketLabel">repeat &times;2</text>
+
+          <g id="grover-gate-h0-n8" class="circuit-gate teleport-stage">
+            <rect x="90" y="60" width="40" height="40" rx="6" fill="var(--surface2)" stroke="var(--zero)" stroke-width="1.5"/>
+            <rect x="90" y="60" width="40" height="40" rx="6" fill="url(#grover-metal-sheen-n8)" pointer-events="none"/>
+            <text x="110" y="86" font-size="16" font-weight="700" fill="var(--zero)" text-anchor="middle">H</text>
+          </g>
+          <g id="grover-gate-h1-n8" class="circuit-gate teleport-stage">
+            <rect x="90" y="120" width="40" height="40" rx="6" fill="var(--surface2)" stroke="var(--text)" stroke-width="1.5"/>
+            <rect x="90" y="120" width="40" height="40" rx="6" fill="url(#grover-metal-sheen-n8)" pointer-events="none"/>
+            <text x="110" y="146" font-size="16" font-weight="700" fill="var(--text)" text-anchor="middle">H</text>
+          </g>
+          <g id="grover-gate-h2-n8" class="circuit-gate teleport-stage">
+            <rect x="90" y="180" width="40" height="40" rx="6" fill="var(--surface2)" stroke="var(--one)" stroke-width="1.5"/>
+            <rect x="90" y="180" width="40" height="40" rx="6" fill="url(#grover-metal-sheen-n8)" pointer-events="none"/>
+            <text x="110" y="206" font-size="16" font-weight="700" fill="var(--one)" text-anchor="middle">H</text>
+          </g>
+
+          <g id="grover-gate-oracle-n8" class="circuit-gate teleport-stage">
+            <rect x="170" y="60" width="70" height="160" rx="8" fill="var(--surface2)" stroke="var(--text2)" stroke-width="1.5"/>
+            <rect x="170" y="60" width="70" height="160" rx="8" fill="url(#grover-metal-sheen-n8)" pointer-events="none"/>
+            <text x="205" y="132" font-size="13" font-weight="700" fill="var(--text)" text-anchor="middle" data-i18n="grover.oracleGateLabel">Oracle</text>
+            <text id="grover-oracle-gate-target-n8" x="205" y="148" font-size="11" fill="var(--text2)" text-anchor="middle">marks 000</text>
+          </g>
+
+          <path d="M 270,54 V 42 H 454 V 54" fill="none" stroke="var(--text3)" stroke-width="1.2"/>
+          <text x="362" y="36" font-size="12" font-weight="700" fill="var(--text2)" text-anchor="middle" data-i18n="grover.diffuserGateLabel">Diffuser</text>
+
+          <g id="grover-gate-diffuse-h0a-n8" class="circuit-gate teleport-stage">
+            <rect x="270" y="60" width="34" height="40" rx="6" fill="var(--surface2)" stroke="var(--zero)" stroke-width="1.5"/>
+            <rect x="270" y="60" width="34" height="40" rx="6" fill="url(#grover-metal-sheen-n8)" pointer-events="none"/>
+            <text x="287" y="86" font-size="16" font-weight="700" fill="var(--zero)" text-anchor="middle">H</text>
+          </g>
+          <g id="grover-gate-diffuse-h1a-n8" class="circuit-gate teleport-stage">
+            <rect x="270" y="120" width="34" height="40" rx="6" fill="var(--surface2)" stroke="var(--text)" stroke-width="1.5"/>
+            <rect x="270" y="120" width="34" height="40" rx="6" fill="url(#grover-metal-sheen-n8)" pointer-events="none"/>
+            <text x="287" y="146" font-size="16" font-weight="700" fill="var(--text)" text-anchor="middle">H</text>
+          </g>
+          <g id="grover-gate-diffuse-h2a-n8" class="circuit-gate teleport-stage">
+            <rect x="270" y="180" width="34" height="40" rx="6" fill="var(--surface2)" stroke="var(--one)" stroke-width="1.5"/>
+            <rect x="270" y="180" width="34" height="40" rx="6" fill="url(#grover-metal-sheen-n8)" pointer-events="none"/>
+            <text x="287" y="206" font-size="16" font-weight="700" fill="var(--one)" text-anchor="middle">H</text>
+          </g>
+
+          <g id="grover-gate-reflect-n8" class="circuit-gate teleport-stage">
+            <rect x="319" y="60" width="86" height="160" rx="8" fill="var(--surface2)" stroke="var(--text2)" stroke-width="1.5"/>
+            <rect x="319" y="60" width="86" height="160" rx="8" fill="url(#grover-metal-sheen-n8)" pointer-events="none"/>
+            <text x="362" y="134" font-size="11" font-weight="700" fill="var(--text)" text-anchor="middle">2|000&#10217;&#10216;000|</text>
+            <text x="362" y="150" font-size="11" font-weight="700" fill="var(--text)" text-anchor="middle">&#8722; I</text>
+          </g>
+
+          <g id="grover-gate-diffuse-h0b-n8" class="circuit-gate teleport-stage">
+            <rect x="420" y="60" width="34" height="40" rx="6" fill="var(--surface2)" stroke="var(--zero)" stroke-width="1.5"/>
+            <rect x="420" y="60" width="34" height="40" rx="6" fill="url(#grover-metal-sheen-n8)" pointer-events="none"/>
+            <text x="437" y="86" font-size="16" font-weight="700" fill="var(--zero)" text-anchor="middle">H</text>
+          </g>
+          <g id="grover-gate-diffuse-h1b-n8" class="circuit-gate teleport-stage">
+            <rect x="420" y="120" width="34" height="40" rx="6" fill="var(--surface2)" stroke="var(--text)" stroke-width="1.5"/>
+            <rect x="420" y="120" width="34" height="40" rx="6" fill="url(#grover-metal-sheen-n8)" pointer-events="none"/>
+            <text x="437" y="146" font-size="16" font-weight="700" fill="var(--text)" text-anchor="middle">H</text>
+          </g>
+          <g id="grover-gate-diffuse-h2b-n8" class="circuit-gate teleport-stage">
+            <rect x="420" y="180" width="34" height="40" rx="6" fill="var(--surface2)" stroke="var(--one)" stroke-width="1.5"/>
+            <rect x="420" y="180" width="34" height="40" rx="6" fill="url(#grover-metal-sheen-n8)" pointer-events="none"/>
+            <text x="437" y="206" font-size="16" font-weight="700" fill="var(--one)" text-anchor="middle">H</text>
+          </g>
+
+          <g id="grover-meter-0-n8" class="teleport-stage">
+            <rect x="484" y="60" width="40" height="40" rx="6" fill="var(--surface2)" stroke="var(--zero)" stroke-width="1.5"/>
+            <path d="M496,88 A10,10 0 0 1 512,88" fill="none" stroke="var(--zero)" stroke-width="1.6"/>
+            <line x1="504" y1="89" x2="511" y2="75" stroke="var(--zero)" stroke-width="1.6" stroke-linecap="round"/>
+          </g>
+          <g id="grover-meter-1-n8" class="teleport-stage">
+            <rect x="484" y="120" width="40" height="40" rx="6" fill="var(--surface2)" stroke="var(--text)" stroke-width="1.5"/>
+            <path d="M496,148 A10,10 0 0 1 512,148" fill="none" stroke="var(--text)" stroke-width="1.6"/>
+            <line x1="504" y1="149" x2="511" y2="135" stroke="var(--text)" stroke-width="1.6" stroke-linecap="round"/>
+          </g>
+          <g id="grover-meter-2-n8" class="teleport-stage">
+            <rect x="484" y="180" width="40" height="40" rx="6" fill="var(--surface2)" stroke="var(--one)" stroke-width="1.5"/>
+            <path d="M496,208 A10,10 0 0 1 512,208" fill="none" stroke="var(--one)" stroke-width="1.6"/>
+            <line x1="504" y1="209" x2="511" y2="195" stroke="var(--one)" stroke-width="1.6" stroke-linecap="round"/>
+          </g>
+          <text id="grover-circuit-out0-n8" x="558" y="86"  font-size="14" font-weight="700" fill="var(--zero)" text-anchor="middle">?</text>
+          <text id="grover-circuit-out1-n8" x="558" y="146" font-size="14" font-weight="700" fill="var(--text)" text-anchor="middle">?</text>
+          <text id="grover-circuit-out2-n8" x="558" y="206" font-size="14" font-weight="700" fill="var(--one)"  text-anchor="middle">?</text>
+        </svg>
+        </div>
+
+        <!-- Small toggle under the circuit — switches which of the two
+             diagrams/pickers/charts above and below are visible, via
+             setGroverMode() in grover-tab.js. -->
+        <div class="mode-grid" id="grover-mode-toggle" style="grid-template-columns:repeat(2,1fr);max-width:420px;margin:14px auto 0;">
+          <button class="preset-btn mode-btn active" data-grover-mode="n4" data-i18n="grover.modeN4Btn">N = 4 (exact)</button>
+          <button class="preset-btn mode-btn" data-grover-mode="n8" data-i18n="grover.modeN8Btn">N = 8 (2 iterations)</button>
+        </div>
+        <p class="bit-explainer" id="grover-mode-desc" style="margin-top:8px;text-align:center;font-size:0.85rem;" data-i18n="grover.modeN4Desc">2 qubits, 1 marked item — a single query is exact.</p>
+        <p class="muted-text" id="grover-iteration-badge" style="text-align:center;margin-top:6px;min-height:1.2em;"></p>
+      </div>
+
+      <div class="grover-controls-grid">
+        <div class="card">
+          <div class="card-title" data-i18n="grover.targetTitle">Item to Find</div>
+          <p class="bit-explainer" data-i18n="grover.targetBody">Pick which item is "marked" — this is what the oracle recognizes, and what the search below should find.</p>
+          <div class="mode-grid" id="grover-target-picker" style="grid-template-columns:repeat(4,1fr);max-width:340px;margin:12px auto 0;">
+            <button class="preset-btn mode-btn active" data-grover-target="00">00</button>
+            <button class="preset-btn mode-btn" data-grover-target="01">01</button>
+            <button class="preset-btn mode-btn" data-grover-target="10">10</button>
+            <button class="preset-btn mode-btn" data-grover-target="11">11</button>
+          </div>
+          <div class="mode-grid" id="grover-target-picker-n8" style="display:none;grid-template-columns:repeat(4,1fr);max-width:340px;margin:12px auto 0;gap:7px;">
+            <button class="preset-btn mode-btn" data-grover-target="000" style="font-size:0.82rem;padding:8px 4px;">000</button>
+            <button class="preset-btn mode-btn" data-grover-target="001" style="font-size:0.82rem;padding:8px 4px;">001</button>
+            <button class="preset-btn mode-btn" data-grover-target="010" style="font-size:0.82rem;padding:8px 4px;">010</button>
+            <button class="preset-btn mode-btn" data-grover-target="011" style="font-size:0.82rem;padding:8px 4px;">011</button>
+            <button class="preset-btn mode-btn" data-grover-target="100" style="font-size:0.82rem;padding:8px 4px;">100</button>
+            <button class="preset-btn mode-btn" data-grover-target="101" style="font-size:0.82rem;padding:8px 4px;">101</button>
+            <button class="preset-btn mode-btn" data-grover-target="110" style="font-size:0.82rem;padding:8px 4px;">110</button>
+            <button class="preset-btn mode-btn" data-grover-target="111" style="font-size:0.82rem;padding:8px 4px;">111</button>
+          </div>
+          <div class="teleport-bits-row" style="margin-top:14px;">
+            <div class="teleport-bit-chip">
+              <span class="teleport-bit-label" data-i18n="grover.targetLabel">Marked item</span>
+              <span class="teleport-bit-val" id="grover-target-val">00</span>
+            </div>
+            <div class="teleport-bit-chip">
+              <span class="teleport-bit-label" data-i18n="grover.foundLabel">Found</span>
+              <span class="teleport-bit-val" id="grover-found-val">?</span>
+            </div>
+          </div>
+          <p class="muted-text" id="grover-tally-text" style="margin-top:10px;text-align:center;"></p>
+          <button class="btn-secondary" id="btn-reset-grover" data-i18n="common.reset" style="margin-top:6px;">Reset</button>
+        </div>
+
+        <div class="card">
+          <div class="card-title" data-i18n="grover.chartTitle">Amplitudes Through the Search</div>
+          <div class="histogram teleport-histogram" id="grover-chart-n4">
+            <div class="hist-col">
+              <div class="hist-track"><div class="hist-bar zero-fill" id="grover-hist-00"></div></div>
+              <span class="grover-sign" id="grover-sign-00">+</span>
+              <span class="ket">00</span>
+              <span class="pct" id="grover-pct-00">—</span>
+            </div>
+            <div class="hist-col">
+              <div class="hist-track"><div class="hist-bar" style="background:var(--text2)" id="grover-hist-01"></div></div>
+              <span class="grover-sign" id="grover-sign-01">+</span>
+              <span class="ket">01</span>
+              <span class="pct" id="grover-pct-01">—</span>
+            </div>
+            <div class="hist-col">
+              <div class="hist-track"><div class="hist-bar" style="background:var(--text2)" id="grover-hist-10"></div></div>
+              <span class="grover-sign" id="grover-sign-10">+</span>
+              <span class="ket">10</span>
+              <span class="pct" id="grover-pct-10">—</span>
+            </div>
+            <div class="hist-col">
+              <div class="hist-track"><div class="hist-bar one-fill" id="grover-hist-11"></div></div>
+              <span class="grover-sign" id="grover-sign-11">+</span>
+              <span class="ket">11</span>
+              <span class="pct" id="grover-pct-11">—</span>
+            </div>
+          </div>
+          <div class="histogram grover-histogram-n8" id="grover-chart-n8" style="display:none;">
+            <div class="hist-col">
+              <div class="hist-track"><div class="hist-bar zero-fill" id="grover-hist-000"></div></div>
+              <span class="grover-sign" id="grover-sign-000">+</span>
+              <span class="ket">000</span>
+              <span class="pct" id="grover-pct-000">—</span>
+            </div>
+            <div class="hist-col">
+              <div class="hist-track"><div class="hist-bar" style="background:var(--text2)" id="grover-hist-001"></div></div>
+              <span class="grover-sign" id="grover-sign-001">+</span>
+              <span class="ket">001</span>
+              <span class="pct" id="grover-pct-001">—</span>
+            </div>
+            <div class="hist-col">
+              <div class="hist-track"><div class="hist-bar" style="background:var(--text2)" id="grover-hist-010"></div></div>
+              <span class="grover-sign" id="grover-sign-010">+</span>
+              <span class="ket">010</span>
+              <span class="pct" id="grover-pct-010">—</span>
+            </div>
+            <div class="hist-col">
+              <div class="hist-track"><div class="hist-bar" style="background:var(--text2)" id="grover-hist-011"></div></div>
+              <span class="grover-sign" id="grover-sign-011">+</span>
+              <span class="ket">011</span>
+              <span class="pct" id="grover-pct-011">—</span>
+            </div>
+            <div class="hist-col">
+              <div class="hist-track"><div class="hist-bar" style="background:var(--text2)" id="grover-hist-100"></div></div>
+              <span class="grover-sign" id="grover-sign-100">+</span>
+              <span class="ket">100</span>
+              <span class="pct" id="grover-pct-100">—</span>
+            </div>
+            <div class="hist-col">
+              <div class="hist-track"><div class="hist-bar" style="background:var(--text2)" id="grover-hist-101"></div></div>
+              <span class="grover-sign" id="grover-sign-101">+</span>
+              <span class="ket">101</span>
+              <span class="pct" id="grover-pct-101">—</span>
+            </div>
+            <div class="hist-col">
+              <div class="hist-track"><div class="hist-bar" style="background:var(--text2)" id="grover-hist-110"></div></div>
+              <span class="grover-sign" id="grover-sign-110">+</span>
+              <span class="ket">110</span>
+              <span class="pct" id="grover-pct-110">—</span>
+            </div>
+            <div class="hist-col">
+              <div class="hist-track"><div class="hist-bar one-fill" id="grover-hist-111"></div></div>
+              <span class="grover-sign" id="grover-sign-111">+</span>
+              <span class="ket">111</span>
+              <span class="pct" id="grover-pct-111">—</span>
+            </div>
+          </div>
+          <div class="superdense-actions">
+            <button class="btn-run" id="btn-grover-search" data-i18n="grover.searchBtn">Search</button>
+            <span class="muted-text" id="grover-result">—</span>
+          </div>
+          <p class="bit-explainer" id="grover-explainer" style="margin-top:14px;" data-i18n="grover.explainerDefault">Pick an item on the left, then press Search. Watch the amplitude bars at each step — the oracle changes a sign nothing here can see, and diffusion is what turns that invisible flip into a visible answer.</p>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title" data-i18n="grover.whyFasterTitle">Why One Query Is Genuinely Faster</div>
+        <p class="bit-explainer" data-i18n="grover.whyFasterBody">Classically, finding one marked item among 4 by checking them one at a time takes up to 3 actual look-ups in the worst case — if the first 3 you check aren't it, you only know the 4th is the answer by elimination, but you still needed those 3 real queries to get there. Grover's algorithm needs exactly 1 oracle call for this same N = 4 case. The gap widens, not narrows, as the list grows: for N items, classical search needs on the order of N queries in the worst case, while Grover's algorithm needs only on the order of √N — the same quadratic speedup already described in this app's own Algorithms overview.</p>
+        <p class="bit-explainer" style="margin-top:10px;" data-i18n="grover.whyFasterBodyN8">The N = 8 mode above is what that general pattern actually looks like: 2 queries instead of up to 7, a real quadratic head start — but Grover's algorithm doesn't promise certainty in general, only that head start. Its own probability peaks at about 94.5% and would fall if pushed further; N = 4 is the special, smaller case where 1 query happens to land exactly on that peak instead of merely near it.</p>
+      </div>
+
+    </div>
+
+    <div class="lesson-embed" id="lesson-embed-grover"></div>
+  </section>
+
   <!-- ═══════════════════ ROADMAP VIEW (home / mind-map) ═══════════════════ -->
   <!-- The app's landing page. "Concept Map" is the default: each node
        navigates straight into that concept's simulation tab (see
@@ -3626,6 +4034,7 @@
   <script src="js/tabs/teleport-tab.js"></script>
   <script src="js/tabs/superdense-tab.js"></script>
   <script src="js/tabs/noise-tab.js"></script>
+  <script src="js/tabs/grover-tab.js"></script>
   <script src="js/roadmap.js"></script>
   <script src="js/tour.js"></script>
   <script src="js/app.js"></script>

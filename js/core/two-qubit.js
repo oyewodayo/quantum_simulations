@@ -60,6 +60,26 @@ class TwoQubitState {
 
   prob(idx) { return C.mag(this.amps[idx]) ** 2; }
 
+  /** Grover oracle: flips the sign of one marked basis state's amplitude,
+   *  leaving every probability (|amplitude|²) exactly unchanged — a phase
+   *  kick, invisible to any measurement taken right after this call. The
+   *  primitive the Grover tab's "Oracle" step is built on. */
+  applyPhaseFlip(idx) {
+    this.amps[idx] = C.scale(this.amps[idx], -1);
+  }
+
+  /** Grover diffusion's middle step, 2|00⟩⟨00| − I in the computational
+   *  basis: diag(1,−1,−1,−1) — every amplitude except |00⟩'s flips sign.
+   *  Doesn't depend on which item is marked; only the surrounding H⊗H
+   *  (applied by the caller with the app's own GATES.H.matrix, same as
+   *  every other module) does. Sandwiched between those two H⊗H calls,
+   *  this reflects every amplitude about their shared mean — "inversion
+   *  about the mean" is the standard closed-form description of exactly
+   *  what that three-step sandwich computes. */
+  applyDiffusionReflect() {
+    for (let idx = 1; idx < 4; idx++) this.amps[idx] = C.scale(this.amps[idx], -1);
+  }
+
   /** Projectively measures `qubitIndex` in the computational basis — same
    *  algorithm as ThreeQubitState.measureQubit(), one fewer bit threaded
    *  through the index math: sums the Born-rule probability of that bit
