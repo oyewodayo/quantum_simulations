@@ -99,4 +99,3 @@ No license file yet. If you want to reuse or adapt any of this, open an issue or
 
 ---
 
-Built by [Temidayo Oyewo](https://github.com/oyewodayo).
