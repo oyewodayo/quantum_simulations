@@ -1,6 +1,6 @@
 # Quantum Explorer · CERN
 
-A browser-based quantum computing simulator, built so that "trust me, it's a unitary matrix" doesn't have to be the whole intro to quantum computing. Fifteen simulation modules — a single qubit on a Bloch sphere, multi-qubit circuits, entanglement, tunnelling, teleportation, superdense coding, noise — plus reference tabs for the concepts and math underneath them, each simulation paired with the equivalent classical picture so you can actually see where the two diverge.
+A browser-based quantum computing simulator, built so that "trust me, it's a unitary matrix" doesn't have to be the whole intro to quantum computing. Sixteen simulation modules — a single qubit on a Bloch sphere, multi-qubit circuits, entanglement, tunnelling, teleportation, superdense coding, Grover's Search, noise — plus reference tabs for the concepts and math underneath them, each simulation paired with the equivalent classical picture so you can actually see where the two diverge.
 
 No backend, no build step, no npm install. It's plain HTML/CSS/JS that runs straight off the filesystem.
 
@@ -27,6 +27,8 @@ That's it. Everything runs client-side.
 **Teleportation & Superdense Coding.** The two protocols that spend a shared entangled pair to move information — teleportation sends a qubit's state using two classical bits, superdense coding does the reverse. Both built from the actual protocol steps (entangle, measure, correct), not scripted to just show the right answer.
 
 **Noise.** The one tab where qubits aren't perfectly isolated — a T₁/T₂ relaxation model (with T₂ capped at 2T₁, enforced in the running code, not just mentioned in a tooltip) showing how a real qubit decays toward a mixed state over time.
+
+**Grover's Search.** The first proper algorithm in here, not just a protocol — toggle between a 4-item search (2 qubits, 1 iteration, hits the marked item with probability exactly 1) and an 8-item search (3 qubits, 2 iterations, peaks around 94.5% instead of 1 — the general case, not the toy one). Each pass redraws the amplitude chart so you can watch the oracle's phase flip do nothing visible on its own, then the diffusion step turn that invisible flip into an actual probability swing.
 
 **Important Concepts & Maths Concept.** A searchable glossary of ~70 terms for when you just need a definition, and a standalone reference for the underlying math — complex numbers, vectors, matrices, state vectors, Dirac notation, tensor products — kept separate from the simulations so it doesn't get in the way of people who just want to click things.
 
@@ -69,7 +71,7 @@ quantum_simulations/
 │   │   ├── dom-utils.js         shared UI bits (tooltips, share links, modals)
 │   │   └── utils.js             small generic helpers (delay, etc.)
 │   ├── locales/               en.js, fr.js, es.js
-│   ├── tabs/                  one file per tab, 20 in total
+│   ├── tabs/                  one file per tab, 21 in total (incl. grover-tab.js)
 │   ├── roadmap.js             Home mode: mind-map, lessons, quiz, progress
 │   ├── tour.js                first-run tour
 │   └── app.js                 wires everything together, loads last
@@ -85,7 +87,7 @@ Every script is a plain `<script>` tag loaded in dependency order — no bundler
 node tests/run.js
 ```
 
-It's a dependency-free Node script, currently 23 checks covering complex arithmetic, qubit/2-qubit/3-qubit normalization, gate unitarity, teleportation and superdense coding round-tripping correctly across random states, and the tunnelling solver's probability conservation and transmission scaling. The tunnelling checks load `tunneling-tab.js` directly into a stubbed-out document rather than re-deriving the solver separately, so a change to the shipped code can't silently drift from what's tested.
+It's a dependency-free Node script, currently 27 checks covering complex arithmetic, qubit/2-qubit/3-qubit normalization, gate unitarity, teleportation and superdense coding round-tripping correctly across random states, Grover's oracle/diffusion step at both N=4 (exact hit) and N=8 (peaks ~94.5%, with a 3rd iteration confirmed to overshoot rather than improve), and the tunnelling solver's probability conservation and transmission scaling. The tunnelling checks load `tunneling-tab.js` directly into a stubbed-out document rather than re-deriving the solver separately, so a change to the shipped code can't silently drift from what's tested.
 
 ## Contributing
 
