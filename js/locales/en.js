@@ -30,7 +30,8 @@ registerLocale('en', {
     sternGerlach: 'Stern–Gerlach',
     teleport: 'Teleport',
     superdense: 'Superdense Coding',
-    noise: 'Noise'
+    noise: 'Noise',
+    grover: 'Grover\'s Search'
   },
   qubitTab: {
     classical: 'Classical',
@@ -731,6 +732,48 @@ registerLocale('en', {
     whyMattersTitle: 'Why This Fight Never Stops on Real Hardware',
     whyMattersBody: 'Every other simulation in this app runs gates and measurements as mathematically perfect operations, because that\'s the right way to learn the ideas first. Real quantum processors — including the superconducting and trapped-ion devices CERN\'s own Quantum Technology Initiative experiments with for particle-physics simulation — only stay coherent for a limited window measured in exactly these T₁/T₂ numbers, typically tens to hundreds of microseconds. Every gate in a real circuit has to finish well inside that window, which is the entire reason quantum error correction and hardware-aware circuit design are active engineering problems, not solved ones.'
   },
+  grover: {
+    title: 'Grover\'s Search',
+    subtitle: 'Finding one marked item among four with a single query, by amplifying its amplitude rather than checking items one at a time',
+    definitionTitle: 'What Is Grover\'s Search?',
+    definitionBody1: 'Grover\'s algorithm searches an unsorted list of N items for one marked entry using roughly √N oracle queries, instead of the up to N a classical search needs in the worst case. It works by amplitude amplification: start every item in equal superposition, use an oracle to flip the sign of the marked item\'s amplitude alone, then use a fixed "diffusion" step to turn that invisible sign flip into a visible boost in measurement probability.',
+    definitionBody2: 'Toggle below between two concrete cases. N = 4 (2 qubits) is the smallest case where the result is exact: a single query brings the marked item\'s probability to exactly 1. N = 8 (3 qubits) is the smallest case where it visibly isn\'t: it takes two queries to reach a peak of only about 94.5%, and — proof this isn\'t just "not enough queries yet" — a third query would overshoot past that peak rather than improving on it.',
+    targetTitle: 'Item to Find',
+    targetBody: 'Pick which item is "marked" — this is what the oracle recognizes, and what the search below should find.',
+    targetLabel: 'Marked item',
+    foundLabel: 'Found',
+    circuitTitle: 'The Circuit',
+    oracleGateLabel: 'Oracle',
+    diffuserGateLabel: 'Diffuser',
+    oracleMarks: 'marks {t}',
+    repeatBracketLabel: 'repeat ×2',
+    iterationBadge: 'Iteration {iter} of {total}',
+    modeN4Btn: 'N = 4 (exact)',
+    modeN8Btn: 'N = 8 (2 iterations)',
+    modeN4Desc: '2 qubits, 1 marked item — a single query is exact.',
+    modeN8Desc: '3 qubits, 1 marked item — needs 2 queries, and even then peaks below 100%.',
+    chartTitle: 'Amplitudes Through the Search',
+    searchBtn: 'Search',
+    resultRunning: 'running…',
+    resultMatch: 'Found on the first query',
+    resultMismatch: 'Missed — check the console, this should never happen for N=4',
+    resultMatchN8: 'Found after 2 queries',
+    resultMismatchN8: 'Missed this time — genuinely possible about 1 time in 20 for N=8, not a bug',
+    stepStart: 'Every search starts at a definite, uninteresting state — all zeros, exactly like a classical register before you\'ve looked at anything.',
+    stepSuperpose: 'A Hadamard on each qubit spreads the amplitude equally across all {n} items at once — every candidate is "live" simultaneously, not checked one at a time.',
+    stepOracle: 'The oracle recognizes the marked item and flips the sign of its amplitude alone. Look closely: none of the bars moved — a probability is the squared size of an amplitude, and a negative amplitude squares to exactly the same probability as a positive one the same size. This step is completely invisible to any measurement taken right now.',
+    stepDiffuse: 'Diffusion reflects every amplitude about their shared average. The other amplitudes, already near that average, collapse toward zero; the marked one, sitting on the far side after its sign flipped, gets thrown past the average by twice the gap — turning that invisible phase flip into a visible answer.',
+    stepDiffuseIteration: 'Diffusion reflects every amplitude about their shared average, the same rule as always. Iteration {iter} of {total} complete: the marked item\'s probability is now {pct}%.',
+    overshootNote: 'That\'s the peak for N=8 — a third iteration would overshoot past it, dropping the probability back down to about 33%, not up.',
+    stepMeasure: 'One query, one measurement, done: {found} — for {n} items with 1 marked, exactly one Grover iteration gives the marked item probability 1, a real measurement over a distribution with no actual uncertainty left in it.',
+    stepMeasureApprox: '2 queries, one measurement, done: {found} — for 8 items with 1 marked, 2 Grover iterations bring the marked item\'s probability to about 94.5%, not exactly 1 this time; measured this way, that\'s still a real Born-rule draw, just one where a small, genuine chance of missing remains.',
+    explainerDefault: 'Pick an item on the left, then press Search. Watch the amplitude bars at each step — the oracle changes a sign nothing here can see, and diffusion is what turns that invisible flip into a visible answer.',
+    tally: '{n} searches · {found}/{n} found on the first query',
+    tallyN8: '{n} searches · {found}/{n} found after 2 queries',
+    whyFasterTitle: 'Why One Query Is Genuinely Faster',
+    whyFasterBody: 'Classically, finding one marked item among 4 by checking them one at a time takes up to 3 actual look-ups in the worst case — if the first 3 you check aren\'t it, you only know the 4th is the answer by elimination, but you still needed those 3 real queries to get there. Grover\'s algorithm needs exactly 1 oracle call for this same N = 4 case. The gap widens, not narrows, as the list grows: for N items, classical search needs on the order of N queries in the worst case, while Grover\'s algorithm needs only on the order of √N — the same quadratic speedup already described in this app\'s own Algorithms overview.',
+    whyFasterBodyN8: 'The N = 8 mode above is what that general pattern actually looks like: 2 queries instead of up to 7, a real quadratic head start — but Grover\'s algorithm doesn\'t promise certainty in general, only that head start. Its own probability peaks at about 94.5% and would fall if pushed further; N = 4 is the special, smaller case where 1 query happens to land exactly on that peak instead of merely near it.'
+  },
   // Mirrors ROADMAP_LESSONS in js/roadmap.js exactly (same ids, same
   // title/body content) — that file keeps its own English copies as the
   // t()-lookup fallback (see buildLessonInfoHTML()), so the two only ever
@@ -811,6 +854,10 @@ registerLocale('en', {
     noise: {
       title: 'Noise & Decoherence',
       body: 'Real qubits aren\'t perfectly isolated: T₁ relaxation lets them leak energy toward |0⟩, and T₂ dephasing erases the relative phase that makes a superposition meaningful. Both shrink the Bloch vector toward the center — the same "mixed state" signature already seen when tracing out an entangled qubit, just caused by an uncontrolled environment instead of a deliberate measurement.'
+    },
+    grover: {
+      title: 'Grover\'s Search',
+      body: 'Grover\'s algorithm finds one marked item among N by amplitude amplification rather than checking items one at a time: an oracle flips the marked item\'s amplitude sign (invisible to any measurement, since probability only depends on the amplitude\'s size), then a fixed "diffusion" step turns that invisible flip into a visible boost. For N=4 with one marked item, a single query brings its measurement probability to exactly 1 — a real quadratic speedup over the best any classical search can do.'
     }
   },
   // Mirrors ROADMAP_QUIZ in js/roadmap.js exactly — same lessonIds as
@@ -910,6 +957,11 @@ registerLocale('en', {
       q: 'A qubit starts in a genuine superposition. After it fully decoheres (T₂ has elapsed many times over), what happens to its Bloch vector?',
       options: ['Nothing — decoherence only affects measurement, not the state', 'It shrinks toward the center, the same signature as a mixed/entangled state', 'It grows longer than 1', 'It instantly jumps to the south pole'],
       explanation: 'Losing coherence to the environment is mathematically identical to becoming entangled with something you can\'t track — both leave the qubit\'s own Bloch vector shorter than 1, a genuinely mixed state, not just a randomized pure one.'
+    },
+    grover: {
+      q: 'Right after Grover\'s oracle flips the marked item\'s amplitude sign, what happens to the measured probability of finding it?',
+      options: ['It jumps straight to 1', 'It stays exactly the same as before the oracle ran', 'It drops to 0', 'It becomes random'],
+      explanation: 'Probability comes from |amplitude|², and a sign flip alone doesn\'t change that: (−0.5)² = (0.5)². The oracle\'s phase kick is completely invisible to a measurement until the diffusion step turns it into an actual probability boost.'
     }
   }
 });

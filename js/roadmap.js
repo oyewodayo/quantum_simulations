@@ -66,7 +66,9 @@ const ROADMAP_LESSONS = [
   { id: 'superdense', title: 'Superdense Coding', tab: 'superdense',
     body: 'Teleportation\'s mirror image: Alice sends Bob two classical bits using only one qubit, by encoding her message onto her half of a pre-shared entangled pair and physically sending Bob that single qubit. Bob decodes both bits exactly, every time — nothing about this protocol is probabilistic.' },
   { id: 'noise', title: 'Noise & Decoherence', tab: 'noise',
-    body: 'Real qubits aren\'t perfectly isolated: T₁ relaxation lets them leak energy toward |0⟩, and T₂ dephasing erases the relative phase that makes a superposition meaningful. Both shrink the Bloch vector toward the center — the same "mixed state" signature already seen when tracing out an entangled qubit, just caused by an uncontrolled environment instead of a deliberate measurement.' }
+    body: 'Real qubits aren\'t perfectly isolated: T₁ relaxation lets them leak energy toward |0⟩, and T₂ dephasing erases the relative phase that makes a superposition meaningful. Both shrink the Bloch vector toward the center — the same "mixed state" signature already seen when tracing out an entangled qubit, just caused by an uncontrolled environment instead of a deliberate measurement.' },
+  { id: 'grover', title: 'Grover\'s Search', tab: 'grover',
+    body: 'Grover\'s algorithm finds one marked item among N by amplitude amplification rather than checking items one at a time: an oracle flips the marked item\'s amplitude sign (invisible to any measurement, since probability only depends on the amplitude\'s size), then a fixed "diffusion" step turns that invisible flip into a visible boost. For N=4 with one marked item, a single query brings its measurement probability to exactly 1 — a real quadratic speedup over the best any classical search can do.' }
 ];
 
 // One question per lesson (lessonId matches ROADMAP_LESSONS[].id), shown
@@ -168,7 +170,12 @@ const ROADMAP_QUIZ = [
     q: 'A qubit starts in a genuine superposition. After it fully decoheres (T₂ has elapsed many times over), what happens to its Bloch vector?',
     options: ['Nothing — decoherence only affects measurement, not the state', 'It shrinks toward the center, the same signature as a mixed/entangled state', 'It grows longer than 1', 'It instantly jumps to the south pole'],
     correct: 1,
-    explanation: 'Losing coherence to the environment is mathematically identical to becoming entangled with something you can\'t track — both leave the qubit\'s own Bloch vector shorter than 1, a genuinely mixed state, not just a randomized pure one.' }
+    explanation: 'Losing coherence to the environment is mathematically identical to becoming entangled with something you can\'t track — both leave the qubit\'s own Bloch vector shorter than 1, a genuinely mixed state, not just a randomized pure one.' },
+  { lessonId: 'grover',
+    q: 'Right after Grover\'s oracle flips the marked item\'s amplitude sign, what happens to the measured probability of finding it?',
+    options: ['It jumps straight to 1', 'It stays exactly the same as before the oracle ran', 'It drops to 0', 'It becomes random'],
+    correct: 1,
+    explanation: 'Probability comes from |amplitude|², and a sign flip alone doesn\'t change that: (−0.5)² = (0.5)². The oracle\'s phase kick is completely invisible to a measurement until the diffusion step turns it into an actual probability boost.' }
 ];
 
 // ═══════════════════════════════════════════════════════════════════
@@ -441,7 +448,8 @@ const MINDMAP_TREE = [
   { id: 'sterngerlach', number: 12, title: 'Stern–Gerlach Experiment', side: 'right', tab: 'sterngerlach' },
   { id: 'teleport',     number: 13, title: 'Quantum Teleportation',    side: 'right', tab: 'teleport' },
   { id: 'superdense',   number: 14, title: 'Superdense Coding',        side: 'right', tab: 'superdense' },
-  { id: 'noise',        number: 15, title: 'Noise & Decoherence',      side: 'right', tab: 'noise' }
+  { id: 'noise',        number: 15, title: 'Noise & Decoherence',      side: 'right', tab: 'noise' },
+  { id: 'grover',       number: 16, title: 'Grover\'s Search',         side: 'right', tab: 'grover' }
 ];
 
 /** Color is per depth, not per branch — reproducing the source diagram's
@@ -466,7 +474,8 @@ const MINDMAP_LEVEL1_COLORS = {
   sterngerlach: '#242265',
   teleport:     '#4281a4',
   superdense:   '#242265',
-  noise:        '#4281a4'
+  noise:        '#4281a4',
+  grover:       '#242265'
 };
 const MINDMAP_LEVEL2_COLOR = '#aa5f82';
 const MINDMAP_LEVEL3_COLOR = '#6c4f77';
